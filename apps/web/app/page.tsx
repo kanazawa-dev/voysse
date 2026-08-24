@@ -6,13 +6,24 @@ import { ArrowRight, Bot, Building2, Cpu, MessagesSquare, MessageSquareText, Rad
 import { api } from "@/lib/api";
 import { useT } from "@/lib/i18n";
 import { PageHead, StatusBadge } from "@/components/ui";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { Agent, AgentSummary, Conversation } from "@/types";
+import { Card } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { CountingNumber } from "@/components/animate-ui/primitives/texts/counting-number";
+import { useReducedMotion } from "motion/react";
 
 type Dashboard = { clients: number; active_clients: number; agents: number; active_agents: number; conversations: number; channels: number; connected_channels: number; recent_agents: AgentSummary[] };
 type DailyPoint = { date: string; count: number };
 type TopAgent = { id: string; name: string; conversations: number };
 type ModelUsage = { model: string; input_tokens: number; output_tokens: number };
 type Metrics = { messages: number; human_conversations: number; by_channel: Record<string, number>; daily_conversations: DailyPoint[]; top_agents: TopAgent[]; tokens_in: number; tokens_out: number; usage_by_model: ModelUsage[] };
+
+function AnimatedMetric({ value }: { value: number | undefined }) {
+  const reducedMotion = useReducedMotion();
+  if (value === undefined) return <>—</>;
+  return <><CountingNumber number={value} initiallyStable={Boolean(reducedMotion)} aria-hidden="true" /><span className="sr-only">{value.toLocaleString()}</span></>;
+}
 
 export default function HomePage() {
   const t = useT();
@@ -30,43 +41,43 @@ export default function HomePage() {
   const maxUsage = Math.max(1, ...usage.map((u) => u.input_tokens + u.output_tokens));
 
   return (
-    <div className="page">
-      <PageHead eyebrow={t("home.head.eyebrow")} title={t("home.head.title")} description={t("home.head.description")} action={<label className="range-select"><select value={range} onChange={(e) => setRange(Number(e.target.value))}>{[7, 14, 30, 90].map((n) => <option key={n} value={n}>{t("home.range.days", { count: n })}</option>)}</select></label>} />
-      <section className="panel next-steps home-next-steps">
-        <div className="panel-head"><div><h3>{t("home.nextSteps.title")}</h3><p>{t("home.nextSteps.subtitle")}</p></div></div>
-        <ol><li className={data?.clients ? "done" : ""}><span>{data?.clients ? "✓" : "1"}</span><div><strong>{t("home.nextSteps.step1Title")}</strong><small>{t("home.nextSteps.step1Desc")}</small></div></li><li className={data?.agents ? "done" : ""}><span>{data?.agents ? "✓" : "2"}</span><div><strong>{t("home.nextSteps.step2Title")}</strong><small>{t("home.nextSteps.step2Desc")}</small></div></li><li><span>3</span><div><strong>{t("home.nextSteps.step3Title")}</strong><small>{t("home.nextSteps.step3Desc")}</small></div></li></ol>
+    <div className="flex w-full flex-col gap-6">
+      <PageHead eyebrow={t("home.head.eyebrow")} title={t("home.head.title")} description={t("home.head.description")} action={<Select value={String(range)} onValueChange={(value) => value && setRange(Number(value))}><SelectTrigger><SelectValue>{t("home.range.days", { count: range })}</SelectValue></SelectTrigger><SelectContent>{[7, 14, 30, 90].map((days) => <SelectItem key={days} value={String(days)}>{t("home.range.days", { count: days })}</SelectItem>)}</SelectContent></Select>} />
+      <Card className="p-5 [&_ol]:grid [&_ol]:gap-3 md:[&_ol]:grid-cols-3 [&_li]:flex [&_li]:gap-3 [&_li]:rounded-lg [&_li]:bg-muted/50 [&_li]:p-3 [&_li>span]:flex [&_li>span]:size-7 [&_li>span]:shrink-0 [&_li>span]:items-center [&_li>span]:justify-center [&_li>span]:rounded-full [&_li>span]:bg-primary [&_li>span]:text-xs [&_li>span]:font-semibold [&_li>span]:text-primary-foreground [&_small]:block [&_small]:text-muted-foreground">
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between [&_h3]:font-semibold [&_p]:mt-1 [&_p]:text-sm [&_p]:text-muted-foreground"><div><h3 className="font-heading">{t("home.nextSteps.title")}</h3><p>{t("home.nextSteps.subtitle")}</p></div></div>
+        <ol><li className={data?.clients ? "opacity-70" : ""}><span>{data?.clients ? "✓" : "1"}</span><div><strong>{t("home.nextSteps.step1Title")}</strong><small>{t("home.nextSteps.step1Desc")}</small></div></li><li className={data?.agents ? "opacity-70" : ""}><span>{data?.agents ? "✓" : "2"}</span><div><strong>{t("home.nextSteps.step2Title")}</strong><small>{t("home.nextSteps.step2Desc")}</small></div></li><li><span>3</span><div><strong>{t("home.nextSteps.step3Title")}</strong><small>{t("home.nextSteps.step3Desc")}</small></div></li></ol>
+      </Card>
+      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <Card className="flex gap-4 p-5 [&_small]:text-sm [&_small]:text-muted-foreground [&_strong]:mt-1 [&_strong]:block [&_strong]:text-2xl [&_strong]:font-semibold [&_p]:mt-1 [&_p]:text-xs [&_p]:text-muted-foreground"><span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary bg-sky-500/10 text-sky-600"><Building2 size={20} /></span><div><small>{t("home.metrics.clients")}</small><strong><AnimatedMetric value={data?.clients} /></strong><p>{t("home.metrics.clientsActive", { count: data?.active_clients ?? 0 })}</p></div></Card>
+        <Card className="flex gap-4 p-5 [&_small]:text-sm [&_small]:text-muted-foreground [&_strong]:mt-1 [&_strong]:block [&_strong]:text-2xl [&_strong]:font-semibold [&_p]:mt-1 [&_p]:text-xs [&_p]:text-muted-foreground"><span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary bg-violet-500/10 text-violet-600"><Bot size={20} /></span><div><small>{t("home.metrics.agents")}</small><strong><AnimatedMetric value={agents.length || data?.agents} /></strong><p>{t("home.metrics.agentsActive", { count: agents.filter((item) => item.is_active).length })}</p></div></Card>
+        <Card className="flex gap-4 p-5 [&_small]:text-sm [&_small]:text-muted-foreground [&_strong]:mt-1 [&_strong]:block [&_strong]:text-2xl [&_strong]:font-semibold [&_p]:mt-1 [&_p]:text-xs [&_p]:text-muted-foreground"><span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary bg-emerald-500/10 text-emerald-600"><MessageSquareText size={20} /></span><div><small>{t("home.metrics.conversations")}</small><strong><AnimatedMetric value={conversations.length} /></strong><p>{t("home.metrics.conversationsCaption")}</p></div></Card>
+        <Card className="flex gap-4 p-5 [&_small]:text-sm [&_small]:text-muted-foreground [&_strong]:mt-1 [&_strong]:block [&_strong]:text-2xl [&_strong]:font-semibold [&_p]:mt-1 [&_p]:text-xs [&_p]:text-muted-foreground"><span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary bg-amber-500/10 text-amber-600"><Radio size={20} /></span><div><small>{t("home.metrics.channels")}</small><strong><AnimatedMetric value={data?.channels} /></strong><p>{t("home.metrics.channelsConnected", { count: data?.connected_channels ?? 0 })}</p></div></Card>
       </section>
-      <section className="metrics-grid">
-        <article className="metric-card"><span className="metric-icon blue"><Building2 size={20} /></span><div><small>{t("home.metrics.clients")}</small><strong>{data?.clients ?? "—"}</strong><p>{t("home.metrics.clientsActive", { count: data?.active_clients ?? 0 })}</p></div></article>
-        <article className="metric-card"><span className="metric-icon violet"><Bot size={20} /></span><div><small>{t("home.metrics.agents")}</small><strong>{agents.length || data?.agents || "—"}</strong><p>{t("home.metrics.agentsActive", { count: agents.filter((item) => item.is_active).length })}</p></div></article>
-        <article className="metric-card"><span className="metric-icon green"><MessageSquareText size={20} /></span><div><small>{t("home.metrics.conversations")}</small><strong>{conversations.length}</strong><p>{t("home.metrics.conversationsCaption")}</p></div></article>
-        <article className="metric-card"><span className="metric-icon amber"><Radio size={20} /></span><div><small>{t("home.metrics.channels")}</small><strong>{data?.channels ?? "—"}</strong><p>{t("home.metrics.channelsConnected", { count: data?.connected_channels ?? 0 })}</p></div></article>
-      </section>
-      <section className="dashboard-row">
-        <div className="panel trend-panel">
-          <div className="panel-head"><div><h3>{t("home.activity.title")}</h3><p>{t("home.activity.subtitle", { count: range })}</p></div>
-            <div className="trend-stats"><span><MessagesSquare size={14} /> {metrics?.messages ?? 0} · {t("home.activity.messages")}</span><span><UserRound size={14} /> {metrics?.human_conversations ?? 0} · {t("home.activity.humanHandled")}</span></div>
+      <section className="grid gap-4 xl:grid-cols-2">
+        <div className="rounded-xl border bg-card p-5 text-card-foreground shadow-sm min-w-0">
+          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between [&_h3]:font-semibold [&_p]:mt-1 [&_p]:text-sm [&_p]:text-muted-foreground"><div><h3 className="font-heading">{t("home.activity.title")}</h3><p>{t("home.activity.subtitle", { count: range })}</p></div>
+            <div className="flex flex-wrap gap-3 text-xs text-muted-foreground [&_span]:inline-flex [&_span]:items-center [&_span]:gap-1"><span><MessagesSquare size={14} /> {metrics?.messages ?? 0} · {t("home.activity.messages")}</span><span><UserRound size={14} /> {metrics?.human_conversations ?? 0} · {t("home.activity.humanHandled")}</span></div>
           </div>
           {trend.some((p) => p.count > 0) ? <>
-            <div className="trend-chart">{trend.map((p) => <div key={p.date} className="trend-col" title={`${p.date}: ${p.count}`}><div className="trend-bar" style={{ height: `${Math.round((p.count / maxDaily) * 100)}%` }} /></div>)}</div>
-            <div className="trend-legend"><span>{new Date(`${trend[0].date}T00:00:00`).toLocaleDateString("es", { day: "numeric", month: "short" })}</span><span>{new Date(`${trend[trend.length - 1].date}T00:00:00`).toLocaleDateString("es", { day: "numeric", month: "short" })}</span></div>
-          </> : <div className="inline-empty slim"><MessagesSquare size={22} /><div><strong>{t("home.activity.empty")}</strong></div></div>}
+            <div className="flex h-40 items-end gap-1 rounded-lg bg-muted/40 p-3">{trend.map((p) => <div key={p.date} className="flex h-full min-w-0 flex-1 items-end" title={`${p.date}: ${p.count}`}><div className="w-full min-h-0.5 rounded-sm bg-primary" style={{ height: `${Math.round((p.count / maxDaily) * 100)}%` }} /></div>)}</div>
+            <div className="mt-2 flex justify-between text-xs text-muted-foreground"><span>{new Date(`${trend[0].date}T00:00:00`).toLocaleDateString("es", { day: "numeric", month: "short" })}</span><span>{new Date(`${trend[trend.length - 1].date}T00:00:00`).toLocaleDateString("es", { day: "numeric", month: "short" })}</span></div>
+          </> : <div className="flex min-h-24 items-center justify-center gap-3 rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground"><MessagesSquare size={22} /><div><strong>{t("home.activity.empty")}</strong></div></div>}
         </div>
-        <div className="panel">
-          <div className="panel-head"><div><h3>{t("home.topAgents.title")}</h3><p>{t("home.topAgents.subtitle")}</p></div></div>
-          {metrics?.top_agents.length ? <div className="rank-list">{metrics.top_agents.map((agent, index) => <Link href={`/agents/${agent.id}`} key={agent.id} className="rank-row"><span className="rank-num">{index + 1}</span><span className="agent-avatar"><Bot size={16} /></span><strong>{agent.name}</strong><span className="rank-count">{t("home.topAgents.conversations", { count: agent.conversations })}</span></Link>)}</div> : <div className="inline-empty slim"><Bot size={22} /><div><strong>{t("home.topAgents.empty")}</strong></div></div>}
+        <div className="rounded-xl border bg-card p-5 text-card-foreground shadow-sm">
+          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between [&_h3]:font-semibold [&_p]:mt-1 [&_p]:text-sm [&_p]:text-muted-foreground"><div><h3 className="font-heading">{t("home.topAgents.title")}</h3><p>{t("home.topAgents.subtitle")}</p></div></div>
+          {metrics?.top_agents.length ? <div className="divide-y">{metrics.top_agents.map((agent, index) => <Link href={`/agents/${agent.id}`} key={agent.id} className="flex items-center gap-3 py-3 text-sm transition-colors hover:text-primary"><span className="w-5 text-center text-xs text-muted-foreground">{index + 1}</span><span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"><Bot size={16} /></span><strong>{agent.name}</strong><span className="ml-auto text-xs text-muted-foreground">{t("home.topAgents.conversations", { count: agent.conversations })}</span></Link>)}</div> : <div className="flex min-h-24 items-center justify-center gap-3 rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground"><Bot size={22} /><div><strong>{t("home.topAgents.empty")}</strong></div></div>}
         </div>
       </section>
-      <section className="panel">
-        <div className="panel-head"><div><h3>{t("home.usage.title")}</h3><p>{t("home.usage.subtitle")}</p></div>
-          <div className="trend-stats"><span>↓ {(metrics?.tokens_in ?? 0).toLocaleString("es")} {t("home.usage.in")}</span><span>↑ {(metrics?.tokens_out ?? 0).toLocaleString("es")} {t("home.usage.out")}</span></div>
+      <Card className="p-5">
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between [&_h3]:font-semibold [&_p]:mt-1 [&_p]:text-sm [&_p]:text-muted-foreground"><div><h3 className="font-heading">{t("home.usage.title")}</h3><p>{t("home.usage.subtitle")}</p></div>
+          <div className="flex flex-wrap gap-3 text-xs text-muted-foreground [&_span]:inline-flex [&_span]:items-center [&_span]:gap-1"><span>↓ {(metrics?.tokens_in ?? 0).toLocaleString("es")} {t("home.usage.in")}</span><span>↑ {(metrics?.tokens_out ?? 0).toLocaleString("es")} {t("home.usage.out")}</span></div>
         </div>
-        {usage.length ? <div className="usage-list">{usage.map((item) => { const total = item.input_tokens + item.output_tokens; return <div className="usage-row" key={item.model}><strong>{item.model}</strong><div className="usage-track"><div className="usage-fill" style={{ width: `${Math.round((total / maxUsage) * 100)}%` }} /></div><span className="usage-count">{total.toLocaleString("es")} tok</span></div>; })}</div> : <div className="inline-empty slim"><Cpu size={22} /><div><strong>{t("home.usage.empty")}</strong></div></div>}
-      </section>
-      <section className="panel">
-        <div className="panel-head"><div><h3>{t("home.recentAgents.title")}</h3><p>{t("home.recentAgents.subtitle")}</p></div><Link href="/agents" className="text-link">{t("home.recentAgents.viewAll")} <ArrowRight size={15} /></Link></div>
-        {agents.length ? <div className="compact-list">{agents.slice(0, 5).map((agent) => <Link href={`/agents/${agent.id}`} key={agent.id} className="compact-row"><span className="agent-avatar"><Bot size={18} /></span><div><strong>{agent.name}</strong><small>{agent.client.name} · {agent.description || t("common.noDescription")}</small></div><StatusBadge active={agent.is_active} /><ArrowRight size={16} /></Link>)}</div> : <div className="inline-empty"><Bot size={24} /><div><strong>{t("home.recentAgents.emptyTitle")}</strong><span>{t("home.recentAgents.emptyDesc")}</span></div></div>}
-      </section>
+        {usage.length ? <div className="space-y-3">{usage.map((item) => { const total = item.input_tokens + item.output_tokens; return <div className="grid items-center gap-3 text-sm sm:grid-cols-[minmax(8rem,1fr)_3fr_auto]" key={item.model}><strong>{item.model}</strong><Progress value={Math.round((total / maxUsage) * 100)} /><span className="text-xs tabular-nums text-muted-foreground">{total.toLocaleString("es")} tok</span></div>; })}</div> : <div className="flex min-h-24 items-center justify-center gap-3 rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground"><Cpu size={22} /><div><strong>{t("home.usage.empty")}</strong></div></div>}
+      </Card>
+      <Card className="p-5">
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between [&_h3]:font-semibold [&_p]:mt-1 [&_p]:text-sm [&_p]:text-muted-foreground"><div><h3 className="font-heading">{t("home.recentAgents.title")}</h3><p>{t("home.recentAgents.subtitle")}</p></div><Link href="/agents" className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline">{t("home.recentAgents.viewAll")} <ArrowRight size={15} /></Link></div>
+        {agents.length ? <div className="divide-y">{agents.slice(0, 5).map((agent) => <Link href={`/agents/${agent.id}`} key={agent.id} className="flex items-center gap-3 py-3 transition-colors hover:text-primary [&>div]:min-w-0 [&_small]:block [&_small]:truncate [&_small]:text-xs [&_small]:text-muted-foreground"><span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"><Bot size={18} /></span><div><strong>{agent.name}</strong><small>{agent.client.name} · {agent.description || t("common.noDescription")}</small></div><StatusBadge active={agent.is_active} /><ArrowRight size={16} /></Link>)}</div> : <div className="flex min-h-28 items-center justify-center gap-3 rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground"><Bot size={24} /><div><strong className="block">{t("home.recentAgents.emptyTitle")}</strong><span className="block">{t("home.recentAgents.emptyDesc")}</span></div></div>}
+      </Card>
     </div>
   );
 }

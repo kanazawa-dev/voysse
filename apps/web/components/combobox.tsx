@@ -1,8 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { Check, ChevronDown, Search } from "lucide-react";
 import { useT } from "@/lib/i18n";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 // Searchable dropdown (autocomplete). Used for long option lists such as the
 // timezone selector and the model picker.
@@ -25,16 +28,6 @@ export function Combobox({
   const t = useT();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const onDocument = (event: MouseEvent) => {
-      if (ref.current && !ref.current.contains(event.target as Node)) close();
-    };
-    document.addEventListener("mousedown", onDocument);
-    return () => document.removeEventListener("mousedown", onDocument);
-  }, [open]);
 
   function close() { setOpen(false); setQuery(""); }
   function pick(option: string) { onChange(option); close(); }
@@ -44,45 +37,22 @@ export function Combobox({
   const canUseCustom = allowCustom && q.length > 0 && !options.some((option) => option.toLowerCase() === q);
 
   return (
-    <div className={`combo ${open ? "open" : ""}`} ref={ref}>
-      <button type="button" className="combo-value" onClick={() => (open ? close() : setOpen(true))}>
-        <span className={value ? "" : "muted"}>{value || placeholder}</span>
+    <Popover open={open} onOpenChange={(nextOpen) => { setOpen(nextOpen); if (!nextOpen) setQuery(""); }}>
+      <PopoverTrigger render={<Button type="button" variant="outline" className="w-full justify-between" />}>
+        <span className={value ? "" : "text-muted-foreground"}>{value || placeholder}</span>
         <ChevronDown size={16} />
-      </button>
-      {open && (
-        <div className="combo-pop">
-          <div className="combo-search">
-            <Search size={14} />
-            <input
-              autoFocus
-              value={query}
-              placeholder={t("common.search")}
-              onChange={(event) => setQuery(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Escape") close();
-                if (event.key === "Enter" && canUseCustom) { event.preventDefault(); pick(query.trim()); }
-              }}
-            />
-          </div>
-          <ul className="combo-list" role="listbox">
-            {canUseCustom && (
-              <li>
-                <button type="button" className="combo-custom" onClick={() => pick(query.trim())}>
-                  {t("common.useValue", { value: query.trim() })}
-                </button>
-              </li>
-            )}
-            {filtered.map((option) => (
-              <li key={option}>
-                <button type="button" className={option === value ? "active" : ""} onClick={() => pick(option)}>
-                  {option}{option === value && <Check size={14} />}
-                </button>
-              </li>
-            ))}
-            {!filtered.length && !canUseCustom && <li className="combo-empty">{t("common.noResults")}</li>}
-          </ul>
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-(--anchor-width) gap-1 p-1">
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" size={14} />
+          <Input className="pl-8" autoFocus value={query} placeholder={t("common.search")} onChange={(event) => setQuery(event.target.value)} onKeyDown={(event) => { if (event.key === "Escape") close(); if (event.key === "Enter" && canUseCustom) { event.preventDefault(); pick(query.trim()); } }} />
         </div>
-      )}
-    </div>
+        <div className="max-h-56 overflow-y-auto" role="listbox">
+          {canUseCustom && <Button type="button" variant="ghost" className="h-auto w-full justify-start rounded-xl p-2 text-left" onClick={() => pick(query.trim())}>{t("common.useValue", { value: query.trim() })}</Button>}
+          {filtered.map((option) => <Button type="button" variant="ghost" className={`h-auto w-full justify-between rounded-xl px-2 py-1.5 text-left ${option === value ? "bg-accent font-medium" : ""}`} key={option} onClick={() => pick(option)}>{option}{option === value && <Check size={14} />}</Button>)}
+          {!filtered.length && !canUseCustom && <div className="p-3 text-center text-sm text-muted-foreground">{t("common.noResults")}</div>}
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }

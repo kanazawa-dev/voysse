@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="apps/web/public/brand/openvoiss-logo-original.png" width="96" alt="Openvoiss" />
+  <img src="apps/web/public/brand/only-logo.png" width="96" alt="Openvoiss" />
 </p>
 
 <h1 align="center">Openvoiss</h1>

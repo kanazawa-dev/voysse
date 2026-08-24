@@ -1,0 +1,408 @@
+/* Tenant-facing login, portal, and widget styles. Scoped away from the authenticated dashboard. */
+:is(.access-page, .portal-app, .portal-loader, .widget-shell), :is(.access-page, .portal-app, .portal-loader, .widget-shell) * { box-sizing: border-box; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell), :is(.access-page, .portal-app, .portal-loader, .widget-shell) { margin: 0; min-height: 100%; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) { color: var(--ink); background: var(--canvas); font-family: var(--font-inter), sans-serif; font-size: 14px; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) button, :is(.access-page, .portal-app, .portal-loader, .widget-shell) input, :is(.access-page, .portal-app, .portal-loader, .widget-shell) textarea, :is(.access-page, .portal-app, .portal-loader, .widget-shell) select { font: inherit; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) button, :is(.access-page, .portal-app, .portal-loader, .widget-shell) a { -webkit-tap-highlight-color: transparent; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) a { color: inherit; text-decoration: none; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) button { cursor: pointer; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) h1, :is(.access-page, .portal-app, .portal-loader, .widget-shell) h2, :is(.access-page, .portal-app, .portal-loader, .widget-shell) h3 { margin-top: 0; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) h1, :is(.access-page, .portal-app, .portal-loader, .widget-shell) h2, :is(.access-page, .portal-app, .portal-loader, .widget-shell) h3 { font-family: var(--font-manrope), sans-serif; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .button { min-height: 39px; padding: 0 16px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid transparent; border-radius: 9px; font-weight: 700; font-size: 13px; transition: .18s ease; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .button:hover:not(:disabled) { transform: translateY(-1px); }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .button.primary { color: white; background: var(--purple); box-shadow: 0 7px 17px rgba(108,92,231,.2); }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .button.primary:hover:not(:disabled) { background: var(--purple-dark); }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .button.secondary { color: #4f42ba; border-color: #ddd8ff; background: #f5f3ff; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .button.ghost { color: var(--text-muted); border-color: var(--line); background: white; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .button.light { color: #4e40c0; background: white; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .button.small { min-height: 34px; padding: 0 12px; font-size: 12px; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .button.full { width: 100%; min-height: 46px; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .button.disabled, :is(.access-page, .portal-app, .portal-loader, .widget-shell) .button:disabled { opacity: .56; cursor: not-allowed; transform: none; box-shadow: none; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .spin { animation: spin .9s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .empty-state { min-height: 380px; padding: 50px 20px; border: 1px dashed #d8dce7; border-radius: 15px; display: flex; align-items: center; justify-content: center; flex-direction: column; text-align: center; background: rgba(255,255,255,.6); }:is(.access-page, .portal-app, .portal-loader, .widget-shell) .empty-icon { width: 58px; height: 58px; margin-bottom: 17px; display: grid; place-items: center; color: var(--purple); background: var(--purple-soft); border-radius: 17px; }:is(.access-page, .portal-app, .portal-loader, .widget-shell) .empty-state h3 { margin: 0 0 7px; font-size: 17px; }:is(.access-page, .portal-app, .portal-loader, .widget-shell) .empty-state p { max-width: 390px; margin: 0 0 18px; color: var(--text-muted); font-size: 12px; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) input, :is(.access-page, .portal-app, .portal-loader, .widget-shell) textarea, :is(.access-page, .portal-app, .portal-loader, .widget-shell) select { width: 100%; color: var(--ink); border: 1px solid #dfe3eb; border-radius: 9px; background: white; outline: none; transition: .15s; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) input, :is(.access-page, .portal-app, .portal-loader, .widget-shell) select { height: 42px; padding: 0 12px; } :is(.access-page, .portal-app, .portal-loader, .widget-shell) textarea { padding: 11px 12px; line-height: 1.55; resize: vertical; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) input:focus, :is(.access-page, .portal-app, .portal-loader, .widget-shell) textarea:focus, :is(.access-page, .portal-app, .portal-loader, .widget-shell) select:focus { border-color: #a99fff; box-shadow: 0 0 0 3px #f0eeff; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) input::placeholder, :is(.access-page, .portal-app, .portal-loader, .widget-shell) textarea::placeholder { color: #adb3c2; font-weight: 400; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .alert { min-height: 39px; padding: 10px 13px; display: flex; align-items: center; gap: 7px; color: #a53e3e; border: 1px solid #f2caca; background: var(--red-soft); border-radius: 9px; font-size: 11px; line-height: 1.4; }:is(.access-page, .portal-app, .portal-loader, .widget-shell) .alert-success { color: #147a57; border-color: #bfe8d7; background: #ebf9f3; }:is(.access-page, .portal-app, .portal-loader, .widget-shell) .alert-info { color: #4f48a9; border-color: #d8d4fa; background: #f4f2ff; }:is(.access-page, .portal-app, .portal-loader, .widget-shell) .alert a { text-decoration: underline; font-weight: 700; }:is(.access-page, .portal-app, .portal-loader, .widget-shell) .auth-tabs { margin-top: 24px; padding: 4px; display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--line); border-radius: 10px; background: #f1f2f6; }:is(.access-page, .portal-app, .portal-loader, .widget-shell) .auth-tabs button { height: 36px; border: 0; color: var(--text-muted); background: transparent; border-radius: 7px; font-size: 11px; font-weight: 700; }:is(.access-page, .portal-app, .portal-loader, .widget-shell) .auth-tabs button.active { color: var(--ink); background: white; box-shadow: 0 2px 8px rgba(22,29,53,.08); }
+
+/* 2026 redesign: agency interface inspired by Stripe clarity and density. */
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) {
+  --ink: #1a1f36;
+  --text-muted: #596171;
+  --subtle: #87909f;
+  --line: #e3e8ee;
+  --surface: #fff;
+  --canvas: #f7f9fc;
+  --purple: #635bff;
+  --purple-dark: #4f46e5;
+  --purple-soft: #f0efff;
+  --green: #0e9272;
+  --green-soft: #e9f8f3;
+  --red: #c43d4b;
+  --red-soft: #fff0f1;
+  --shadow: 0 1px 2px rgba(16, 24, 40, .04), 0 2px 8px rgba(16, 24, 40, .04);
+}
+
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) { background: var(--canvas); font-family: var(--font-geist), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 15px; line-height: 1.5; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) h1, :is(.access-page, .portal-app, .portal-loader, .widget-shell) h2, :is(.access-page, .portal-app, .portal-loader, .widget-shell) h3 { font-family: inherit; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .button { min-height: 40px; padding: 0 15px; border-radius: 7px; font-size: 14px; font-weight: 600; box-shadow: 0 1px 2px rgba(16, 24, 40, .05); }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .button.primary { border: 1px solid #5149e8; background: #635bff; box-shadow: 0 2px 5px rgba(99, 91, 255, .25); }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .button.primary:hover { background: #544cf0; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .button.secondary, :is(.access-page, .portal-app, .portal-loader, .widget-shell) .button.ghost { color: #3b4252; border: 1px solid #d8dde5; background: white; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .button.danger { color: #b02e3c; border: 1px solid #efc6ca; background: white; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) label { color: #343b4d; font-size: 14px; font-weight: 600; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) input, :is(.access-page, .portal-app, .portal-loader, .widget-shell) textarea, :is(.access-page, .portal-app, .portal-loader, .widget-shell) select { min-height: 43px; padding: 10px 12px; color: #202638; border: 1px solid #cfd6df; border-radius: 7px; background: white; font-size: 15px; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) input:focus, :is(.access-page, .portal-app, .portal-loader, .widget-shell) textarea:focus, :is(.access-page, .portal-app, .portal-loader, .widget-shell) select:focus { outline: 0; border-color: #7770ff; box-shadow: 0 0 0 3px rgba(99,91,255,.13); }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) textarea { line-height: 1.55; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .alert { margin: 12px 0; min-height: 44px; padding: 11px 14px; border-radius: 7px; font-size: 13px; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .empty-state { min-height: 320px; border-radius: 10px; background: white; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .entity-avatar { width: 36px; height: 36px; flex: 0 0 auto; display: grid; place-items: center; color: #5149cf; border: 1px solid #dddafe; border-radius: 7px; background: #f1f0ff; font-size: 13px; font-weight: 700; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .entity-avatar.xl { width: 54px; height: 54px; border-radius: 10px; font-size: 17px; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .entity-avatar.tiny { width: 30px; height: 30px; border-radius: 50%; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .button.danger { color: white; border: 0; background: var(--red); }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .button.danger:hover { filter: brightness(.95); }
+.widget-shell { position: fixed; inset: 0; display: flex; flex-direction: column; background: white; font-size: 14px; overflow: hidden; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .widget-empty { flex: 1; display: grid; place-items: center; color: var(--text-muted); }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .widget-head { flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 14px; color: white; background: var(--widget-color, #635bff); }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .widget-head-id { display: flex; align-items: center; gap: 10px; min-width: 0; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .widget-head-id img { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; background: white; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .widget-avatar { width: 34px; height: 34px; flex: 0 0 auto; display: grid; place-items: center; border-radius: 50%; background: rgba(255,255,255,.22); font-weight: 700; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .widget-head-id div { min-width: 0; display: flex; flex-direction: column; line-height: 1.2; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .widget-head-id strong { font-size: 14px; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .widget-head-id small { opacity: .85; font-size: 11px; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .widget-close { flex: 0 0 auto; display: inline-flex; padding: 4px; border: 0; background: rgba(255,255,255,.18); color: white; border-radius: 8px; cursor: pointer; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .widget-close:hover { background: rgba(255,255,255,.3); }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .widget-messages { flex: 1 1 auto; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 8px; background: #f7f8fa; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .widget-msg { display: flex; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .widget-msg.user { justify-content: flex-end; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .widget-bubble { max-width: 82%; padding: 9px 12px; border-radius: 14px; line-height: 1.4; white-space: pre-wrap; word-break: break-word; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .widget-msg.assistant .widget-bubble { background: white; color: var(--ink); border: 1px solid var(--line); border-bottom-left-radius: 4px; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .widget-msg.user .widget-bubble { background: var(--widget-color, #635bff); color: white; border-bottom-right-radius: 4px; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .widget-typing { display: inline-flex; gap: 4px; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .widget-typing i { width: 6px; height: 6px; border-radius: 50%; background: #b7bcc7; animation: widget-blink 1.2s infinite; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .widget-typing i:nth-child(2) { animation-delay: .2s; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .widget-typing i:nth-child(3) { animation-delay: .4s; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .widget-error { padding: 6px 14px; color: var(--red); font-size: 12px; background: var(--red-soft); }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .widget-composer { flex: 0 0 auto; display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-top: 1px solid var(--line); background: white; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .widget-composer input { flex: 1 1 auto; height: 40px; padding: 0 12px; border: 1px solid var(--line); border-radius: 20px; font-size: 14px; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .widget-composer input:focus { outline: none; border-color: var(--widget-color, #635bff); }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .widget-composer button { flex: 0 0 auto; width: 40px; height: 40px; display: grid; place-items: center; border: 0; border-radius: 50%; color: white; background: var(--widget-color, #635bff); cursor: pointer; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .widget-composer button:disabled { opacity: .55; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .mode-toggle { min-height: 35px; padding: 0 12px; color: #4f46cf; border: 1px solid #cac6ff; border-radius: 7px; background: #f4f3ff; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .mode-toggle.human { color: #087a5e; border-color: #a9ddce; background: #eaf8f3; }
+
+.portal-loader { min-height: 100vh; display: flex; align-items: center; justify-content: center; gap: 10px; color: #687082; background: #f7f9fc; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-brand { display: flex; align-items: center; gap: 10px; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-brand span, :is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-brand img { width: 34px; height: 34px; display: grid; place-items: center; object-fit: contain; color: white; border-radius: 8px; background: var(--portal-color, #635bff); font-weight: 700; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-client-avatar { width: 48px; height: 48px; display: grid; place-items: center; color: var(--portal-color); border-radius: 9px; background: #eeecff; font-weight: 700; }
+.portal-app { min-height: 100vh; display: grid; grid-template-columns: 230px minmax(0,1fr); background: #f7f9fc; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-nav { padding: 20px 14px; display: flex; flex-direction: column; border-right: 1px solid var(--line); background: white; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-nav .portal-brand { padding: 0 8px 22px; border-bottom: 1px solid #edf0f3; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-nav nav { padding-top: 18px; display: flex; flex-direction: column; gap: 4px; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-nav nav a { height: 42px; padding: 0 10px; display: flex; align-items: center; gap: 10px; color: #50586a; border-radius: 7px; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-nav nav a.active { color: #202638; background: #eef1f4; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-nav nav a.disabled { opacity: .45; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-nav > button { margin-top: auto; height: 40px; display: flex; align-items: center; gap: 9px; color: #687082; border: 0; background: transparent; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-main { min-width: 0; padding: 32px; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-main > header { margin-bottom: 22px; display: flex; align-items: flex-end; justify-content: space-between; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-main > header h1 { margin: 3px 0 0; font-size: 30px; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-main > header small, :is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-main > header span { color: #737c8b; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-inbox { height: calc(100vh - 125px); display: grid; grid-template-columns: 320px minmax(0,1fr); overflow: hidden; border: 1px solid var(--line); border-radius: 10px; background: white; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-inbox > aside { overflow: auto; border-right: 1px solid var(--line); background: #fafbfc; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-inbox > aside button { width: 100%; padding: 14px; display: flex; gap: 10px; text-align: left; border: 0; border-bottom: 1px solid #edf0f3; background: transparent; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-inbox > aside button.active { background: #f0efff; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-inbox > aside button > span:last-child { min-width: 0; display: flex; flex-direction: column; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-inbox > aside strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-inbox > aside small { color: #7b8391; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-inbox-row-top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-inbox-row-top strong { flex: 1 1 auto; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-inbox-row-top time { flex: 0 0 auto; color: #9aa1af; font-size: 11px; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-inbox-preview { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-inbox > section { min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-inbox > section > header { min-height: 64px; padding: 0 18px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-inbox > section > header div { display: flex; flex-direction: column; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-inbox > section > header small { color: #7d8594; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-messages { padding: 24px; display: flex; flex: 1; overflow: auto; overflow-anchor: none; flex-direction: column; gap: 15px; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-messages article { max-width: 76%; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-messages article.user { align-self: flex-end; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-messages small { color: #7a8291; font-size: 11px; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-messages p { margin: 4px 0 0; padding: 11px 13px; border-radius: 4px 11px 11px; background: #f0f2f5; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-messages article.user p { color: white; border-radius: 11px 4px 11px 11px; background: var(--portal-color); }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-composer { padding: 13px; display: flex; gap: 8px; border-top: 1px solid var(--line); }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-composer input { flex: 1; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-composer button { width: 42px; display: grid; place-items: center; color: white; border: 0; border-radius: 7px; background: var(--portal-color); }
+
+@media (max-width: 900px) {
+  .portal-app { grid-template-columns: 76px minmax(0,1fr); }
+  :is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-nav strong, :is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-nav nav a span, :is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-nav > button { font-size: 0; }
+  :is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-inbox { grid-template-columns: 260px minmax(0,1fr); }
+}
+
+@media (max-width: 640px) {
+  :is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-main { padding: 18px 12px; }
+  :is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-inbox { height: calc(100vh - 100px); grid-template-columns: 1fr; grid-template-rows: 190px 1fr; }
+  :is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-inbox > aside { border-right: 0; border-bottom: 1px solid var(--line); }
+  :is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-main > header span { display: none; }
+}
+
+/* Correcciones de consistencia visual */
+
+/* Los controles globales daban a los checkboxes min-height y padding de campo. */
+
+/* Accesos de agencia y cliente */
+.access-page { min-height: 100vh; color: #202638; background: #f8f9fb; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-topbar {
+  height: 72px;
+  padding: 0 max(28px, calc((100vw - 1220px) / 2));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #e2e6ec;
+  background: rgba(255, 255, 255, .94);
+}
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-topbar > small { color: #7a8290; font-size: 13px; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-brand { display: flex; align-items: center; gap: 10px; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-brand > span:not(.openvoiss-brand), :is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-brand > img { width: 32px; height: 32px; display: grid; place-items: center; object-fit: contain; color: white; border-radius: 7px; background: #635bff; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-brand > .openvoiss-brand { color: var(--ink); }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-brand strong { color: #1d2230; font-size: 17px; font-weight: 650; letter-spacing: -.2px; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-access-brand > span { background: var(--portal-color, #635bff); }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-layout {
+  width: min(1220px, calc(100% - 56px));
+  min-height: calc(100vh - 72px);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(380px, .8fr);
+  gap: clamp(54px, 8vw, 120px);
+  align-items: center;
+}
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-intro { padding: 56px 0; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-eyebrow { color: #635bff; font-size: 12px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-access .access-eyebrow { color: var(--portal-color, #635bff); }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-intro > h1 { max-width: 660px; margin: 12px 0 16px; font-size: clamp(40px, 4.5vw, 58px); font-weight: 650; line-height: 1.04; letter-spacing: -2.5px; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-intro > p { max-width: 620px; margin-bottom: 30px; color: #667085; font-size: 17px; line-height: 1.65; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-preview { overflow: hidden; border: 1px solid #dfe3e9; border-radius: 12px; background: white; box-shadow: 0 16px 45px rgba(24, 32, 56, .08); }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-preview > header { min-height: 54px; padding: 0 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #e8ebf0; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-preview > header > div { display: flex; align-items: center; gap: 9px; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-preview > header strong { font-size: 13px; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-preview > header small { color: #8a929f; font-size: 11px; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .preview-logo, :is(.access-page, .portal-app, .portal-loader, .widget-shell) .preview-icon { width: 30px; height: 30px; display: grid; place-items: center; color: #5b53db; border-radius: 7px; background: #efeeff; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .preview-metrics { display: grid; grid-template-columns: repeat(3, 1fr); border-bottom: 1px solid #e8ebf0; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .preview-metrics article { padding: 15px 16px; display: flex; flex-direction: column; gap: 4px; border-right: 1px solid #e8ebf0; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .preview-metrics article:last-child { border-right: 0; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .preview-metrics span { color: #7b8391; font-size: 10px; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .preview-metrics strong { font-size: 21px; font-weight: 650; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .preview-list > div, :is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-preview-thread > div { min-height: 62px; padding: 10px 15px; display: flex; align-items: center; gap: 11px; border-bottom: 1px solid #edf0f3; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .preview-list > div:last-child, :is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-preview-thread > div:last-child { border-bottom: 0; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .preview-list p, :is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-preview-thread p { margin: 0; display: flex; flex: 1; flex-direction: column; gap: 2px; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .preview-list p strong, :is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-preview-thread p strong { font-size: 12px; font-weight: 620; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .preview-list p small, :is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-preview-thread p small { color: #7d8593; font-size: 10px; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .preview-list em, :is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-preview-thread em { color: #10805f; font-size: 10px; font-style: normal; font-weight: 650; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-preview-thread > div.active { background: #f6f5ff; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-preview > footer { min-height: 50px; padding: 0 15px; display: flex; align-items: center; justify-content: space-between; color: #687082; border-top: 1px solid #e8ebf0; font-size: 11px; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-preview > footer span { display: flex; align-items: center; gap: 6px; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-preview > footer strong { padding: 6px 9px; color: var(--portal-color, #635bff); border: 1px solid color-mix(in srgb, var(--portal-color, #635bff) 35%, white); border-radius: 6px; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-form-wrap { padding: 56px 0; display: flex; justify-content: flex-end; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-card { width: min(440px, 100%); padding: 34px; border: 1px solid #dfe3e9; border-radius: 12px; background: white; box-shadow: 0 12px 35px rgba(24, 32, 56, .07); }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-card-label { display: inline-flex; align-items: center; gap: 6px; color: #5b53cf; font-size: 12px; font-weight: 650; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-access .access-card-label { color: var(--portal-color, #635bff); }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-card > h2 { margin: 14px 0 8px; font-size: 27px; font-weight: 650; letter-spacing: -.7px; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-card > p { margin-bottom: 0; color: #687082; font-size: 14px; line-height: 1.55; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-card .auth-tabs { margin-top: 24px; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-form { display: flex; flex-direction: column; gap: 17px; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-card > .access-form { margin-top: 23px; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-form label { display: flex; flex-direction: column; gap: 7px; font-size: 13px; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-form input { font-size: 14px; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-card.access-form > .portal-client-avatar { margin-bottom: -4px; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-access .button.primary { border-color: var(--portal-color, #635bff); background: var(--portal-color, #635bff); }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-security { margin: 18px 0 0 !important; display: flex; align-items: flex-start; justify-content: center; gap: 6px; color: #8a929f !important; font-size: 11px !important; line-height: 1.45; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-security svg { flex: 0 0 auto; margin-top: 1px; }
+
+@media (max-width: 980px) {
+  :is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-layout { width: min(760px, calc(100% - 44px)); grid-template-columns: 1fr; gap: 0; }
+  :is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-intro { padding-bottom: 22px; }
+  :is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-intro > h1 { font-size: 44px; }
+  :is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-form-wrap { padding-top: 22px; justify-content: flex-start; }
+  :is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-card { max-width: 520px; }
+}
+
+@media (max-width: 640px) {
+  :is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-topbar { height: 62px; padding: 0 20px; }
+  :is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-topbar > small { display: none; }
+  :is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-layout { width: min(100% - 32px, 560px); min-height: calc(100vh - 62px); }
+  :is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-intro { padding: 38px 0 18px; }
+  :is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-intro > h1 { font-size: 36px; letter-spacing: -1.6px; }
+  :is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-intro > p { margin-bottom: 22px; font-size: 15px; }
+  :is(.access-page, .portal-app, .portal-loader, .widget-shell) .preview-metrics article { padding: 12px 10px; }
+  :is(.access-page, .portal-app, .portal-loader, .widget-shell) .preview-metrics span { min-height: 28px; }
+  :is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-form-wrap { padding: 18px 0 42px; }
+  :is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-card { padding: 25px 21px; }
+}
+
+/* Canal real de WhatsApp */
+
+/* Identidad Openvoiss: azul institucional, verde como acento y superficies neutras. */
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) {
+  --ink: #102a43;
+  --text-muted: #5f6f7f;
+  --subtle: #8996a3;
+  --line: #dfe6eb;
+  --canvas: #f7f9fa;
+  --navy: #06476f;
+  --purple: #075985;
+  --purple-dark: #064466;
+  --purple-soft: #eaf3f5;
+  --green: #00a67d;
+  --green-soft: #e8f7f2;
+}
+
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .openvoiss-icon {
+  width: 32px !important;
+  height: 32px !important;
+  min-width: 32px;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  border: 0 !important;
+  border-radius: 7px !important;
+  box-shadow: none !important;
+}
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .openvoiss-icon .openvoiss-brand-mark { width: 100% !important; height: 100% !important; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .brand .openvoiss-icon { width: 30px !important; height: 30px !important; min-width: 30px; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .preview-logo.openvoiss-icon { width: 30px !important; height: 30px !important; min-width: 30px; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-eyebrow { color: #00866b; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .button.primary { border-color: #075985; background: #075985; box-shadow: 0 2px 5px rgba(7, 89, 133, .2); }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .button.primary:hover, :is(.access-page, .portal-app, .portal-loader, .widget-shell) .button.primary:hover:not(:disabled) { background: #064466; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .button.secondary { color: #075985; border-color: #c9dce4; background: #f5f9fa; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) input:focus, :is(.access-page, .portal-app, .portal-loader, .widget-shell) textarea:focus, :is(.access-page, .portal-app, .portal-loader, .widget-shell) select:focus { border-color: #3b8ca0; box-shadow: 0 0 0 3px rgba(0, 166, 125, .12); }
+
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .entity-avatar { color: #075985; border-color: #cee0e5; background: #edf5f6; }
+
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-brand > .openvoiss-icon { background: #f1f7f7 !important; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-brand strong { color: #063f67; font-size: 18px; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .preview-logo, :is(.access-page, .portal-app, .portal-loader, .widget-shell) .preview-icon { color: #075985; background: #eaf3f5; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-card-label { color: #007d67; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-access .access-card-label { color: var(--portal-color, #075985); }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-access .button.primary { border-color: var(--portal-color, #075985); background: var(--portal-color, #075985); }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-brand span, :is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-brand img { background: var(--portal-color, #075985); }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-preview > footer strong { color: var(--portal-color, #075985); }
+
+/* i18n: language switcher in the sidebar footer. */
+
+/* Agent creation wizard (Fase 1). Built on the existing design tokens. */
+
+/* Agent tools tab */
+
+/* ============================================================
+   Wise-inspired redesign: bold near-black + lime-green identity,
+   adapted for a dense SaaS dashboard rather than a marketing site.
+   Wise Sans is proprietary; Inter (weight 900) stands in for display
+   type per the brief's own documented fallback.
+   ============================================================ */
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) {
+  --ink: #0e0f0c;
+  --text-muted: #454745;
+  --subtle: #868685;
+  --line: rgba(14, 15, 12, .12);
+  --surface: #ffffff;
+  --canvas: #f8f7f2;
+  --navy: #0e0f0c;
+  --purple: #163300;
+  --purple-dark: #0b2400;
+  --purple-soft: #e2f6d5;
+  --green: #054d28;
+  --green-soft: #e2f6d5;
+  --red: #d03238;
+  --red-soft: #fdecec;
+  --amber: #cb8a27;
+  --shadow: 0 0 0 1px rgba(14, 15, 12, .12);
+  --wise-green: #9fe870;
+  --wise-green-hover: #cdffad;
+  --wise-green-text: #163300;
+}
+
+:is(.access-page, .portal-app, .portal-loader, .widget-shell), :is(.access-page, .portal-app, .portal-loader, .widget-shell) button, :is(.access-page, .portal-app, .portal-loader, .widget-shell) input, :is(.access-page, .portal-app, .portal-loader, .widget-shell) textarea, :is(.access-page, .portal-app, .portal-loader, .widget-shell) select {
+  font-feature-settings: "calt" 1;
+}
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) {
+  background: var(--canvas);
+  font-family: var(--font-inter), var(--font-geist), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-weight: 500;
+}
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) h1, :is(.access-page, .portal-app, .portal-loader, .widget-shell) h2, :is(.access-page, .portal-app, .portal-loader, .widget-shell) h3 { font-family: var(--font-inter), var(--font-geist), sans-serif; }
+
+/* Display identity: weight 900, ultra-tight 0.85 line-height, on real headline moments only. */
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-intro > h1,
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-card > h2,
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-main > header h1 {
+  font-weight: 900;
+  line-height: .85;
+  letter-spacing: normal;
+}
+
+/* Buttons: pill shape, scale interactions, ring-only depth (no colored drop shadows). */
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .button {
+  border-radius: 9999px;
+  font-weight: 600;
+  box-shadow: none;
+  transition: transform .15s ease, background-color .15s ease, border-color .15s ease, color .15s ease;
+}
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .button:hover:not(:disabled) { transform: scale(1.05); }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .button:active:not(:disabled) { transform: scale(.95); }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .button.disabled, :is(.access-page, .portal-app, .portal-loader, .widget-shell) .button:disabled { transform: none; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .button.primary {
+  color: var(--wise-green-text);
+  border-color: transparent;
+  background: var(--wise-green);
+  box-shadow: none;
+}
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .button.primary:hover:not(:disabled) { background: var(--wise-green-hover); }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .button.secondary {
+  color: var(--ink);
+  border-color: transparent;
+  background: rgba(22, 51, 0, .08);
+}
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .button.secondary:hover:not(:disabled) { background: rgba(22, 51, 0, .14); }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .button.ghost { color: var(--ink); border-color: var(--line); background: white; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .button.light { color: var(--wise-green-text); background: white; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .button.danger { color: white; border-color: transparent; background: var(--red); }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .button.danger:hover:not(:disabled) { background: #b32329; filter: none; }
+
+/* Cards & surfaces: large soft radii, ring shadows instead of drop shadows. */
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-card,
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-preview {
+  border-radius: 30px;
+  box-shadow: var(--shadow);
+}
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .empty-state {
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+}
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .entity-avatar, :is(.access-page, .portal-app, .portal-loader, .widget-shell) .empty-icon, :is(.access-page, .portal-app, .portal-loader, .widget-shell) .preview-logo, :is(.access-page, .portal-app, .portal-loader, .widget-shell) .preview-icon {
+  border-radius: 14px;
+}
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .entity-avatar.tiny { border-radius: 50%; }
+
+/* Inputs stay a moderate, non-pill radius. */
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) input, :is(.access-page, .portal-app, .portal-loader, .widget-shell) textarea, :is(.access-page, .portal-app, .portal-loader, .widget-shell) select {
+  border-radius: 10px;
+}
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) input:focus, :is(.access-page, .portal-app, .portal-loader, .widget-shell) textarea:focus, :is(.access-page, .portal-app, .portal-loader, .widget-shell) select:focus {
+  border-color: rgba(14, 15, 12, .35);
+  box-shadow: 0 0 0 3px rgba(14, 15, 12, .08);
+  color: var(--ink);
+}
+
+/* Brand accent retint: purple/blue → near-black ink + lime-green, across the app. */
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-eyebrow, :is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-card-label {
+  color: var(--purple);
+}
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .entity-avatar, :is(.access-page, .portal-app, .portal-loader, .widget-shell) .preview-logo, :is(.access-page, .portal-app, .portal-loader, .widget-shell) .preview-icon {
+  color: var(--purple);
+  background: var(--purple-soft);
+}
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .mode-toggle { color: var(--purple); border-color: var(--line); background: var(--purple-soft); }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .alert-info { color: var(--purple); border-color: var(--line); background: var(--purple-soft); }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-brand strong { color: var(--ink); }

@@ -6,6 +6,10 @@ import { api, messageFrom } from "@/lib/api";
 import { useT } from "@/lib/i18n";
 import { Alert, Modal } from "@/components/ui";
 import { useToast } from "@/components/toast";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { AgentTool } from "@/types";
 import { HeadersEditor, headersToDict, type HeaderRow } from "./headers-editor";
 
@@ -78,39 +82,36 @@ export function McpServerModal({ agentId, tool, open, onClose, onSaved }: {
 
   return (
     <Modal open={open} title={tool ? t("tools.mcp.editTitle") : t("tools.mcp.createTitle")} description={t("tools.mcp.subtitle")} onClose={onClose}>
-      <form className="modal-form" onSubmit={submit}>
+      <form className="space-y-4" onSubmit={submit}>
         <label>{t("tools.form.name")}
-          <input required value={name} onChange={(e) => setName(e.target.value)} placeholder="weather_service" pattern="[a-z][a-z0-9]*(_[a-z0-9]+)*" maxLength={24} />
-          <span className="field-help">{t("tools.form.nameHint")}</span>
+          <Input required value={name} onChange={(e) => setName(e.target.value)} placeholder="weather_service" pattern="[a-z][a-z0-9]*(_[a-z0-9]+)*" maxLength={24} />
+          <span className="mt-1.5 text-xs text-muted-foreground">{t("tools.form.nameHint")}</span>
         </label>
         <label>{t("tools.form.description")}
-          <textarea rows={2} value={description} onChange={(e) => setDescription(e.target.value)} placeholder={t("tools.form.descriptionPlaceholder")} />
+          <Textarea rows={2} value={description} onChange={(e) => setDescription(e.target.value)} placeholder={t("tools.form.descriptionPlaceholder")} />
         </label>
         <label>{t("tools.mcp.serverUrl")}
-          <input required type="url" value={url} onChange={(e) => { setUrl(e.target.value); invalidateTest(); }} placeholder="https://mcp-server.example.com/mcp" />
+          <Input required type="url" value={url} onChange={(e) => { setUrl(e.target.value); invalidateTest(); }} placeholder="https://mcp-server.example.com/mcp" />
         </label>
-        <span className="field-label">{t("tools.mcp.transport")}</span>
-        <div className="transport-toggle">
-          <button type="button" className={transport === "sse" ? "active" : ""} onClick={() => { setTransport("sse"); invalidateTest(); }}>{t("tools.mcp.sse")}</button>
-          <button type="button" className={transport === "streamable_http" ? "active" : ""} onClick={() => { setTransport("streamable_http"); invalidateTest(); }}>{t("tools.mcp.streamableHttp")}</button>
-        </div>
-        <span className="field-label">{t("tools.form.headers")}</span>
+        <span className="mb-1.5 block text-sm font-medium">{t("tools.mcp.transport")}</span>
+        <Tabs value={transport} onValueChange={(value) => { setTransport(value as typeof transport); invalidateTest(); }}><TabsList className="w-full"><TabsTrigger value="sse">{t("tools.mcp.sse")}</TabsTrigger><TabsTrigger value="streamable_http">{t("tools.mcp.streamableHttp")}</TabsTrigger></TabsList></Tabs>
+        <span className="mb-1.5 block text-sm font-medium">{t("tools.form.headers")}</span>
         {tool?.has_headers && !showHeaders
-          ? <div className="stored-headers"><small>{t("tools.form.headersConfigured")}</small><button type="button" className="button ghost" onClick={() => { setShowHeaders(true); setHeadersTouched(true); invalidateTest(); }}>{t("tools.form.replaceHeaders")}</button></div>
+          ? <div className="space-y-2"><small>{t("tools.form.headersConfigured")}</small><Button type="button" variant="ghost" onClick={() => { setShowHeaders(true); setHeadersTouched(true); invalidateTest(); }}>{t("tools.form.replaceHeaders")}</Button></div>
           : <HeadersEditor rows={headerRows} onChange={(rows) => { setHeaderRows(rows); setHeadersTouched(true); invalidateTest(); }} />}
         {tested
-          ? <div className="mcp-discovered"><strong>{t("tools.mcp.discoveredTools")}</strong><div className="sources">{tested.tools.map((item) => <span key={item.name} title={item.description}><Server size={12} /> {item.name}</span>)}</div></div>
+          ? <div className="rounded-lg border bg-muted/30 p-4"><strong>{t("tools.mcp.discoveredTools")}</strong><div className="mt-2 space-y-1 text-xs text-muted-foreground">{tested.tools.map((item) => <span key={item.name} title={item.description}><Server size={12} /> {item.name}</span>)}</div></div>
           : <Alert type="info">{t("tools.mcp.testNote")}</Alert>}
-        <div className="modal-actions mcp-actions">
-          <button type="button" className="button secondary" onClick={testConnection} disabled={testing || !url}>
-            {testing ? <LoaderCircle className="spin" size={16} /> : <Wifi size={16} />} {testing ? t("tools.mcp.testing") : t("tools.mcp.testConnection")}
-          </button>
-          <span className="spacer" />
-          <button type="button" className="button ghost" onClick={onClose}>{t("tools.form.cancel")}</button>
-          <button className="button primary" disabled={busy || !canSave}>
-            {busy ? <LoaderCircle className="spin" size={16} /> : <Save size={16} />}
+        <div className="flex flex-wrap justify-end gap-2 border-t pt-4">
+          <Button type="button" variant="outline" onClick={testConnection} disabled={testing || !url}>
+            {testing ? <LoaderCircle className="animate-spin" size={16} /> : <Wifi size={16} />} {testing ? t("tools.mcp.testing") : t("tools.mcp.testConnection")}
+          </Button>
+          <span className="flex-1" />
+          <Button type="button" variant="ghost" onClick={onClose}>{t("tools.form.cancel")}</Button>
+          <Button type="submit" disabled={busy || !canSave}>
+            {busy ? <LoaderCircle className="animate-spin" size={16} /> : <Save size={16} />}
             {busy ? t("tools.form.saving") : tool ? t("tools.mcp.save") : t("tools.mcp.addServer")}
-          </button>
+          </Button>
         </div>
       </form>
     </Modal>

@@ -5,8 +5,15 @@ import { ReactNode, useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import { useT } from "@/lib/i18n";
 import { AppSidebar } from "@/components/app-sidebar";
+import { OpenvoissBrand } from "@/components/openvoiss-brand";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbList,
+  BreadcrumbPage,
+} from "@/components/ui/breadcrumb";
 import type { User } from "@/types";
 
 // Extra path prefixes served without a session (comma-separated, baked at
@@ -22,6 +29,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const t = useT();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(pathname !== "/login");
+  const [sidebarOpen, setSidebarOpen] = useState<boolean | null>(null);
   const isLogin = pathname === "/login";
   const isPortal = pathname.startsWith("/portal/");
   const isWidget = pathname.startsWith("/widget/");
@@ -29,6 +37,19 @@ export function AppShell({ children }: { children: ReactNode }) {
     (path) => pathname === path || pathname.startsWith(`${path}/`),
   );
   const isBare = isLogin || isPortal || isWidget || isExtraPublic;
+
+  useEffect(() => {
+    if (isBare) {
+      setSidebarOpen(null);
+      return;
+    }
+
+    const sidebarCookie = document.cookie
+      .split("; ")
+      .find((entry) => entry.startsWith("sidebar_state="))
+      ?.split("=")[1];
+    setSidebarOpen(sidebarCookie !== "false");
+  }, [isBare]);
 
   useEffect(() => {
     if (isBare) { setLoading(false); return; }
@@ -40,18 +61,32 @@ export function AppShell({ children }: { children: ReactNode }) {
   }, [isBare, pathname, router]);
 
   if (isBare) return <>{children}</>;
-  if (loading || !user) return <div className="app-loader"><span className="openvoiss-icon"><img src="/brand/only-logo.png" alt="" /></span><span>{t("shell.loading")}</span></div>;
+  if (loading || !user || sidebarOpen === null) return <div className="flex min-h-screen items-center justify-center gap-3 bg-background text-sm text-muted-foreground"><OpenvoissBrand decorative effect="benday" size={40} state="thinking" /><span>{t("shell.loading")}</span></div>;
+
+  const currentSection = pathname === "/"
+    ? "Dashboard"
+    : pathname
+      .split("/")
+      .filter((segment) => segment && !/^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(segment))
+      .map((segment) => segment.replaceAll("-", " "))
+      .at(-1) ?? "Dashboard";
 
   return (
-    <SidebarProvider>
+    <SidebarProvider open={sidebarOpen} onOpenChange={setSidebarOpen}>
       <AppSidebar user={user} />
       <SidebarInset>
-        <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4 md:hidden">
-          <SidebarTrigger className="-ml-1" />
-          <Separator orientation="vertical" className="mr-2 data-[orientation=vertical]:h-4" />
-          <span className="font-semibold">Openvoiss</span>
+        <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+          <div className="flex items-center gap-2 px-4">
+            <SidebarTrigger className="-ml-1" />
+            <Separator orientation="vertical" className="mr-2 data-vertical:h-4 data-vertical:self-auto" />
+            <Breadcrumb>
+              <BreadcrumbList>
+                <BreadcrumbItem><BreadcrumbPage className="capitalize">{currentSection}</BreadcrumbPage></BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
+          </div>
         </header>
-        <main className="main-content">{children}</main>
+        <main className="flex min-w-0 flex-1 flex-col gap-4 p-4 pt-0">{children}</main>
       </SidebarInset>
     </SidebarProvider>
   );

@@ -6,5 +6,5 @@ import { useT } from "@/lib/i18n";
 
 export default function PlaygroundPage() {
   const t = useT();
-  return <div className="page playground-page"><PageHead eyebrow={t("playground.page.eyebrow")} title={t("playground.page.title")} description={t("playground.page.description")} /><ChatPlayground /></div>;
+  return <div className="flex min-h-0 w-full flex-1 flex-col gap-4"><PageHead eyebrow={t("playground.page.eyebrow")} title={t("playground.page.title")} description={t("playground.page.description")} /><ChatPlayground /></div>;
 }

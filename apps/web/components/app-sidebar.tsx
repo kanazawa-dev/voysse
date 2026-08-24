@@ -1,23 +1,7 @@
 "use client"
 
-import * as React from "react"
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { NavMain } from "@/components/nav-main"
-import { NavUser } from "@/components/nav-user"
-import { TeamSwitcher } from "@/components/team-switcher"
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarHeader,
-  SidebarRail,
-  SidebarGroup,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-} from "@/components/ui/sidebar"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
 import {
   Bot,
   Building2,
@@ -30,8 +14,23 @@ import {
   Sparkles,
   Wallet,
 } from "lucide-react"
-import { useT } from "@/lib/i18n";
-import type { User } from "@/types";
+import { useT } from "@/lib/i18n"
+import { NavMain } from "@/components/nav-main"
+import { NavUser } from "@/components/nav-user"
+import { TeamSwitcher } from "@/components/team-switcher"
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarRail,
+  useSidebar,
+} from "@/components/ui/sidebar"
+import type { User } from "@/types"
 
 const EXTRA_NAV_ICONS: Record<string, typeof LayoutDashboard> = {
   wallet: Wallet,
@@ -45,14 +44,15 @@ const EXTRA_NAV = (process.env.NEXT_PUBLIC_EXTRA_NAV || "")
   .map((entry) => entry.trim())
   .filter(Boolean)
   .map((entry) => {
-    const [label, href, icon] = entry.split("|").map((part) => (part || "").trim());
-    return { label, href, icon: EXTRA_NAV_ICONS[icon] || Wallet };
+    const [label, href, icon] = entry.split("|").map((part) => (part || "").trim())
+    return { label, href, icon: EXTRA_NAV_ICONS[icon] || Wallet }
   })
   .filter((item) => item.label && item.href);
 
 export function AppSidebar({ user, ...props }: React.ComponentProps<typeof Sidebar> & { user: User }) {
-  const t = useT();
-  const pathname = usePathname();
+  const t = useT()
+  const pathname = usePathname()
+  const { setOpenMobile } = useSidebar()
 
   const mainNav: { title: string; url: string; icon: React.ElementType; isActive?: boolean }[] = [
     { title: t("nav.home"), url: "/", icon: LayoutDashboard, isActive: pathname === "/" },
@@ -62,7 +62,7 @@ export function AppSidebar({ user, ...props }: React.ComponentProps<typeof Sideb
     { title: t("nav.playground"), url: "/playground", icon: MessageSquareText, isActive: pathname.startsWith("/playground") },
     { title: t("nav.channels"), url: "/channels", icon: Radio, isActive: pathname.startsWith("/channels") },
     { title: t("nav.settings"), url: "/settings", icon: Settings, isActive: pathname.startsWith("/settings") },
-  ];
+  ]
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -73,19 +73,18 @@ export function AppSidebar({ user, ...props }: React.ComponentProps<typeof Sideb
         <NavMain items={mainNav} />
         {EXTRA_NAV.length > 0 && (
           <SidebarGroup>
-            <SidebarGroupLabel>{t("nav.section")}</SidebarGroupLabel>
             <SidebarMenu>
               {EXTRA_NAV.map((item) => {
-                const Icon = item.icon;
-                const active = pathname.startsWith(item.href);
+                const Icon = item.icon
+                const active = pathname === item.href || pathname.startsWith(`${item.href}/`)
                 return (
                   <SidebarMenuItem key={item.href}>
-                    <SidebarMenuButton render={<Link href={item.href} />} isActive={active} tooltip={item.label}>
+                    <SidebarMenuButton render={<Link href={item.href} onClick={() => setOpenMobile(false)} />} isActive={active} tooltip={item.label}>
                       <Icon />
                       <span>{item.label}</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
-                );
+                )
               })}
             </SidebarMenu>
           </SidebarGroup>
@@ -96,5 +95,5 @@ export function AppSidebar({ user, ...props }: React.ComponentProps<typeof Sideb
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
-  );
+  )
 }

@@ -1,12 +1,14 @@
 "use client"
 
-import Link from "next/link";
+import Link from "next/link"
+import { useT } from "@/lib/i18n"
 import {
   SidebarGroup,
   SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar"
 
 export function NavMain({
@@ -19,22 +21,28 @@ export function NavMain({
     isActive?: boolean
   }[]
 }) {
+  const t = useT()
+  const { setOpenMobile } = useSidebar()
   return (
     <SidebarGroup>
-      <SidebarGroupLabel>Platform</SidebarGroupLabel>
+      <SidebarGroupLabel>{t("nav.section")}</SidebarGroupLabel>
       <SidebarMenu>
-        {items.map((item) => {
-          const Icon = item.icon;
-          return (
-            <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton render={<Link href={item.url} />} isActive={item.isActive} tooltip={item.title}>
-                <Icon />
-                <span>{item.title}</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          );
-        })}
+      {items.map((item) => {
+        const Icon = item.icon
+        return (
+          <SidebarMenuItem key={item.title}>
+            <SidebarMenuButton
+              render={<Link href={item.url} onClick={() => setOpenMobile(false)} />}
+              isActive={item.isActive}
+              tooltip={item.title}
+            >
+              <Icon />
+              <span>{item.title}</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        )
+      })}
       </SidebarMenu>
     </SidebarGroup>
-  );
+  )
 }

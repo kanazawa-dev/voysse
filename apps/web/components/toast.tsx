@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
 import { AlertCircle, CheckCircle2, Info, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 type ToastType = "success" | "error" | "info";
 type Toast = { id: number; type: ToastType; message: string };
@@ -40,17 +41,17 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <ToastContext.Provider value={api}>
       {children}
-      <div className="toast-viewport" role="region" aria-live="polite">
+      <div className="fixed right-4 top-4 z-[100] flex w-[min(24rem,calc(100vw-2rem))] flex-col gap-2" role="region" aria-live="polite">
         {toasts.map((toast) => (
-          <div key={toast.id} className={`toast toast-${toast.type}`} role={toast.type === "error" ? "alert" : "status"}>
-            <span className="toast-icon">
+          <div key={toast.id} className={`flex items-start gap-3 rounded-xl border bg-background p-4 shadow-lg ${toast.type === "success" ? "border-emerald-200" : toast.type === "error" ? "border-destructive/30" : "border-blue-200"}`} role={toast.type === "error" ? "alert" : "status"}>
+            <span className="mt-0.5">
               {toast.type === "success" ? <CheckCircle2 size={18} /> : toast.type === "error" ? <AlertCircle size={18} /> : <Info size={18} />}
             </span>
-            <span className="toast-message">{toast.message}</span>
+            <span className="flex-1 text-sm">{toast.message}</span>
             {toast.type === "error" && (
-              <button type="button" className="toast-close" onClick={() => dismiss(toast.id)} aria-label="Close">
+              <Button type="button" size="icon-xs" variant="ghost" onClick={() => dismiss(toast.id)} aria-label="Close">
                 <X size={15} />
-              </button>
+              </Button>
             )}
           </div>
         ))}

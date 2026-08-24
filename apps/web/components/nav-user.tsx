@@ -1,6 +1,6 @@
 "use client"
 
-import { useRouter } from "next/navigation";
+import { useRouter } from "next/navigation"
 import {
   Avatar,
   AvatarFallback,
@@ -21,79 +21,80 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
-import { ChevronsUpDownIcon, LogOutIcon, Languages } from "lucide-react"
-import { useLanguage, useT } from "@/lib/i18n";
-import { api } from "@/lib/api";
-import type { User } from "@/types";
+import { ChevronsUpDownIcon, LogOutIcon } from "lucide-react"
+import { api } from "@/lib/api"
+import { useT } from "@/lib/i18n"
+import { LanguageSwitcher } from "@/components/language-switcher"
+import type { User } from "@/types"
 
 export function NavUser({ user }: { user: User }) {
   const { isMobile } = useSidebar()
-  const router = useRouter();
-  const t = useT();
-  const { lang, setLang } = useLanguage();
-  const initials = user.name.slice(0, 2).toUpperCase();
+  const router = useRouter()
+  const t = useT()
+  const initials = user.name.slice(0, 2).toUpperCase()
 
   async function logout() {
-    await api("/auth/logout", { method: "POST" });
-    router.push("/login");
-    router.refresh();
+    await api("/auth/logout", { method: "POST" })
+    router.push("/login")
+    router.refresh()
   }
 
   return (
-    <SidebarMenu>
-      <SidebarMenuItem>
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            render={
-              <SidebarMenuButton
-                size="lg"
-                className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-              />
-            }
-          >
-            <Avatar className="size-8 rounded-lg">
-              <AvatarImage src="" alt={user.name} />
-              <AvatarFallback className="rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">{initials}</AvatarFallback>
-            </Avatar>
-            <div className="grid flex-1 text-left text-sm leading-tight">
-              <span className="truncate font-medium">{user.name}</span>
-              <span className="truncate text-xs">{user.email}</span>
-            </div>
-            <ChevronsUpDownIcon className="ml-auto size-4" />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
-            side={isMobile ? "bottom" : "right"}
-            align="end"
-            sideOffset={4}
-          >
-            <DropdownMenuLabel className="p-0 font-normal">
-              <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                <Avatar className="size-8 rounded-lg">
-                  <AvatarImage src="" alt={user.name} />
-                  <AvatarFallback className="rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">{initials}</AvatarFallback>
-                </Avatar>
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">{user.name}</span>
-                  <span className="truncate text-xs">{user.email}</span>
-                </div>
+    <>
+      <SidebarMenu>
+        <SidebarMenuItem>
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={
+                <SidebarMenuButton
+                  size="lg"
+                  tooltip={user.name}
+                  className="data-open:bg-sidebar-accent data-open:text-sidebar-accent-foreground"
+                />
+              }
+            >
+              <Avatar>
+                <AvatarImage src="" alt={user.name} />
+                <AvatarFallback>{initials}</AvatarFallback>
+              </Avatar>
+              <div className="grid flex-1 text-left text-sm leading-tight">
+                <span className="truncate font-medium">{user.name}</span>
+                <span className="truncate text-xs">{user.email}</span>
               </div>
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem onClick={() => setLang(lang === "en" ? "es" : "en")}>
-                <Languages className="mr-2 size-4" />
-                {lang === "en" ? "Español" : "English"}
+              <ChevronsUpDownIcon className="ml-auto size-4" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              className="min-w-56"
+              side={isMobile ? "bottom" : "right"}
+              align="end"
+              sideOffset={4}
+            >
+              <DropdownMenuGroup>
+                <DropdownMenuLabel className="p-0 font-normal">
+                  <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
+                    <Avatar>
+                      <AvatarImage src="" alt={user.name} />
+                      <AvatarFallback>{initials}</AvatarFallback>
+                    </Avatar>
+                    <div className="grid flex-1 text-left text-sm leading-tight">
+                      <span className="truncate font-medium">{user.name}</span>
+                      <span className="truncate text-xs">{user.email}</span>
+                    </div>
+                  </div>
+                </DropdownMenuLabel>
+              </DropdownMenuGroup>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={logout}>
+                <LogOutIcon />
+                {t("shell.logout")}
               </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={logout}>
-              <LogOutIcon className="mr-2 size-4" />
-              {t("shell.logout")}
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </SidebarMenuItem>
-    </SidebarMenu>
-  );
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </SidebarMenuItem>
+      </SidebarMenu>
+      <div className="px-2 group-data-[collapsible=icon]:hidden">
+        <LanguageSwitcher />
+      </div>
+    </>
+  )
 }

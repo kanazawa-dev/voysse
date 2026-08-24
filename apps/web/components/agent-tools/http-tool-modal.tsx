@@ -6,6 +6,11 @@ import { api, messageFrom } from "@/lib/api";
 import { useT } from "@/lib/i18n";
 import { Alert, Modal } from "@/components/ui";
 import { useToast } from "@/components/toast";
+import { Switch } from "@/components/ui/switch";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { AgentTool, ToolParam } from "@/types";
 import { HeadersEditor, headersToDict, type HeaderRow } from "./headers-editor";
 
@@ -16,30 +21,25 @@ function ParamsEditor({ label, params, onChange }: { label: string; params: Tool
   const update = (index: number, patch: Partial<ToolParam>) =>
     onChange(params.map((param, i) => (i === index ? { ...param, ...patch } : param)));
   return (
-    <div className="params-editor">
-      <div className="params-head">
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
         <strong>{label}</strong>
-        <button type="button" className="button secondary" onClick={() => onChange([...params, { ...EMPTY_PARAM }])}>
+        <Button type="button" variant="outline" onClick={() => onChange([...params, { ...EMPTY_PARAM }])}>
           <Plus size={14} /> {t("tools.http.addParam")}
-        </button>
+        </Button>
       </div>
       {params.map((param, index) => (
-        <div className="param-row" key={index}>
-          <input placeholder={t("tools.http.paramName")} value={param.name} onChange={(e) => update(index, { name: e.target.value })} />
-          <select value={param.type} onChange={(e) => update(index, { type: e.target.value as ToolParam["type"] })}>
-            <option value="string">string</option>
-            <option value="number">number</option>
-            <option value="integer">integer</option>
-            <option value="boolean">boolean</option>
-          </select>
-          <input placeholder={t("tools.http.paramDescription")} value={param.description} onChange={(e) => update(index, { description: e.target.value })} />
-          <label className="param-required" title={t("tools.http.paramRequired")}>
-            <input type="checkbox" checked={param.required} onChange={(e) => update(index, { required: e.target.checked })} />
+        <div className="grid gap-2 rounded-lg border p-3 sm:grid-cols-2" key={index}>
+          <Input placeholder={t("tools.http.paramName")} value={param.name} onChange={(e) => update(index, { name: e.target.value })} />
+          <Select value={param.type} onValueChange={(value) => value && update(index, { type: value as ToolParam["type"] })}><SelectTrigger className="w-full"><SelectValue /></SelectTrigger><SelectContent>{["string", "number", "integer", "boolean"].map((type) => <SelectItem key={type} value={type}>{type}</SelectItem>)}</SelectContent></Select>
+          <Input placeholder={t("tools.http.paramDescription")} value={param.description} onChange={(e) => update(index, { description: e.target.value })} />
+          <label className="text-xs text-destructive" title={t("tools.http.paramRequired")}>
+            <Switch checked={param.required} onCheckedChange={(checked) => update(index, { required: checked })} />
             {t("tools.http.paramRequired")}
           </label>
-          <button type="button" className="icon-button danger-icon" onClick={() => onChange(params.filter((_, i) => i !== index))} title={t("tools.delete")}>
+          <Button type="button" size="icon" variant="ghost" className="text-destructive" onClick={() => onChange(params.filter((_, i) => i !== index))} title={t("tools.delete")}>
             <Trash2 size={15} />
-          </button>
+          </Button>
         </div>
       ))}
     </div>
@@ -98,49 +98,45 @@ export function HttpToolModal({ agentId, tool, open, onClose, onSaved }: {
 
   return (
     <Modal open={open} title={tool ? t("tools.http.editTitle") : t("tools.http.createTitle")} description={t("tools.http.subtitle")} onClose={onClose}>
-      <form className="modal-form" onSubmit={submit}>
-        <div className="form-grid">
+      <form className="space-y-4" onSubmit={submit}>
+        <div className="grid gap-4 sm:grid-cols-2">
           <label>{t("tools.form.name")}
-            <input required value={name} onChange={(e) => setName(e.target.value)} placeholder="search_client" pattern="[a-z][a-z0-9]*(_[a-z0-9]+)*" maxLength={40} />
-            <span className="field-help">{t("tools.form.nameHint")}</span>
+            <Input required value={name} onChange={(e) => setName(e.target.value)} placeholder="search_client" pattern="[a-z][a-z0-9]*(_[a-z0-9]+)*" maxLength={40} />
+            <span className="mt-1.5 text-xs text-muted-foreground">{t("tools.form.nameHint")}</span>
           </label>
           <label>{t("tools.form.description")}
-            <input value={description} onChange={(e) => setDescription(e.target.value)} placeholder={t("tools.form.descriptionPlaceholder")} />
+            <Input value={description} onChange={(e) => setDescription(e.target.value)} placeholder={t("tools.form.descriptionPlaceholder")} />
           </label>
         </div>
-        <div className="form-grid url-method">
+        <div className="grid gap-4 sm:grid-cols-2">
           <label>{t("tools.http.url")}
-            <input required type="url" value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://api.example.com/v1/resource/{id}" />
-            <span className="field-help">{t("tools.http.urlHint")}</span>
+            <Input required type="url" value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://api.example.com/v1/resource/{id}" />
+            <span className="mt-1.5 text-xs text-muted-foreground">{t("tools.http.urlHint")}</span>
           </label>
-          <label>{t("tools.http.method")}
-            <select value={method} onChange={(e) => setMethod(e.target.value)}>
-              {["GET", "POST", "PUT", "PATCH", "DELETE"].map((m) => <option key={m} value={m}>{m}</option>)}
-            </select>
-          </label>
+          <label>{t("tools.http.method")}<Select value={method} onValueChange={(value) => value && setMethod(value)}><SelectTrigger className="w-full"><SelectValue /></SelectTrigger><SelectContent>{["GET", "POST", "PUT", "PATCH", "DELETE"].map((item) => <SelectItem key={item} value={item}>{item}</SelectItem>)}</SelectContent></Select></label>
         </div>
         <label>{t("tools.http.promptInstructions")}
-          <textarea rows={4} value={promptInstructions} onChange={(e) => setPromptInstructions(e.target.value)} placeholder={t("tools.http.promptPlaceholder")} />
+          <Textarea rows={4} value={promptInstructions} onChange={(e) => setPromptInstructions(e.target.value)} placeholder={t("tools.http.promptPlaceholder")} />
         </label>
         <Alert type="info">{t("tools.http.llmNote")}</Alert>
         {allowsBody && <ParamsEditor label={t("tools.http.bodyParams")} params={bodyParams} onChange={setBodyParams} />}
         <ParamsEditor label={t("tools.http.queryParams")} params={queryParams} onChange={setQueryParams} />
-        <details className="advanced-options">
+        <details className="space-y-4 rounded-lg border bg-muted/20 p-4">
           <summary>{t("tools.http.advanced")}</summary>
           <label>{t("tools.http.timeout")}
-            <input type="number" min={1} max={120} value={timeout} onChange={(e) => setTimeoutSeconds(Number(e.target.value))} />
+            <Input type="number" min={1} max={120} value={timeout} onChange={(e) => setTimeoutSeconds(Number(e.target.value))} />
           </label>
-          <span className="field-label">{t("tools.form.headers")}</span>
+          <span className="mb-1.5 block text-sm font-medium">{t("tools.form.headers")}</span>
           {tool?.has_headers && !showHeaders
-            ? <div className="stored-headers"><small>{t("tools.form.headersConfigured")}</small><button type="button" className="button ghost" onClick={() => { setShowHeaders(true); setHeadersTouched(true); }}>{t("tools.form.replaceHeaders")}</button></div>
+            ? <div className="space-y-2"><small>{t("tools.form.headersConfigured")}</small><Button type="button" variant="ghost" onClick={() => { setShowHeaders(true); setHeadersTouched(true); }}>{t("tools.form.replaceHeaders")}</Button></div>
             : <HeadersEditor rows={headerRows} onChange={(rows) => { setHeaderRows(rows); setHeadersTouched(true); }} />}
         </details>
-        <div className="modal-actions">
-          <button type="button" className="button ghost" onClick={onClose}>{t("tools.form.cancel")}</button>
-          <button className="button primary" disabled={busy}>
-            {busy ? <LoaderCircle className="spin" size={16} /> : tool ? <Save size={16} /> : <Zap size={16} />}
+        <div className="flex justify-end gap-2 border-t pt-4">
+          <Button type="button" variant="ghost" onClick={onClose}>{t("tools.form.cancel")}</Button>
+          <Button type="submit" disabled={busy}>
+            {busy ? <LoaderCircle className="animate-spin" size={16} /> : tool ? <Save size={16} /> : <Zap size={16} />}
             {busy ? t("tools.form.saving") : tool ? t("tools.http.save") : t("tools.http.create")}
-          </button>
+          </Button>
         </div>
       </form>
     </Modal>
