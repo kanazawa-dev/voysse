@@ -1,0 +1,253 @@
+/* Public marketing landing (/welcome). Scoped as a CSS Module so none of these
+   rules leak into the authenticated dashboard, which loads globals.css on
+   every route. Palette/type mirror the dashboard's own tokens. */
+
+.page {
+  --ink: #0e0f0c;
+  --muted: #454745;
+  --subtle: #868685;
+  --line: rgba(14, 15, 12, 0.12);
+  --canvas: #f8f7f2;
+  --surface: #ffffff;
+  --green: #9fe870;
+  --green-hover: #cdffad;
+  --green-text: #163300;
+  --positive: #054d28;
+  --positive-soft: #e2f6d5;
+
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 1.55;
+  font-feature-settings: "calt" 1;
+  -webkit-font-smoothing: antialiased;
+}
+
+.page :global(a) { color: var(--green-text); text-decoration: none; }
+.page :global(a:hover) { color: var(--ink); }
+.page h1, .page h2, .page h3 { margin: 0; font-weight: 900; line-height: 0.85; letter-spacing: -0.01em; }
+.page p { margin: 0; }
+.page button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+
+.wrap { max-width: 1180px; margin: 0 auto; padding: 0 clamp(20px, 5vw, 56px); }
+
+.eyebrow { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--green-text); }
+.eyebrow::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
+
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 52px; padding: 0 28px; border-radius: 9999px; font-size: 15px; font-weight: 600; white-space: nowrap; transition: transform 0.15s ease, background-color 0.15s ease, border-color 0.15s ease; }
+.btn:hover { transform: scale(1.05); }
+.btn:active { transform: scale(0.95); }
+/* `a.` prefix, base AND :hover: both need to out-specificity the
+   `.page :global(a)` / `.page :global(a:hover)` link-color reset above.
+   `.page a:hover` is (class + pseudo-class + type) = higher specificity than
+   a bare `a.btnDark:hover`-less rule, so every variant needs its own :hover
+   color too, not just the base state — a `.btnDark` with no :hover override
+   still lost its white text to the dark link-hover color on mouseover. */
+a.btnPrimary { background: var(--green); color: var(--green-text); }
+a.btnPrimary:hover { background: var(--green-hover); color: var(--green-text); }
+a.btnSecondary { background: rgba(14, 15, 12, 0.06); color: var(--ink); }
+a.btnSecondary:hover { background: rgba(14, 15, 12, 0.1); color: var(--ink); }
+a.btnGhost { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+a.btnGhost:hover { color: var(--ink); }
+a.btnDark { background: rgba(255, 255, 255, 0.1); color: #fff; }
+a.btnDark:hover { color: #fff; }
+.btnSm { height: 44px; padding: 0 20px; font-size: 14px; }
+
+.card { background: var(--surface); border-radius: 28px; box-shadow: 0 0 0 1px var(--line); }
+.section { padding: clamp(56px, 8vw, 108px) 0; }
+.sectionTight { padding-top: 0; }
+.sectionHead { max-width: 620px; margin: 0 0 44px; display: flex; flex-direction: column; gap: 14px; }
+.sectionHead h2 { font-size: clamp(30px, 3.6vw, 44px); }
+.sectionHead p { color: var(--muted); font-size: 17px; line-height: 1.6; }
+
+/* Nav */
+.topbar { position: sticky; top: 0; z-index: 40; background: rgba(248, 247, 242, 0.85); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
+.topbarInner { display: flex; align-items: center; gap: 20px; height: 78px; }
+.wordmark { height: 32px; width: auto; display: block; flex: 0 0 auto; }
+.navActions { display: flex; align-items: center; gap: 10px; flex: 0 0 auto; }
+.langSwitchWrap :global(.lang-switcher) { margin-top: 0; }
+
+/* Short top-level links stay inline and centered in the space between the
+   logo and the actions; deeper links (channels, self-hosting, FAQ, docs)
+   live behind one "Resources" mega-menu instead of a full inline row —
+   Spanish labels for those run noticeably longer than English and were
+   wrapping/overflowing the navbar when all six were shown inline. Below
+   ~640px even "Funciones · Precios · Recursos" doesn't leave room for the
+   logo + language switch + GitHub + CTA, so that breakpoint swaps to a
+   single compact icon trigger (.mobileNavWrap) holding all six links. */
+.navLinks { flex: 1 1 auto; display: flex; align-items: center; justify-content: center; gap: 28px; }
+.navLinks > a { font-size: 14px; font-weight: 600; color: var(--ink); white-space: nowrap; }
+.navMenuWrap { position: relative; }
+.resourcesTrigger { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: var(--ink); white-space: nowrap; }
+.menuChevron { transition: transform 0.15s ease; }
+.menuChevronOpen { transform: rotate(180deg); }
+.menuBackdrop { position: fixed; inset: 0; z-index: 38; }
+.menuDropdown { position: absolute; top: calc(100% + 16px); left: 50%; transform: translateX(-50%); z-index: 39; width: 320px; padding: 10px; display: flex; flex-direction: column; gap: 2px; border-radius: 18px; background: var(--surface); box-shadow: 0 0 0 1px var(--line), 0 20px 45px rgba(14, 15, 12, 0.14); }
+.menuRow { display: flex; align-items: flex-start; gap: 13px; padding: 10px; border-radius: 13px; }
+.menuRow:hover { background: rgba(14, 15, 12, 0.05); }
+.menuRowIcon { flex: 0 0 auto; width: 38px; height: 38px; border-radius: 11px; background: var(--positive-soft); color: var(--green-text); display: grid; place-items: center; }
+.menuRowTitle { display: block; font-size: 14px; font-weight: 700; color: var(--ink); }
+.menuRowDesc { display: block; margin-top: 2px; font-size: 12.5px; line-height: 1.4; color: var(--muted); }
+
+.mobileNavWrap { position: relative; flex: 0 0 auto; display: none; }
+.mobileMenuTrigger { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 9999px; background: rgba(14, 15, 12, 0.06); color: var(--ink); }
+.mobileMenuTrigger:hover { background: rgba(14, 15, 12, 0.1); }
+.menuDropdownLeft { left: 0; transform: none; }
+
+.navGhostLabel { display: inline; }
+@media (max-width: 640px) {
+  .navLinks { display: none; }
+  .mobileNavWrap { display: block; }
+  /* Anchor to the viewport, not the trigger's offset parent — the icon sits
+     near the left edge here, so a dropdown anchored to it would overflow
+     off the right side of a narrow screen. */
+  .menuDropdownLeft { position: fixed; top: 88px; left: 16px; right: 16px; width: auto; max-height: calc(100vh - 104px); overflow-y: auto; }
+}
+@media (max-width: 480px) {
+  .navGhostLabel { display: none; }
+  .navGhostLink { padding: 0 14px; }
+}
+@media (max-width: 420px) {
+  .navGhostLink { display: none; }
+}
+
+/* Hero */
+.hero { padding: clamp(56px, 9vw, 120px) 0 clamp(40px, 6vw, 72px); position: relative; overflow: hidden; }
+.heroBlob { position: absolute; z-index: 0; border-radius: 50%; background: var(--green); filter: blur(60px); opacity: 0.35; }
+.heroBlobOne { width: 420px; height: 420px; top: -140px; right: -100px; }
+.heroBlobTwo { width: 280px; height: 280px; bottom: -120px; left: -80px; opacity: 0.22; }
+.heroInner { position: relative; z-index: 1; display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 56px; align-items: center; }
+.hero h1 { margin-top: 16px; font-size: clamp(40px, 5.6vw, 76px); }
+/* `p.` prefix: needs to out-specificity the `.page p { margin: 0 }` reset
+   above (both class+type, later source order wins the tie) — a bare
+   `.heroSub { margin-top: 38px }` was silently losing to that reset and
+   rendering with no gap at all above the sub-headline. */
+p.heroSub { margin-top: 38px; max-width: 540px; color: var(--muted); font-size: 19px; line-height: 1.6; }
+.heroCta { margin-top: 34px; display: flex; flex-wrap: wrap; align-items: center; gap: 14px; }
+p.heroNote { margin-top: 18px; color: var(--subtle); font-size: 13px; }
+@media (max-width: 900px) { .heroInner { grid-template-columns: 1fr; } }
+
+/* Animated orb */
+.orbWrap { position: relative; display: grid; place-items: center; min-height: 420px; }
+.orbGlow { position: absolute; width: 340px; height: 340px; border-radius: 50%; background: radial-gradient(circle, rgba(159, 232, 112, 0.55), rgba(159, 232, 112, 0) 70%); filter: blur(30px); animation: orbPulse 4.5s ease-in-out infinite; }
+.orbRing { position: absolute; border-radius: 50%; border: 1px solid rgba(159, 232, 112, 0.4); animation: orbRingPulse 4.5s ease-out infinite; }
+.orbRingOne { width: 220px; height: 220px; }
+.orbRingTwo { width: 300px; height: 300px; animation-delay: 1.1s; }
+.orbRingThree { width: 380px; height: 380px; animation-delay: 2.2s; }
+.orbParticles { position: absolute; inset: 0; animation: orbRotate 16s linear infinite; }
+.orbParticle { position: absolute; width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 12px rgba(159, 232, 112, 0.85); }
+.orbParticleOne { top: 8%; left: 50%; }
+.orbParticleTwo { top: 52%; right: 3%; }
+.orbParticleThree { bottom: 10%; left: 20%; }
+.orbCore { position: relative; z-index: 2; width: 180px; height: 180px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #eafccd 0%, #9fe870 45%, #4f9e34 100%); box-shadow: 0 0 70px rgba(159, 232, 112, 0.55), inset -14px -14px 30px rgba(22, 51, 0, 0.28), inset 10px 10px 24px rgba(255, 255, 255, 0.4); animation: orbBreathe 5s ease-in-out infinite; }
+@keyframes orbPulse { 0%, 100% { opacity: 0.5; transform: scale(1); } 50% { opacity: 0.85; transform: scale(1.08); } }
+@keyframes orbRingPulse { 0% { transform: scale(0.82); opacity: 0.75; } 100% { transform: scale(1.18); opacity: 0; } }
+@keyframes orbBreathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.045); } }
+@keyframes orbRotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .orbGlow, .orbRing, .orbParticles, .orbCore { animation: none; }
+}
+
+/* Trust marquee */
+.trust { padding: 34px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); overflow: hidden; }
+.marquee { position: relative; width: 100%; overflow: hidden; }
+.marquee::before, .marquee::after { content: ""; position: absolute; top: 0; bottom: 0; width: clamp(48px, 10vw, 140px); z-index: 2; pointer-events: none; }
+.marquee::before { left: 0; background: linear-gradient(90deg, var(--canvas), rgba(248, 247, 242, 0)); }
+.marquee::after { right: 0; background: linear-gradient(270deg, var(--canvas), rgba(248, 247, 242, 0)); }
+.marqueeTrack { display: flex; align-items: center; gap: 28px; width: max-content; animation: marqueeScroll 24s linear infinite; }
+.marqueeItem { font-size: clamp(20px, 2.8vw, 32px); font-weight: 700; letter-spacing: -0.01em; color: var(--ink); white-space: nowrap; }
+.marqueeDot { color: var(--green); font-size: 15px; }
+@keyframes marqueeScroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@media (prefers-reduced-motion: reduce) { .marqueeTrack { animation: none; } }
+
+/* Feature tabs */
+.tabsShell { display: grid; grid-template-columns: 0.8fr 1.2fr; gap: 0; }
+.tabsNav { display: flex; flex-direction: column; gap: 8px; padding-right: 8px; }
+.tabBtn { display: flex; align-items: center; gap: 14px; padding: 16px 18px; border-radius: 18px; text-align: left; transition: background-color 0.15s ease, color 0.15s ease; background: transparent; color: var(--muted); }
+.tabBtnActive { background: var(--ink); color: var(--canvas); }
+.tabIconWrap { flex: 0 0 auto; width: 40px; height: 40px; display: grid; place-items: center; border-radius: 12px; background: var(--positive-soft); color: var(--green-text); }
+.tabBtn strong { display: block; font-size: 15px; font-weight: 700; }
+.tabBtnSub { display: block; margin-top: 2px; font-size: 13px; font-weight: 500; opacity: 0.75; }
+.tabPanel { padding: 40px; display: flex; flex-direction: column; gap: 22px; }
+.tabPanel h3 { font-size: clamp(24px, 2.6vw, 30px); line-height: 1; }
+.tabPanel > p { color: var(--muted); font-size: 16px; line-height: 1.65; }
+.pointList { display: flex; flex-direction: column; gap: 14px; list-style: none; margin: 0; padding: 0; }
+.pointList li { display: flex; align-items: flex-start; gap: 12px; font-size: 14.5px; color: var(--ink); }
+.pointList svg { flex: 0 0 auto; margin-top: 2px; color: var(--positive); }
+@media (max-width: 900px) {
+  .tabsShell { grid-template-columns: 1fr; }
+  .tabsNav { flex-direction: row; overflow-x: auto; padding: 4px; }
+  .tabBtn { flex-direction: column; align-items: flex-start; min-width: 180px; }
+}
+
+/* Grids */
+.grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+.grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+@media (max-width: 900px) { .grid3, .grid2 { grid-template-columns: 1fr; } }
+
+.featCard { padding: 30px; display: flex; flex-direction: column; gap: 14px; }
+.featIconWrap { width: 46px; height: 46px; display: grid; place-items: center; border-radius: 13px; background: var(--positive-soft); color: var(--green-text); }
+.featCard h3 { font-size: 18px; font-weight: 700; line-height: 1.2; }
+.featCard p { color: var(--muted); font-size: 14.5px; line-height: 1.6; }
+
+/* Dark self-hosting panel */
+.darkPanel { border-radius: 32px; background: var(--ink); color: #eef2ea; padding: clamp(32px, 5vw, 56px); }
+.darkPanel .eyebrow { color: var(--green); }
+.darkPanel .eyebrow::before { background: var(--green); }
+.darkPanel h2 { margin-top: 16px; color: #fff; }
+p.darkPanelBody { color: rgba(238, 242, 234, 0.72); margin-top: 28px; font-size: 16px; line-height: 1.65; }
+.darkGrid { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 40px; align-items: center; }
+@media (max-width: 900px) { .darkGrid { grid-template-columns: 1fr; } }
+.stepRow { display: flex; gap: 18px; align-items: flex-start; }
+.stepNum { flex: 0 0 auto; width: 44px; color: var(--green); font-size: 26px; font-weight: 900; line-height: 1; font-variant-numeric: tabular-nums; }
+.stepRow strong { display: block; font-size: 15px; font-weight: 700; color: #fff; }
+.stepRow span { display: block; margin-top: 3px; font-size: 13.5px; color: rgba(238, 242, 234, 0.65); }
+.steps { display: flex; flex-direction: column; gap: 20px; }
+
+/* Pricing */
+.planCard { padding: 34px; display: flex; flex-direction: column; gap: 16px; }
+.planCardCloud { background: var(--ink); color: #eef2ea; box-shadow: none; }
+.planTag { align-self: flex-start; padding: 5px 13px; border-radius: 9999px; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; }
+.planTagLive { background: var(--positive-soft); color: var(--green-text); }
+.planTagSoon { background: rgba(159, 232, 112, 0.16); color: var(--green); }
+.planCard h3 { font-size: 24px; font-weight: 800; line-height: 1.1; }
+.planCardCloud h3 { color: #fff; }
+.planPrice { font-size: 28px; font-weight: 900; letter-spacing: -0.01em; color: var(--green-text); }
+.planCardCloud .planPrice { color: #fff; }
+.planPriceDay { margin-top: 2px; font-size: 13px; font-weight: 600; color: var(--muted); }
+.planCardCloud .planPriceDay { color: var(--green); }
+.planDesc { color: var(--muted); font-size: 14.5px; line-height: 1.6; }
+.planCardCloud .planDesc { color: rgba(238, 242, 234, 0.72); }
+.planList { display: flex; flex-direction: column; gap: 10px; margin: 4px 0 8px; padding: 0; list-style: none; }
+.planList li { display: flex; align-items: flex-start; gap: 10px; font-size: 14px; color: var(--ink); }
+.planCardCloud .planList li { color: #eef2ea; }
+.planList svg { flex: 0 0 auto; margin-top: 2px; color: var(--positive); }
+.planCardCloud .planList svg { color: var(--green); }
+.planCta { align-self: flex-start; }
+
+/* FAQ */
+.faqItem { border-bottom: 1px solid var(--line); }
+.faqItem:first-child { border-top: 1px solid var(--line); }
+.faqQ { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 24px 4px; text-align: left; }
+.faqQ strong { font-size: 17px; font-weight: 700; }
+.faqQ svg { flex: 0 0 auto; color: var(--muted); transition: transform 0.18s ease; }
+.faqChevronOpen { transform: rotate(180deg); }
+.faqA { padding: 0 4px 24px; max-width: 780px; color: var(--muted); font-size: 15px; line-height: 1.65; }
+
+/* CTA */
+.ctaPanel { text-align: center; padding: clamp(48px, 7vw, 88px) clamp(24px, 6vw, 64px); display: flex; flex-direction: column; align-items: center; gap: 20px; }
+.ctaPanel h2 { font-size: clamp(30px, 4vw, 48px); max-width: 680px; }
+.ctaPanel p { max-width: 480px; color: var(--muted); font-size: 16px; }
+.ctaActions { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+
+/* Footer */
+.footer { border-top: 1px solid var(--line); padding: 52px 0 40px; }
+.footTop { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 40px; margin-bottom: 40px; }
+.footBrand img { height: 28px; width: auto; }
+.footBrand p { margin-top: 14px; max-width: 260px; color: var(--subtle); font-size: 13px; line-height: 1.6; }
+.footCols { display: flex; gap: 56px; flex-wrap: wrap; }
+.footCol strong { display: block; margin-bottom: 14px; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--subtle); }
+.footCol a { display: block; margin-bottom: 10px; font-size: 14px; color: var(--ink); font-weight: 500; }
+.footBottom { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px; padding-top: 26px; border-top: 1px solid var(--line); color: var(--subtle); font-size: 12.5px; }

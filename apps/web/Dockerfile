@@ -12,6 +12,12 @@ ENV NEXT_TELEMETRY_DISABLED=1
 # gateway. Set this only to point at a different API origin.
 ARG NEXT_PUBLIC_API_URL=
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+# Optional deployment-only extras (see components/app-shell.tsx): extra sidebar
+# links and path prefixes served without a session. Empty by default.
+ARG NEXT_PUBLIC_EXTRA_NAV=
+ENV NEXT_PUBLIC_EXTRA_NAV=${NEXT_PUBLIC_EXTRA_NAV}
+ARG NEXT_PUBLIC_PUBLIC_PATHS=
+ENV NEXT_PUBLIC_PUBLIC_PATHS=${NEXT_PUBLIC_PUBLIC_PATHS}
 
 COPY --from=dependencies /app/node_modules ./node_modules
 COPY . .

@@ -54,6 +54,8 @@ services:
       dockerfile: Dockerfile
       args:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-}
+        NEXT_PUBLIC_EXTRA_NAV: ${NEXT_PUBLIC_EXTRA_NAV:-}
+        NEXT_PUBLIC_PUBLIC_PATHS: ${NEXT_PUBLIC_PUBLIC_PATHS:-}
     image: ${OPENVOISS_IMAGE_PREFIX:-ghcr.io/kanazawa-dev/openvoiss}-web:${OPENVOISS_VERSION:-latest}
     container_name: openvoiss_web
     environment:

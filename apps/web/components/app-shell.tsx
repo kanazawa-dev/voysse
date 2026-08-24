@@ -53,12 +53,13 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(pathname !== "/login");
   const [mobileOpen, setMobileOpen] = useState(false);
   const isLogin = pathname === "/login";
+  const isWelcome = pathname === "/welcome";
   const isPortal = pathname.startsWith("/portal/");
   const isWidget = pathname.startsWith("/widget/");
   const isExtraPublic = EXTRA_PUBLIC_PATHS.some(
     (path) => pathname === path || pathname.startsWith(`${path}/`),
   );
-  const isBare = isLogin || isPortal || isWidget || isExtraPublic;
+  const isBare = isLogin || isWelcome || isPortal || isWidget || isExtraPublic;
 
   useEffect(() => {
     if (isBare) { setLoading(false); return; }
@@ -76,7 +77,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   }
 
   if (isBare) return <>{children}</>;
-  if (loading || !user) return <div className="app-loader"><span className="openvoiss-icon"><img src="/brand/openvoiss-logo-original.png" alt="" /></span><span>{t("shell.loading")}</span></div>;
+  if (loading || !user) return <div className="app-loader"><span className="openvoiss-icon"><img src="/brand/only-logo.png" alt="" /></span><span>{t("shell.loading")}</span></div>;
 
   return (
     <div className="app-layout">
@@ -84,7 +85,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       {mobileOpen && <div className="sidebar-overlay" onClick={() => setMobileOpen(false)} />}
       <aside className={`sidebar ${mobileOpen ? "sidebar-open" : ""}`}>
         <div className="brand-row">
-          <Link href="/" className="brand"><span className="openvoiss-icon"><img src="/brand/openvoiss-logo-original.png" alt="" /></span><span>Openvoiss</span></Link>
+          <Link href="/" className="brand"><img className="brand-wordmark" src="/brand/word-logo.png" alt="Openvoiss" /></Link>
           <button className="sidebar-close" onClick={() => setMobileOpen(false)} aria-label={t("shell.closeMenu")}><X /></button>
         </div>
         <div className="sidebar-workspace"><Building2 size={14} /><span>{user.agency.name}</span></div>

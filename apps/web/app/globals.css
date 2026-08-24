@@ -845,29 +845,25 @@ textarea { line-height: 1.55; }
   width: 32px !important;
   height: 32px !important;
   min-width: 32px;
-  display: inline-block !important;
-  position: relative;
-  overflow: hidden;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
   flex: 0 0 auto;
   border: 0 !important;
   border-radius: 7px !important;
-  background: #f1f7f7 !important;
   box-shadow: none !important;
 }
 .openvoiss-icon img {
-  width: 112px !important;
+  width: 100% !important;
   max-width: none !important;
-  height: 112px !important;
-  position: absolute;
-  top: -38px;
-  left: -15px;
+  height: 100% !important;
   object-fit: contain;
 }
-.openvoiss-icon::after { content: ""; width: 6px; position: absolute; inset: 0 0 0 auto; z-index: 2; background: #f1f7f7; }
 .brand .openvoiss-icon { width: 30px !important; height: 30px !important; min-width: 30px; }
-.brand .openvoiss-icon img { width: 106px !important; height: 106px !important; top: -36px; left: -14px; }
 .preview-logo.openvoiss-icon { width: 30px !important; height: 30px !important; min-width: 30px; }
-.preview-logo.openvoiss-icon img { width: 106px !important; height: 106px !important; top: -36px; left: -14px; }
+/* word-logo.png is a wide wordmark (icon + "openvoiss" baked in) — sized by height, not the square icon box above. */
+img.brand-wordmark { width: auto; height: 22px; max-width: 100%; object-fit: contain; background: none; border: 0; border-radius: 0; box-shadow: none; }
+.access-brand img.brand-wordmark { height: 26px; }
 
 .brand-row { padding-bottom: 14px; }
 .brand { color: #063f67; font-size: 17px; font-weight: 700; }
@@ -1038,3 +1034,227 @@ input:focus, textarea:focus, select:focus { border-color: #3b8ca0; box-shadow: 0
 .tool-error-details { margin-top: 4px; display: flex; flex-direction: column; gap: 3px; }
 .tool-error-details small { display: inline-flex; align-items: baseline; gap: 5px; padding: 6px 9px; color: #9b2c2c; background: var(--red-soft); border: 1px solid #f0c3c3; border-radius: 7px; font-size: 11px; line-height: 1.5; word-break: break-word; }
 .tool-error-details small svg { flex: 0 0 auto; align-self: center; }
+
+/* ============================================================
+   Wise-inspired redesign: bold near-black + lime-green identity,
+   adapted for a dense SaaS dashboard rather than a marketing site.
+   Wise Sans is proprietary; Inter (weight 900) stands in for display
+   type per the brief's own documented fallback.
+   ============================================================ */
+:root {
+  --ink: #0e0f0c;
+  --muted: #454745;
+  --subtle: #868685;
+  --line: rgba(14, 15, 12, .12);
+  --surface: #ffffff;
+  --canvas: #f8f7f2;
+  --navy: #0e0f0c;
+  --purple: #163300;
+  --purple-dark: #0b2400;
+  --purple-soft: #e2f6d5;
+  --green: #054d28;
+  --green-soft: #e2f6d5;
+  --red: #d03238;
+  --red-soft: #fdecec;
+  --amber: #cb8a27;
+  --shadow: 0 0 0 1px rgba(14, 15, 12, .12);
+  --wise-green: #9fe870;
+  --wise-green-hover: #cdffad;
+  --wise-green-text: #163300;
+}
+
+body, button, input, textarea, select {
+  font-feature-settings: "calt" 1;
+}
+body {
+  background: var(--canvas);
+  font-family: var(--font-inter), var(--font-geist), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-weight: 500;
+}
+h1, h2, h3, .brand { font-family: var(--font-inter), var(--font-geist), sans-serif; }
+
+/* Display identity: weight 900, ultra-tight 0.85 line-height, on real headline moments only. */
+.page-head h1,
+.entity-header h1,
+.agent-detail-head .title-line h1,
+.hero-panel h2,
+.channels-hero h2,
+.story-copy h1,
+.auth-form-card h2,
+.modal-head h2,
+.access-intro > h1,
+.access-card > h2,
+.portal-login-copy h1,
+.portal-main > header h1,
+.wizard-head h1,
+.wa-header h1 {
+  font-weight: 900;
+  line-height: .85;
+  letter-spacing: normal;
+}
+.client-title h3, .agent-card h3, .panel-head h3, .connection-main h3,
+.channel-card h3, .wa-panel-head h2, .settings-copy h3, .section-copy h2 {
+  font-weight: 600;
+  letter-spacing: -.02em;
+}
+
+/* Buttons: pill shape, scale interactions, ring-only depth (no colored drop shadows). */
+.button {
+  border-radius: 9999px;
+  font-weight: 600;
+  box-shadow: none;
+  transition: transform .15s ease, background-color .15s ease, border-color .15s ease, color .15s ease;
+}
+.button:hover:not(:disabled) { transform: scale(1.05); }
+.button:active:not(:disabled) { transform: scale(.95); }
+.button.disabled, .button:disabled { transform: none; }
+.button.primary {
+  color: var(--wise-green-text);
+  border-color: transparent;
+  background: var(--wise-green);
+  box-shadow: none;
+}
+.button.primary:hover:not(:disabled) { background: var(--wise-green-hover); }
+.channel-card-live .button.primary,
+.wa-connected ~ .wa-actions .button.primary {
+  color: var(--wise-green-text);
+  border-color: transparent;
+  background: var(--wise-green);
+}
+.button.secondary {
+  color: var(--ink);
+  border-color: transparent;
+  background: rgba(22, 51, 0, .08);
+}
+.button.secondary:hover:not(:disabled) { background: rgba(22, 51, 0, .14); }
+.button.ghost { color: var(--ink); border-color: var(--line); background: white; }
+.button.light { color: var(--wise-green-text); background: white; }
+.button.danger { color: white; border-color: transparent; background: var(--red); }
+.button.danger:hover:not(:disabled) { background: #b32329; filter: none; }
+.icon-button { border-radius: 9999px; border-color: var(--line); }
+.icon-button:hover:not(:disabled) { color: var(--purple); border-color: var(--wise-green); background: #f2fbe9; }
+
+/* Cards & surfaces: large soft radii, ring shadows instead of drop shadows. */
+.panel,
+.hero-panel,
+.client-card, .agent-card, .channel-card,
+.modal,
+.wizard-card,
+.access-card,
+.access-preview,
+.portal-login-form form {
+  border-radius: 30px;
+  box-shadow: var(--shadow);
+}
+.channels-hero,
+.form-section, .settings-section,
+.wa-panel, .wa-side,
+.table-shell {
+  border-radius: 24px;
+  box-shadow: var(--shadow);
+}
+.metric-card,
+.connection-card,
+.template-card,
+.model-recommendations > button,
+.empty-state,
+.toast,
+.combo-pop {
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+}
+.metric-icon, .agent-avatar, .client-logo, .connection-icon,
+.template-icon, .entity-avatar, .message-avatar, .chat-welcome > span,
+.wa-mark, .wa-panel-head > span, .empty-icon, .document-icon,
+.auth-form-icon, .logo-preview, .preview-logo, .preview-icon {
+  border-radius: 14px;
+}
+.entity-avatar.tiny { border-radius: 50%; }
+
+/* Inputs stay a moderate, non-pill radius. */
+input, textarea, select,
+.search-box, .combo-value {
+  border-radius: 10px;
+}
+input:focus, textarea:focus, select:focus,
+.search-box:focus-within, .composer:focus-within,
+.combo.open .combo-value {
+  border-color: rgba(14, 15, 12, .35);
+  box-shadow: 0 0 0 3px rgba(14, 15, 12, .08);
+  color: var(--ink);
+}
+
+/* Brand accent retint: purple/blue → near-black ink + lime-green, across the app. */
+.sidebar { background: var(--surface); border-right: 1px solid var(--line); }
+.sidebar nav a { color: var(--muted); }
+.sidebar nav a:hover { color: var(--ink); background: #f2f2ee; }
+.sidebar nav a.active { color: var(--ink); background: var(--wise-green-hover); box-shadow: inset 3px 0 var(--wise-green); font-weight: 600; }
+.sidebar nav a.active svg { color: var(--purple); }
+.user-avatar { color: var(--wise-green-text); background: var(--wise-green); }
+.eyebrow, .access-eyebrow, .hero-kicker, .hero-panel .light-link,
+.text-link, .table-link, .text-button, .url-preview button, .url-preview a,
+.tabs button.active, .client-label, .back-link:hover,
+.access-card-label {
+  color: var(--purple);
+}
+.tabs button.active::after { background: var(--wise-green); }
+.conversation-list button:hover, .conversation-list button.active,
+.inbox-list > button.active {
+  color: var(--purple);
+  background: var(--purple-soft);
+}
+.chat-welcome > span, .message-avatar, .connection-icon, .wa-panel-head > span,
+.entity-avatar, .agent-avatar, .metric-icon.blue, .metric-icon.violet,
+.template-icon, .row-arrow:hover, .pill.purple, .compact-channel-grid article > span,
+.channel-icon.webchat, .preview-logo, .preview-icon {
+  color: var(--purple);
+  background: var(--purple-soft);
+}
+.metric-icon.green { color: var(--green); background: var(--green-soft); }
+.metric-icon.amber { color: var(--amber); background: #fff6e5; }
+.message-row.user .bubble, .inbox-message.user p, .inbox-composer button,
+.composer button, .connection-dot {
+  background: var(--purple);
+}
+.connection-dot { border-color: var(--purple-soft); }
+.mode-label { color: var(--purple); background: var(--purple-soft); }
+.mode-toggle { color: var(--purple); border-color: var(--line); background: var(--purple-soft); }
+.settings-intro, .security-note { color: var(--purple); border-color: var(--line); background: var(--purple-soft); }
+.channels-note { color: var(--green); border-color: #cce5df; background: var(--green-soft); }
+.channels-note strong { color: var(--purple); }
+.model-chips button:hover, .model-chips button.active,
+.model-recommendations > button.active {
+  color: var(--purple);
+  border-color: var(--wise-green);
+  background: var(--purple-soft);
+}
+.model-recommendations > button.active { box-shadow: 0 0 0 2px rgba(159, 232, 112, .35); }
+.wa-side > svg { color: var(--green); }
+.wa-state.qr { color: var(--purple); border-color: var(--line); background: var(--purple-soft); }
+.alert-info { color: var(--purple); border-color: var(--line); background: var(--purple-soft); }
+.hero-panel { color: var(--ink); border-color: var(--line); background: linear-gradient(115deg, #eef9e2 0%, #f8f7f2 65%, #e7f6d9 100%); }
+.hero-panel p { color: var(--muted); }
+.hero-panel .button.light { color: var(--wise-green-text); background: var(--wise-green); }
+.hero-visual > span, .node { color: var(--purple); background: var(--wise-green); }
+.access-brand strong, .brand { color: var(--ink); }
+.trend-bar, .usage-fill, .context-bar > div {
+  background: linear-gradient(180deg, var(--wise-green), var(--purple));
+}
+.mini-badge.ai, .lang-switcher button.active, .combo-list button.active,
+.combo-list button.combo-custom, .token-meter span, .inbox-unread-count,
+.wizard-steps li.current span {
+  color: var(--purple);
+  background: var(--purple-soft);
+}
+.inbox-unread-count { color: white; background: var(--purple); }
+.mini-badge.human { color: var(--green); }
+.status-active { color: var(--green); }
+.wizard-steps li.current { border-color: var(--wise-green); box-shadow: 0 0 0 3px rgba(159, 232, 112, .3); }
+.transport-toggle button.active { color: white; border-color: var(--purple); background: var(--purple); }
+.template-card.active { border-color: var(--purple); box-shadow: 0 0 0 3px var(--purple-soft); }
+.switch-row input[type="checkbox"]:checked { background: var(--purple); }
+.switch-row input[type="checkbox"]:focus-visible { box-shadow: 0 0 0 3px rgba(159, 232, 112, .35); }
+.slider-field input[type="range"] { accent-color: var(--purple); }
+.capability-head input[type="checkbox"] { accent-color: var(--purple); }
+.inbox-tabs button.active { background: var(--ink); }
+.inbox-tabs button.active em { color: var(--ink); background: white; }
