@@ -18,6 +18,9 @@ apps/api/storage/*
 apps/web/node_modules/
 apps/web/.next/
 apps/web/out/
+apps/marketing/node_modules/
+apps/marketing/.next/
+apps/marketing/out/
 apps/whatsapp/node_modules/
 apps/whatsapp/dist/
 .DS_Store

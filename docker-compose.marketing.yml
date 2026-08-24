@@ -1,0 +1,27 @@
+# Standalone compose file for the public marketing site (openvoiss.com), kept
+# out of docker-compose.yml on purpose: self-hosted deployments run the
+# dashboard (apps/web) only and never need this. This file is for Openvoiss's
+# own hosting of the landing page and has no dependency on the rest of the
+# stack — no db/api/whatsapp, and no shared network with docker-compose.yml.
+# Run with: docker compose -f docker-compose.marketing.yml up --build -d
+# Put your own reverse proxy in front of this port for TLS, same as the main stack.
+name: openvoiss-marketing
+
+services:
+  marketing:
+    build:
+      context: ./apps/marketing
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-}
+    image: ${OPENVOISS_IMAGE_PREFIX:-ghcr.io/kanazawa-dev/openvoiss}-marketing:${OPENVOISS_VERSION:-latest}
+    container_name: openvoiss_marketing
+    ports:
+      - "${BIND_HOST:-127.0.0.1}:${MARKETING_PORT:-3020}:3000"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/').then(r => { if (!r.ok) process.exit(1) }).catch(() => process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
+    restart: unless-stopped

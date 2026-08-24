@@ -27,7 +27,7 @@ import {
 import { useT } from "@/lib/i18n";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import Grainient from "@/components/grainient";
-import styles from "./welcome.module.css";
+import styles from "./page.module.css";
 
 type TabId = "agents" | "knowledge" | "tools" | "channels";
 
@@ -45,8 +45,13 @@ function cx(...classes: (string | false | undefined)[]) {
   return classes.filter(Boolean).join(" ");
 }
 
-export default function WelcomePage() {
+export default function LandingPage() {
   const t = useT();
+  // Empty by default: relative "/login" resolves same-origin, matching this
+  // repo's NEXT_PUBLIC_API_URL pattern (apps/web/Dockerfile). Set this when
+  // the dashboard is deployed on a different origin than the marketing site
+  // (e.g. https://app.openvoiss.com).
+  const appUrl = (process.env.NEXT_PUBLIC_APP_URL || "").replace(/\/$/, "");
   const [activeTab, setActiveTab] = useState<TabId>("agents");
   const [menuOpen, setMenuOpen] = useState(false);
   const [openFaq, setOpenFaq] = useState<Set<number>>(new Set());
@@ -125,7 +130,7 @@ export default function WelcomePage() {
             <a className={cx(styles.btn, styles.btnGhost, styles.btnSm, styles.navGhostLink)} href="https://github.com/kanazawa-dev/openvoiss">
               <Github size={16} className={styles.icon} /> <span className={styles.navGhostLabel}>GitHub</span>
             </a>
-            <a className={cx(styles.btn, styles.btnPrimary, styles.btnSm)} href="/login">{t("welcome.nav.getStarted")}</a>
+            <a className={cx(styles.btn, styles.btnPrimary, styles.btnSm)} href={`${appUrl}/login`}>{t("welcome.nav.getStarted")}</a>
           </div>
         </div>
       </nav>
@@ -139,7 +144,7 @@ export default function WelcomePage() {
             <h1>{t("welcome.hero.titleLine1")}<br />{t("welcome.hero.titleLine2")}</h1>
             <p className={styles.heroSub}>{t("welcome.hero.sub")}</p>
             <div className={styles.heroCta}>
-              <a className={cx(styles.btn, styles.btnPrimary)} href="/login">
+              <a className={cx(styles.btn, styles.btnPrimary)} href={`${appUrl}/login`}>
                 {t("welcome.nav.getStarted")} <ArrowRight size={17} />
               </a>
               <a className={cx(styles.btn, styles.btnSecondary)} href="https://openvoiss.com/docs/getting-started">{t("welcome.hero.readDocs")}</a>
@@ -324,7 +329,7 @@ export default function WelcomePage() {
                   <li><Check size={16} /> {t("welcome.plans.selfhost.p2")}</li>
                   <li><Check size={16} /> {t("welcome.plans.selfhost.p3")}</li>
                 </ul>
-                <a className={cx(styles.btn, styles.btnPrimary, styles.planCta)} href="/login">{t("welcome.plans.selfhost.cta")}</a>
+                <a className={cx(styles.btn, styles.btnPrimary, styles.planCta)} href={`${appUrl}/login`}>{t("welcome.plans.selfhost.cta")}</a>
               </div>
               <div className={cx(styles.card, styles.planCard, styles.planCardCloud, styles.cardGrain)}>
                 <div className={styles.grainLayer}>
@@ -379,7 +384,7 @@ export default function WelcomePage() {
               <h2>{t("welcome.cta.title")}</h2>
               <p>{t("welcome.cta.body")}</p>
               <div className={styles.ctaActions}>
-                <a className={cx(styles.btn, styles.btnPrimary)} href="/login">{t("welcome.nav.getStarted")}</a>
+                <a className={cx(styles.btn, styles.btnPrimary)} href={`${appUrl}/login`}>{t("welcome.nav.getStarted")}</a>
                 <a className={cx(styles.btn, styles.btnSecondary)} href="https://github.com/kanazawa-dev/openvoiss">{t("welcome.cta.star")}</a>
               </div>
             </div>

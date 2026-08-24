@@ -1,6 +1,6 @@
-/* Public marketing landing (/welcome). Scoped as a CSS Module so none of these
-   rules leak into the authenticated dashboard, which loads globals.css on
-   every route. Palette/type mirror the dashboard's own tokens. */
+/* Public marketing landing page, root route of the openvoiss-marketing app.
+   Scoped as a CSS Module and fully self-contained (own palette/type tokens
+   below) — no dependency on the dashboard app's globals.css. */
 
 .page {
   --ink: #0e0f0c;
@@ -79,7 +79,11 @@ a.btnDark:hover { background: rgba(14, 15, 12, 0.14); color: var(--ink); }
 .topbarInner { display: flex; align-items: center; gap: 20px; height: 78px; }
 .wordmark { height: 42px; width: auto; display: block; flex: 0 0 auto; }
 .navActions { display: flex; align-items: center; gap: 10px; flex: 0 0 auto; }
-.langSwitchWrap :global(.lang-switcher) { margin-top: 0; }
+.langSwitchWrap :global(.lang-switcher) { margin-top: 0; padding: 4px; display: flex; align-items: center; gap: 4px; color: var(--subtle); }
+.langSwitchWrap :global(.lang-switcher) svg { margin: 0 4px; color: var(--subtle); }
+.langSwitchWrap :global(.lang-switcher) button { min-height: 26px; padding: 0 9px; color: var(--muted); border: 1px solid transparent; border-radius: 6px; background: transparent; font-size: 11px; font-weight: 650; }
+.langSwitchWrap :global(.lang-switcher) button:hover { background: rgba(14, 15, 12, 0.06); }
+.langSwitchWrap :global(.lang-switcher) button.active { color: var(--green-text); background: var(--positive-soft); }
 
 /* Short top-level links stay inline and centered in the space between the
    logo and the actions; deeper links (channels, self-hosting, FAQ, docs)

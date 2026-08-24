@@ -53,13 +53,12 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(pathname !== "/login");
   const [mobileOpen, setMobileOpen] = useState(false);
   const isLogin = pathname === "/login";
-  const isWelcome = pathname === "/welcome";
   const isPortal = pathname.startsWith("/portal/");
   const isWidget = pathname.startsWith("/widget/");
   const isExtraPublic = EXTRA_PUBLIC_PATHS.some(
     (path) => pathname === path || pathname.startsWith(`${path}/`),
   );
-  const isBare = isLogin || isWelcome || isPortal || isWidget || isExtraPublic;
+  const isBare = isLogin || isPortal || isWidget || isExtraPublic;
 
   useEffect(() => {
     if (isBare) { setLoading(false); return; }

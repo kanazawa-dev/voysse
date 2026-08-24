@@ -9,7 +9,6 @@ import { playground } from "./dicts/playground";
 import { portal } from "./dicts/portal";
 import { inbox } from "./dicts/inbox";
 import { tools } from "./dicts/tools";
-import { welcome } from "./dicts/welcome";
 
 // Spanish dictionary. Composed from the same modules; typed as Dictionary so it
 // must mirror the exact shape of `en` (each area's `es` mirrors its own `en`).
@@ -24,5 +23,4 @@ export const es: Dictionary = {
   portal: portal.es,
   inbox: inbox.es,
   tools: tools.es,
-  welcome: welcome.es,
 };
