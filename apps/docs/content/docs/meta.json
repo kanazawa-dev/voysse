@@ -1,0 +1,18 @@
+{
+  "title": "Openvoiss",
+  "pages": [
+    "index",
+    "getting-started",
+    "self-hosting",
+    "architecture",
+    "configuration",
+    "contributing",
+    "---Features---",
+    "agents",
+    "knowledge-base",
+    "custom-tools",
+    "ai-providers",
+    "whatsapp",
+    "inbox"
+  ]
+}

@@ -1,0 +1,175 @@
+---
+title: "Contributing"
+description: "Run Openvoiss locally, run its tests and follow its conventions."
+---
+
+Run Openvoiss locally, run its tests and follow its conventions. For the
+services and data model see [Architecture](/docs/architecture); for deploying
+an install see [Self-hosting](/docs/self-hosting).
+
+## Contents
+
+- [Local development](#local-development)
+- [Tests](#tests)
+- [Conventions](#conventions)
+- [Migrations](#migrations)
+- [Opening a PR](#opening-a-pr)
+
+## Local development
+
+Docker Compose (`make up`, see [Self-hosting](/docs/self-hosting#install)) is
+the fastest way to run the whole stack. To iterate on one service with hot
+reload, run it outside Docker instead — each service still needs the others
+reachable (PostgreSQL at minimum; the backend for the frontend and the
+WhatsApp bridge).
+
+Requirements: Python 3.12+, Node.js 20+, PostgreSQL 14+ running locally.
+
+```bash
+# 1) databases — a main DB and a separate one for tests
+psql -d postgres -c "CREATE ROLE openvoiss LOGIN PASSWORD 'openvoiss';"
+createdb -O openvoiss openvoiss
+createdb -O openvoiss openvoiss_test
+
+# 2) env
+cp .env.example .env          # then set SECRET_KEY and ENCRYPTION_KEY
+
+# 3) backend — http://localhost:8000, docs at /docs
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r apps/api/requirements.txt
+cd apps/api && alembic upgrade head && uvicorn app.main:app --reload --port 8000
+
+# 4) frontend (new terminal) — http://localhost:3000
+cd apps/web && npm install && npm run dev
+
+# 5) WhatsApp bridge (new terminal) — listens on 127.0.0.1:3101
+cd apps/whatsapp && npm install && npm run dev
+```
+
+Migrations must run (`alembic upgrade head`) before the backend starts — the
+app does not apply them automatically outside Docker. See `.env.example` for
+the full local variable list (`DATABASE_URL`, `BACKEND_URL`,
+`WHATSAPP_BRIDGE_URL`, `WHATSAPP_BRIDGE_PORT`, …); ⚠️ `ENCRYPTION_KEY` must
+never change once you have real secrets/sessions stored under it.
+
+`apps/whatsapp/package.json` also exposes `npm run start` (runs once, no
+watch) — used by the [self-hosting run-without-Docker
+flow](/docs/self-hosting#run-without-docker) for a plain long-running process;
+`npm run dev` (`tsx watch`) is the one you want while actively editing bridge
+code.
+
+## Tests
+
+```bash
+# backend — needs the separate openvoiss_test DB from step 1 above; tables
+# are dropped and recreated per test (see apps/api/tests/conftest.py), so
+# never point TEST_DATABASE_URL at a database you care about
+cd apps/api
+pytest -q
+pytest tests/test_flows.py::test_register_login_logout_and_me -v   # single test
+
+# frontend
+cd apps/web
+npm run lint     # eslint .
+npm run build    # next build
+
+# WhatsApp bridge
+cd apps/whatsapp
+npm test         # tsx --test tests/**/*.test.ts (node's built-in test runner)
+npm run build    # tsc -p tsconfig.json (typecheck only, no emitted output used)
+```
+
+`apps/api/tests/conftest.py` points `DATABASE_URL` at
+`postgresql+psycopg://openvoiss:openvoiss@localhost:5432/openvoiss_test` by
+default; override it with `TEST_DATABASE_URL` (e.g. for the Dockerized
+`POSTGRES_TEST_DB`). It also forces `RATE_LIMIT_ENABLED=false` for the test
+process, so the login/widget limiters never interfere with a test run. Test
+config lives in `apps/api/pyproject.toml`
+(`[tool.pytest.ini_options]`: `testpaths = ["tests"]`).
+
+Inside Docker, `make test` runs the backend `pytest` suite and rebuilds the
+`web`/`whatsapp` images' validation stages (lint/build/typecheck), matching
+the commands above without needing a local Python/Node toolchain. See
+[Tests](/docs/self-hosting#tests) in the self-hosting guide for that path,
+including how to re-test migrations from scratch
+(`alembic downgrade base && alembic upgrade head`).
+
+## Conventions
+
+- **English only in code, routes, identifiers, comments, commit messages and
+  docs — always.** The single deliberate exception is the LLM system prompt
+  assembled in `apps/api/app/services/knowledge.py`
+  (`build_system_prompt()`), which is kept in the customer's own language on
+  purpose — it's what the agent says to end users, not developer-facing text.
+  Everything user-facing in the UI goes behind the typed i18n system instead
+  of being hardcoded in another language: see `apps/web/lib/i18n` (`en.ts` is
+  the default locale, `es.ts` is Spanish; `index.tsx` wires the provider).
+- **Conventional commits.** `git log --oneline` shows a consistent
+  `type: description` / `type(scope): description` pattern — e.g.
+  `feat: update marketing landing page content`,
+  `feat(web): adopt Base Rhea dashboard and brand system`,
+  `chore: adopt FSL-1.1-MIT license and refresh READMEs`,
+  `refactor: migrate dashboard forms and CTAs to shadcn components`. Match
+  that style (`feat`, `fix`, `chore`, `refactor`, `docs`, `test`, …; scope in
+  parentheses is optional and usually an app name like `web` or `marketing`).
+- **Repo hygiene hook.** Enable it once per clone:
+  ```bash
+  git config core.hooksPath .githooks
+  ```
+  `.githooks/pre-commit` blocks committing local-only paths (`work/`,
+  `internal/`, `*.local.md`) and any staged content matching a term in the
+  gitignored `work/forbidden-words.txt`, or containing a `DO-NOT-COMMIT` /
+  `INTERNAL-ONLY` marker. Keep internal notes and roadmap items in `work/`
+  (gitignored) — never in the tracked repo.
+- **Tenant isolation is a review-blocking concern.** Any new or changed
+  backend query that reads/writes agency-scoped data must filter by the
+  authenticated user's `agency_id` — see
+  [Tenant isolation](/docs/architecture#tenant-isolation). There's no database
+  constraint enforcing this; it's app-level discipline, checked in review.
+
+## Migrations
+
+`apps/api/migrations/versions/` uses sequential, zero-padded, hand-authored
+revision IDs — `0001_initial.py`, `0002_white_label_portal.py`, …,
+`0017_whatsapp_cloud_channel.py` — each file's `revision` string matches its
+filename, and `down_revision` points at the previous one in the sequence.
+There's no autogenerate-and-rename script in the repo; the practical workflow
+observed from the existing files is:
+
+```bash
+cd apps/api
+alembic revision -m "short description"     # creates a new revision file
+```
+
+then rename the generated file (and set `revision`/`down_revision` inside it)
+to continue the existing `NNNN_` numbering, and write `upgrade()`/`downgrade()`
+by hand against `sqlalchemy as sa` / `alembic.op` (see any file under
+`migrations/versions/` for the established style — explicit
+`create_table`/`add_column`/`create_index`/`create_foreign_key` calls, matching
+`downgrade()` that undoes them in reverse order). `env.py` points
+`target_metadata` at `Base.metadata` from `apps/api/app/models.py`, so
+`alembic revision --autogenerate` will also pick up model changes if you
+prefer to start from a diff and then tidy the generated file.
+
+Docker runs `alembic upgrade head` automatically on backend container start
+(see [Upgrade](/docs/self-hosting#upgrade)); locally you run it yourself
+(`cd apps/api && alembic upgrade head`, per [Local
+development](#local-development) above).
+
+## Opening a PR
+
+Branches and commits in this repo follow plain conventional-commit style (see
+[Conventions](#conventions)) rather than an enforced branch-naming scheme —
+name your branch after the change (`feat/...`, `fix/...`, or similar) and keep
+commits scoped to one logical change each.
+
+Before a non-trivial change:
+
+- Read [Architecture](/docs/architecture) if it touches the data model, a
+  router, a service, or the WhatsApp bridge — it explains the tenant-isolation
+  rule and where each concern lives.
+- Read [Self-hosting](/docs/self-hosting) if it touches Docker Compose, the
+  gateway, environment variables, or anything operators depend on.
+- Run the relevant test suite from [Tests](#tests) before pushing; `apps/web`
+  and `apps/whatsapp` typecheck as part of their `build` script, so a broken
+  type is a broken build, not just a broken test.

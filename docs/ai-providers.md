@@ -1,0 +1,86 @@
+# AI providers
+
+Openvoiss is bring-your-own-key: each agency stores its own OpenAI and/or Anthropic API key, and every agent is billed directly by the provider on that key. For a feature overview see the [README](../README.md).
+
+## Contents
+
+- [Add a provider key](#add-a-provider-key)
+- [OpenAI, Anthropic, or any compatible endpoint](#openai-anthropic-or-any-compatible-endpoint)
+- [Model presets](#model-presets)
+- [Costs](#costs)
+
+## Add a provider key
+
+Open **Settings → AI providers**. There are two fixed provider cards (OpenAI and Anthropic — the full, hardcoded list in `apps/web/lib/providers.ts`, which must match the backend's `apps/api/app/services/providers.py`). For a provider with no key yet:
+
+1. Paste the key into the masked field (a password input with a reveal toggle).
+2. Click **Save**.
+
+Saving does two calls in sequence:
+
+```
+POST /api/providers/{provider}/validate   { "api_key": "sk-..." }
+PUT  /api/providers/{provider}            { "api_key": "sk-..." }
+```
+
+`validate` sends the raw key straight to the provider — it lists `{base_url}/models` — **before anything is stored**; if that fails (bad key, network error, provider outage) the error is shown and nothing is saved. Only on success does the frontend call `PUT` to persist it. `PUT` upserts one row per `(agency_id, provider)` pair.
+
+**Encryption.** The key is stored as `ProviderCredential.encrypted_api_key`, encrypted the same way as agent-tool auth headers and WhatsApp session state: Fernet, keyed from a SHA-256 digest of `ENCRYPTION_KEY` (`apps/api/app/security.py`). As covered in [Self-hosting](./self-hosting.md#secure-your-install), `ENCRYPTION_KEY` must never change once a key is stored — there is no re-encryption path, so losing or rotating it makes stored provider keys (and everything else it protects) unrecoverable.
+
+**Never returned in full.** `GET /api/providers` reports `configured: true/false` plus an `api_key_masked` field (e.g. first 3 and last 4 characters, `••••••••` in between — `mask_secret()` in `security.py`); the raw key is never sent back to the browser after it's saved. Note the current Settings page doesn't actually display that masked string — a configured provider just shows a green "Configured" checkmark with **Replace** / **Remove** buttons; `api_key_masked` is present in the API response but unused by this page today. **Replace** clears the field for a new key (through the same validate-then-save flow); **Remove** calls `DELETE /api/providers/{provider}`. A `POST /api/providers/{provider}/test` endpoint also exists to re-verify an already-stored key, but nothing in the frontend currently calls it.
+
+## OpenAI, Anthropic, or any compatible endpoint
+
+`chat_completion()` in `apps/api/app/services/ai.py` is **not** a single normalized client — it branches explicitly on the agent's `provider` field:
+
+- `provider == "anthropic"` → builds an **Anthropic Messages API** request: `POST {base_url}/messages`, headers `x-api-key` + `anthropic-version: 2023-06-01`, `max_tokens` required (defaults to 2048).
+- anything else (in practice, only `"openai"` is offered) → builds an **OpenAI Responses API** request: `POST {base_url}/responses`, header `Authorization: Bearer {key}`.
+
+Both paths return the same `Completion` dataclass (`text`, `input_tokens`, `output_tokens`, and — when tools were used — `tool_calls`), which is what unifies them for the rest of the app. If a provider rejects a sampling parameter (`temperature`, `max_tokens`, etc. — common on reasoning models, or Anthropic's `temperature <= 1` limit), the request is retried once with sampling stripped before failing.
+
+`base_url` for each provider is a **fixed constant** in `apps/api/app/services/providers.py`:
+
+```python
+PROVIDERS = {
+    "openai": {"label": "OpenAI", "base_url": "https://api.openai.com/v1"},
+    "anthropic": {"label": "Anthropic", "base_url": "https://api.anthropic.com/v1"},
+}
+```
+
+**Accuracy note:** as of this codebase, there is no field anywhere — not on `ProviderCredential`, not on `Agent`, not in any request schema — to set a custom base URL. So "any OpenAI-compatible endpoint via per-connection base URL + model" isn't literally true of the current source: what *is* free-form is the **model name**. `Agent.model` is a plain string set from a `Combobox` with `allowCustom` in the agent wizard's Model step (`apps/web/app/agents/new/page.tsx`), and nothing server-side restricts it to the preset list — so any model id your OpenAI (or Anthropic) key can serve at that fixed base URL works, including custom/fine-tuned model ids, but a different host does not. If a configurable base URL exists elsewhere (e.g. as a newer or in-flight change), it wasn't found under `apps/api/app/services/providers.py`, `apps/api/app/models.py`, or `apps/api/app/schemas.py` at the time of writing.
+
+Testing a key (`test_provider()`) always lists `{base_url}/models`:
+
+```
+GET https://api.openai.com/v1/models
+Authorization: Bearer sk-...
+```
+
+```json
+{ "ok": true, "message": "Key verified. 87 models available.", "models": ["gpt-4.1", "gpt-5", "..."] }
+```
+
+A non-2xx response raises a `502` with the provider's own error message (truncated to 500 characters); a transport-level failure raises `502 Could not connect to the provider`.
+
+## Model presets
+
+`apps/web/lib/providers.ts` — not a separate `model-catalog.ts` file — holds the per-provider model list shown in the agent wizard's Model combobox:
+
+| Provider | Preset models |
+| --- | --- |
+| OpenAI | `gpt-5.6-sol`, `gpt-5.6-terra`, `gpt-5.6-luna`, `gpt-5.5`, `gpt-5.4`, `gpt-5.4-mini`, `gpt-5.4-nano`, `gpt-5.2`, `gpt-5.1`, `gpt-5`, `gpt-5-mini`, `gpt-5-nano`, `gpt-4.1`, `gpt-4.1-mini`, `gpt-4.1-nano` |
+| Anthropic | `claude-opus-4-8`, `claude-opus-4-7`, `claude-opus-4-6`, `claude-sonnet-4-6`, `claude-sonnet-4-5`, `claude-haiku-4-5` |
+
+Since the combobox `allowCustom`s, typing any other model id (e.g. a newer release, or a fine-tune) is accepted without validation beyond what the provider itself does at request time.
+
+The same file also carries two smaller, separate presets used for an agent's multimodal capabilities rather than its main chat model: `AUDIO_MODELS` (`gpt-transcribe`, `whisper-1`, `gpt-4o-transcribe`, `gpt-4o-mini-transcribe`, `gpt-4o-transcribe-diarize`) for audio transcription, and `IMAGE_MODELS` (`gpt-5.6-sol`, `gpt-5.6-terra`, `gpt-4.1`, `gpt-4.1-mini`, `gpt-5.5`, `gpt-5.4`, `gpt-5`, `gpt-5-mini`) for vision. `modelContextWindow()` also estimates a context-window size per model family for the wizard's usage bar — its own comment calls the values "representative, not exact."
+
+Choosing the provider and model for a given agent happens on the agent's Model step, not here — see [Agents](./agents.md).
+
+## Costs
+
+Every request an agent makes goes out on the agency's own stored key, straight to OpenAI or Anthropic's API — Openvoiss itself never proxies through a shared key or adds a per-token markup. Usage is billed by the provider directly to whatever account the key belongs to; per-agent and per-model token totals are visible on the [dashboard](../README.md#operations) for tracking, not for billing.
+
+---
+
+See also: [Agents](./agents.md), [Configuration](./configuration.md).

@@ -1,0 +1,306 @@
+---
+title: "Architecture"
+description: "How Openvoiss is put together: the services, the data model and tenant isolation."
+---
+
+How Openvoiss is put together: the services, the data model and tenant
+isolation. For deployment see [Self-hosting](/docs/self-hosting), for the full
+environment variable list see [Configuration](/docs/configuration), and for
+running the project locally see [Contributing](/docs/contributing).
+
+## Contents
+
+- [System overview](#system-overview)
+- [Data model](#data-model)
+- [Tenant isolation](#tenant-isolation)
+- [Backend layout](#backend-layout)
+- [WhatsApp bridge flow](#whatsapp-bridge-flow)
+- [Frontend structure](#frontend-structure)
+
+## System overview
+
+Three services plus PostgreSQL, orchestrated by Docker Compose, behind a
+single-origin gateway:
+
+| Service | Stack | Role |
+| --- | --- | --- |
+| `proxy` | Caddy | Gateway — the app's single public origin. Routes `/api/*` to the backend, everything else to the frontend. |
+| `web` | Next.js 16 · React 19 · TypeScript · Tailwind | Agency dashboard, client portal, chat playground, embeddable widget. |
+| `api` | FastAPI · SQLAlchemy · Alembic | REST API, data model, AI / knowledge / provider services. |
+| `db` | PostgreSQL | All application data; provider API keys and WhatsApp sessions are encrypted at rest. |
+| `whatsapp` | Node.js + Baileys | Stateful WhatsApp Web bridge; not exposed outside the Compose network. |
+
+The browser only ever talks to the gateway. Because `web` and `api` share one
+origin, the frontend calls the API with a relative `/api/...` path
+(`apps/web/lib/api.ts`) — no CORS dance in normal deployments, and
+`NEXT_PUBLIC_API_URL` stays empty unless the API is deliberately split onto its
+own origin. The `whatsapp` bridge talks only to the backend (never directly to
+the browser or the gateway); see
+[WhatsApp bridge flow](#whatsapp-bridge-flow).
+
+> **Why route through one origin instead of exposing the API directly?**
+> Authentication lives in the API as a JWT in an httpOnly cookie, not at the
+> edge, so the gateway doesn't need to understand auth at all — it is a pure
+> path router. That keeps the routing rule to one line (`/api/*` → backend)
+> and means a browser only ever needs to trust one hostname. See the
+> self-hosting doc's [Why Caddy for the gateway?](/docs/self-hosting) callout
+> for the operational side of that decision.
+
+## Data model
+
+Everything is scoped under an `Agency` — one Openvoiss install serves exactly
+one agency, created by the first user who registers. All models live in
+`apps/api/app/models.py`.
+
+```text
+Agency
+├── User            (agency staff; role, email/password login)
+├── ProviderCredential   (one row per AI provider: "openai" | "anthropic")
+├── UsageRecord     (per-request token usage, for the dashboard)
+└── Client                          (one of the agency's customers)
+    ├── WhatsAppChannel             (Baileys/QR channel, 0..1 per client)
+    ├── WhatsAppCloudChannel        (WhatsApp Business Cloud API channel, 0..1 per client)
+    └── Agent                       (an AI agent configured for this client)
+        ├── AgentQA                 (structured Q&A pairs, ordered)
+        ├── AgentTool               (custom HTTP tool or MCP server)
+        ├── KnowledgeDocument        (uploaded PDF, extracted text)
+        │   └── KnowledgeChunk       (chunk + JSON embedding vector)
+        └── Conversation             (playground / WhatsApp / widget thread)
+            └── Message               (role, content, sources, tool_calls)
+```
+
+Notes on fields that shape the rest of the system:
+
+- **`Agent`** carries both free-form fields (`instructions`, `personality`,
+  `manual_context`) and a structured business brief
+  (`brief_summary`/`brief_products`/`brief_audience`/`brief_policies`/
+  `brief_goal`/`brief_dos`/`brief_donts`) — both feed
+  `build_system_prompt()` in `app/services/knowledge.py`. Generation knobs
+  (`temperature`, `max_tokens`, `memory_limit`) and multimodal switches
+  (`image_enabled`/`image_model`, `audio_enabled`/`audio_model`) live on the
+  same row, along with the embeddable-widget config
+  (`widget_enabled`, `widget_public_id`, `widget_greeting`, `widget_color`,
+  `widget_position`).
+- **`AgentTool`** is one row per custom tool, `type` is `"http"` or `"mcp"`.
+  HTTP tools store `body_params`/`query_params`/`http_method`/`timeout_seconds`;
+  MCP tools store `transport` and a `cached_tools` JSON snapshot (refreshed on
+  save/test) so chat requests never block on live tool discovery. Auth headers
+  for either kind are encrypted (`encrypted_headers`) and never returned by the
+  API.
+- **`Client`** owns the portal config directly (`portal_slug`, `portal_enabled`,
+  `portal_email`, `portal_password_hash`) plus an optional custom domain
+  (`portal_domain`, `portal_domain_verified`, `portal_domain_token`) — see
+  [Custom domains for client portals](/docs/self-hosting#custom-domains-for-client-portals)
+  in the self-hosting guide for the verification flow.
+- **`WhatsAppChannel`** (Baileys) and **`WhatsAppCloudChannel`** (official Meta
+  Cloud API) are separate tables — a client can run one of each, on different
+  numbers, at the same time. Both store per-channel secrets encrypted
+  (`encrypted_auth_state`/`encrypted_qr` for Baileys;
+  `encrypted_access_token`/`encrypted_app_secret` for Cloud).
+- **`Conversation`** is shared by all channels: `channel` is `"playground"`,
+  `"whatsapp"`, `"whatsapp_cloud"` or `"widget"`, and at most one of
+  `whatsapp_channel_id`/`whatsapp_cloud_channel_id` is set depending on the
+  channel. `mode` (`"ai"` | `"human"`) drives operator takeover — see
+  [WhatsApp bridge flow](#whatsapp-bridge-flow).
+- **`KnowledgeChunk.embedding`** stores the vector as a plain JSON array of
+  floats rather than a native vector column — similarity is computed in
+  Python (cosine), so any Postgres works with no extension. The code comment
+  in `models.py` calls out `pgvector` as the scale-up path.
+
+## Tenant isolation
+
+There is no Postgres row-level security in this project — a grep of
+`apps/api/migrations/` for `ROW LEVEL SECURITY` / `CREATE POLICY` finds
+nothing. Isolation is enforced **entirely at the application layer**, one
+router at a time: every authenticated query filters by the `agency_id` of the
+current user (`Depends(get_current_user)`).
+
+The consistent pattern, taken from `apps/api/app/routers/clients.py`:
+
+```python
+def _client(db: Session, user: User, client_id: uuid.UUID) -> Client:
+    client = db.scalar(
+        select(Client)
+        .options(selectinload(Client.agents))
+        .where(Client.id == client_id, Client.agency_id == user.agency_id)
+    )
+    if not client:
+        raise HTTPException(status_code=404, detail="Client not found")
+    return client
+```
+
+`apps/api/app/routers/agents.py` follows the same shape — every lookup adds
+`Agent.agency_id == user.agency_id` to the `WHERE` clause, and nested
+resources are reached only through a parent that was itself checked against
+`agency_id` (e.g. an `Agent` is fetched via its `Client`, which is scoped
+first). A request for another agency's `client_id`/`agent_id` simply returns
+404, not 403 — the row is invisible, not merely forbidden.
+
+> **Why application-level filtering instead of RLS?** With one Postgres role
+> shared by the whole API process, RLS would need a `SET app.agency_id` (or
+> equivalent) per request/session and policies mirrored across every table —
+> real infrastructure to keep in sync with the ORM models. Filtering by
+> `agency_id` in each router keeps the boundary next to the query that needs
+> it and visible in a code review; the trade-off is discipline — a new router
+> that forgets the filter is a real tenant-isolation bug, so any PR touching a
+> router should be checked for it (see [Contributing](/docs/contributing)).
+
+Two deliberate exceptions to the "authenticated user + `agency_id`" rule, both
+scoped by a different secret instead:
+
+- **Portal routes** (`apps/api/app/routers/portal.py`) authenticate the
+  *client's* portal login (a separate JWT, `type: "portal"`, minted by
+  `create_portal_token()`) and scope by `client_id`, not `agency_id` — a
+  portal session only ever sees that one client's data.
+- **Internal WhatsApp/bridge routes and the widget** don't have a user session
+  at all: the WhatsApp internal router checks `WHATSAPP_BRIDGE_TOKEN` via
+  `hmac.compare_digest`, and the widget resolves the agent by its public,
+  unguessable `widget_public_id` (only when `widget_enabled` is true) rather
+  than by agency membership.
+
+## Backend layout
+
+`apps/api/app/main.py` wires everything together: CORS (the configured
+frontend origin plus any `localhost`/`127.0.0.1` port, so a changed
+`WEB_PORT` never breaks local dev) and then one `include_router()` call per
+domain, all mounted under `/api`:
+
+| Router (`app/routers/*.py`) | Owns |
+| --- | --- |
+| `auth.py` | Agency registration, login/logout, `/me` (JWT in an httpOnly cookie). |
+| `agency.py` | Agency profile — name, brand color, logo. |
+| `clients.py` | CRUD for clients, portal config, custom-domain verification. |
+| `agents.py` | CRUD for agents (instructions, brief, model, multimodal, widget config). |
+| `agent_tools.py` | CRUD and test-connection for per-agent HTTP tools and MCP servers. |
+| `providers.py` | Agency-level AI provider credentials (save/verify OpenAI or Anthropic keys). |
+| `catalog.py` | Static model catalog used by the agent creation/edit UI. |
+| `conversations.py` | Playground chat, conversation list/detail, human takeover. |
+| `dashboard.py` | Aggregate metrics (clients, agents, conversations, token usage) for the agency. |
+| `portal.py` | Client-facing portal: its own login and Inbox, scoped by `client_id`. |
+| `whatsapp.py` | Baileys channel config (`router`) plus the bridge-facing internal API (`internal_router`, token-authenticated). |
+| `whatsapp_cloud.py` | WhatsApp Business Cloud API channel config (bring-your-own Meta app). |
+| `whatsapp_cloud_webhook.py` | Public, HMAC-verified webhook that receives Cloud API events from Meta. |
+| `widget.py` | Public, rate-limited endpoint the embeddable web chat widget calls. |
+| `domains.py` | Public `/api/public/portal-domain` lookup used by `proxy.ts` and the gateway's on-demand-TLS `ask` hook. |
+
+Shared services (`app/services/`):
+
+- **`ai.py`** — `chat_completion()` is the one place that talks to an LLM. It
+  dispatches to the OpenAI Responses API or the Anthropic Messages API based
+  on the connection's `provider`, against that connection's `base_url` +
+  `model` — so any OpenAI-compatible endpoint works, not just OpenAI itself.
+  Sampling params (`temperature`/`max_tokens`) are applied best-effort: a 400
+  that looks like an unsupported-parameter error triggers one retry without
+  them. `test_provider()` verifies a key by listing `{base_url}/models`.
+- **`knowledge.py`** — turns an agent's knowledge base into the system
+  prompt. `embed_document_chunks()` chunks a processed PDF's extracted text
+  and embeds each chunk (best-effort — no-op if the agency has no OpenAI
+  connection). `retrieve_knowledge()` includes small knowledge bases in full;
+  larger ones go through `_semantic_search()` (cosine similarity over stored
+  `KnowledgeChunk.embedding` vectors), falling back to keyword ranking
+  (`build_knowledge()`) when embeddings are unavailable. `build_system_prompt()`
+  assembles the final prompt from instructions, personality, the structured
+  brief, client context, Q&A pairs and retrieved knowledge — this system
+  prompt is the one deliberate exception to the English-only rule, kept in
+  the customer's language (see [Contributing](/docs/contributing#conventions)).
+- **`security.py`** — `create_access_token()`/`decode_access_token()` issue
+  and verify the agency-user JWT (HS256, `SECRET_KEY`); `create_portal_token()`
+  does the same for portal sessions with a `type: "portal"` claim. Both are
+  set as httpOnly cookies by the routers, never read from `localStorage`.
+  `encrypt_secret()`/`decrypt_secret()` wrap a Fernet cipher keyed by SHA-256
+  of `ENCRYPTION_KEY` — used for provider API keys and WhatsApp
+  auth-state/QR/tokens. `hash_password()`/`verify_password()` use bcrypt.
+- **`ratelimit.py`** — an in-memory, per-IP fixed-window limiter
+  (`RateLimiter`), used as a FastAPI dependency on public endpoints: login
+  (`login_rate_limit`, 10/min), the widget's message endpoint
+  (`widget_rate_limit`, 30/min — each call spends LLM tokens), and the
+  WhatsApp Cloud webhook (300/min — it's HMAC-authenticated already, this
+  just guards against floods of unsigned traffic). It reads the caller from
+  `X-Forwarded-For`, set by the gateway, and is toggled off entirely by
+  `RATE_LIMIT_ENABLED` (the test suite disables it). Being in-memory, it's
+  correct for one instance only — see the module's own docstring for the
+  horizontally-scaled alternative.
+
+## WhatsApp bridge flow
+
+`apps/whatsapp/src/manager.ts` holds every live Baileys socket in memory
+(`Map<channelId, ChannelRuntime>`) — the bridge is a stateful process, not a
+stateless worker. Encrypted session/auth state is persisted through the
+backend (`createDatabaseAuth()` calls the internal WhatsApp API), not to disk,
+so the bridge can restart or move hosts without losing a linked session.
+
+Flow for an inbound WhatsApp message:
+
+1. Baileys fires `messages.upsert` on the socket; `processIncoming()` in
+   `manager.ts` filters out anything that isn't a direct 1:1 message
+   (`isDirectIncoming()`), extracts text and/or media, and downloads media
+   (capped at 18 MB in the bridge; the backend caps at 20 MB too).
+2. The bridge `POST`s the message to the backend:
+   `/api/internal/whatsapp/channels/{channel_id}/inbound`
+   (`internal_router` in `apps/api/app/routers/whatsapp.py`, mounted at
+   `/internal/whatsapp` under the global `/api` prefix). The call carries
+   `X-Bridge-Token`, checked with `hmac.compare_digest()` against
+   `WHATSAPP_BRIDGE_TOKEN` — the only auth between bridge and backend.
+3. The backend resolves the `WhatsAppChannel`, generates (or records) a reply
+   via `services/whatsapp_inbound.py`, and returns it in the response body —
+   it does not push the reply back to the bridge asynchronously.
+4. If the channel's `Conversation.mode` is `"human"`, the AI is paused; an
+   operator answers from the agency Inbox or the client portal instead, and
+   no reply is generated automatically. Switching back to `"ai"` resumes
+   automatic replies.
+5. The bridge sends the returned reply back over the same Baileys socket and,
+   if the backend gave it a pending `outbound_message_id`, confirms delivery
+   with a second call once WhatsApp acknowledges the send
+   (`/outbound-confirm`), so the stored `Message.external_message_id` matches
+   the real WhatsApp message ID.
+
+Session lifecycle: `connectChannel()` opens a socket, persists credentials on
+every `creds.update`, and on `connection.update` reports status back to the
+backend (`qr`, `connected`, `reconnecting`, `error`) via
+`PUT /internal/whatsapp/channels/{id}/status`. A logout or bad-session
+disconnect clears the stored auth (`DELETE .../auth`); any other disconnect
+retries after 3s. On process start, `restoreChannels()` asks the backend for
+every enabled channel with a stored session
+(`GET /internal/whatsapp/channels`) and reconnects them all — no new QR scan
+is needed unless WhatsApp itself ended the session, the device was unlinked,
+or `ENCRYPTION_KEY` changed (which makes the stored session undecryptable).
+
+The WhatsApp Business **Cloud API** channel (`WhatsAppCloudChannel`,
+`app/routers/whatsapp_cloud.py` + `whatsapp_cloud_webhook.py`) is a separate,
+stateless path: Meta calls the backend's public webhook directly (HMAC-signed
+with the app secret), so it doesn't go through the Node.js bridge at all.
+
+## Frontend structure
+
+`apps/web` is a Next.js 16 App Router project. Top-level route groups under
+`apps/web/app/`: `dashboard`, `clients`, `agents`, `channels`, `inbox`,
+`playground`, `portal` (the client-facing portal, `/portal/[slug]`),
+`settings`, `login` and `widget` (the embeddable chat widget's own route).
+
+Every network call goes through the single fetch wrapper,
+`apps/web/lib/api.ts`:
+
+```ts
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
+// ...
+fetch(`${API_URL}/api${path}`, { ...options, credentials: "include", ... });
+```
+
+With `NEXT_PUBLIC_API_URL` empty (the default), every request is a relative
+`/api/...` path resolved against the current origin — the same
+single-origin-through-the-gateway pattern described in
+[System overview](#system-overview). `credentials: "include"` is what lets
+the httpOnly session cookie ride along. The wrapper also normalizes error
+bodies into `ApiError` and honors an `X-Redirect-To` response header (e.g. for
+a gated/lapsed deployment) by navigating the browser instead of surfacing the
+error.
+
+`apps/web/proxy.ts` (Next.js 16 renamed `middleware` → `proxy`) is what
+rewrites a verified custom client domain to `/portal/[slug]` — see
+[Custom domains for client portals](/docs/self-hosting#custom-domains-for-client-portals).
+
+Next.js 16 has real breaking changes versus most models' training data.
+`apps/web/CLAUDE.md` (→ `apps/web/AGENTS.md`) flags this directly: check
+`node_modules/next/dist/docs/` before writing non-trivial Next.js code in this
+app, and heed its deprecation notices. See
+[Contributing](/docs/contributing) before making frontend changes.

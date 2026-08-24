@@ -1,0 +1,96 @@
+---
+title: "Custom tools"
+description: "Give an agent the ability to call your own APIs and MCP servers during a chat."
+---
+
+Give an agent the ability to call your own APIs and MCP servers during a chat. For a feature overview see the [README](https://github.com/kanazawa-dev/openvoiss/blob/main/README.md).
+
+An agent's tools are configured per-agent, on the agent's **Tools** tab. Every request an agent makes goes through the router at `POST /api/agents/{agent_id}/tools`, and every tool call the LLM makes at chat time is logged on the reply's message, failures included.
+
+## Contents
+
+- [HTTP tools](#http-tools)
+- [MCP servers](#mcp-servers)
+- [Seeing tool usage](#seeing-tool-usage)
+
+## HTTP tools
+
+An HTTP tool wraps any REST endpoint so the agent's LLM can call it as a function. Add one from the agent's Tools tab (**Add HTTP tool**), or directly against the API:
+
+```bash
+curl -X POST https://your-instance/api/agents/<agent_id>/tools \
+  -H "Content-Type: application/json" \
+  --cookie "access_token=..." \
+  -d '{
+    "type": "http",
+    "name": "search_orders",
+    "description": "Look up an order by id",
+    "url": "https://api.example.com/v1/orders/{order_id}",
+    "http_method": "GET",
+    "prompt_instructions": "Use this when the customer asks about an order status.",
+    "query_params": [
+      { "name": "include_items", "type": "boolean", "description": "Include line items", "required": false }
+    ],
+    "body_params": [],
+    "headers": { "Authorization": "Bearer sk-live-..." },
+    "timeout_seconds": 30
+  }'
+```
+
+| Field | Notes |
+| --- | --- |
+| `name` | `^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$`, max 40 chars, unique per agent. Snake_case, no consecutive underscores — `"__"` is reserved as the separator between an MCP server's name and its tool names (see below). |
+| `url` | Must start with `http://` or `https://` and include a host. `{name}` path placeholders (e.g. `/orders/{order_id}`) become required string parameters automatically — no need to declare them in `query_params`/`body_params`. |
+| `http_method` | `GET`, `POST`, `PUT`, `PATCH` or `DELETE`. `body_params` are rejected (`422`) for `GET`/`DELETE`. |
+| `query_params` / `body_params` | Each is `{ name, type: "string"\|"number"\|"integer"\|"boolean", description, required }`. These become the JSON schema the LLM sees for the tool's arguments. |
+| `prompt_instructions` | Free text appended to the tool's description, telling the model *when* to use it. |
+| `headers` | A flat `{header: value}` dict, e.g. an `Authorization` or API-key header. Optional. |
+| `timeout_seconds` | `1`–`120`, default `30`. |
+
+**Auth headers are encrypted at rest.** The dict is JSON-encoded and encrypted with the same `ENCRYPTION_KEY`-derived Fernet key used for provider keys and WhatsApp sessions (`apps/api/app/security.py`); the API never returns header values back, only a `has_headers` boolean. In the UI, once a tool has headers configured, the headers editor is collapsed behind an **Advanced** section and shows "headers configured" — editing the tool without touching that section keeps the stored secret; click **Replace headers** to overwrite it.
+
+**The SSRF guard.** Before every call, the tool's resolved URL is checked: the hostname is DNS-resolved and rejected if any resolved address is private, loopback, link-local or otherwise reserved (RFC 1918 ranges, `127.0.0.0/8`, `169.254.0.0/16`, etc. — via Python's `ipaddress` module). Redirects are never followed (`follow_redirects=False`); any `3xx` response is treated as a failed call, since the data it would have redirected to was never fetched. This is enforced per outgoing request, not just at save time, and is theoretically bypassable by DNS rebinding between the check and the request — not something this stack tries to close (the transport complexity wasn't judged worth it). Set `TOOLS_ALLOW_PRIVATE_URLS=true` on the API to disable the guard entirely, e.g. to point a tool at a service on your own Docker network during development.
+
+A tool's response body is capped at 100,000 characters (truncated with `... [truncated]`) before it's handed back to the LLM.
+
+## MCP servers
+
+An MCP server row proxies one external [Model Context Protocol](https://modelcontextprotocol.io) server and exposes **all** of its tools to the agent. Add one from the Tools tab (**Add MCP server**):
+
+```bash
+curl -X POST https://your-instance/api/agents/<agent_id>/tools \
+  -H "Content-Type: application/json" \
+  --cookie "access_token=..." \
+  -d '{
+    "type": "mcp",
+    "name": "weather_service",
+    "description": "Current weather and forecasts",
+    "url": "https://mcp-server.example.com/mcp",
+    "transport": "streamable_http",
+    "headers": { "Authorization": "Bearer sk-mcp-..." }
+  }'
+```
+
+| Field | Notes |
+| --- | --- |
+| `name` | Same pattern as HTTP tools, but capped at 24 chars — the composite `{name}__{mcp_tool_name}` exposed to the LLM must fit inside the 64-character tool-name limit both OpenAI and Anthropic enforce. |
+| `transport` | `"streamable_http"` (default) or `"sse"`. |
+| `headers` | Same encrypted-at-rest auth headers as HTTP tools, sent as connection headers to the MCP server. |
+
+**Test-before-save.** Both creating and updating an MCP server row connect to the server live and call `list_tools()` before anything is persisted — a create/update that can't reach the server fails with `502` (nothing is saved). The **Test connection** button in the UI calls the same discovery via `POST /agents/{agent_id}/tools/test-mcp`, showing the discovered tool names without saving the row, so you can verify a server before committing to it. Connection errors are mapped to specific hints: `401`/`403` → "the server rejected the credentials — check the auth headers"; `404`/`405` → "check the server URL and transport"; a timeout, an unreachable host, or an SSE endpoint that doesn't behave like SSE (suggesting you try the other transport) each get their own message.
+
+**Tool discovery is cached, not live.** The discovered tool list (name, description, JSON input schema per tool) is stored on the row as `cached_tools`, with a `tools_cached_at` timestamp. Every chat request builds the LLM's tool list from that cached column — never a live `list_tools()` call — so a chat never blocks on the MCP server being slow. The cache is refreshed automatically whenever you save changes to the server's `url`, `transport`, or `headers`; there's no time-based expiry and no separate manual "refresh tools" action — if the remote server adds tools without any of those fields changing, re-saving the row (e.g. touching and re-entering the URL) is what refreshes it.
+
+Each discovered tool is exposed to the LLM as `{server_name}__{tool_name}` (e.g. `weather_service__get_forecast`).
+
+## Seeing tool usage
+
+Every tool call an agent's reply makes — HTTP or MCP — is recorded on that assistant `Message` as `tool_calls`: a list of `{ name, arguments, result_preview, is_error }`, where `result_preview` is the tool's result text truncated to 500 characters. The model gets up to 5 rounds of tool calls per reply before it's forced to answer with text.
+
+The **playground** (`apps/web/components/chat-playground.tsx`) renders this: under an assistant message that used tools, a line lists each tool call by name (in red if `is_error`, with the result preview as a tooltip), and — only when at least one call failed — a separate red callout lists just the failed calls with their name and result preview inline, so a broken tool is visible without opening dev tools.
+
+The same `tool_calls` data is returned by the conversations API for every message in every conversation, but today only the playground renders it — the agency **Inbox** conversation view shows message content, sender and timestamp only, with no tool-call detail. If you need to audit tool usage on a live (non-playground) conversation, replaying the same prompt in the playground is currently the way to see it.
+
+---
+
+See also: [Agents](/docs/agents), [Architecture](/docs/architecture).

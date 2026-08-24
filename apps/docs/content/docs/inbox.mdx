@@ -1,0 +1,139 @@
+---
+title: "Inbox, portals & dashboard"
+description: "Reference for how conversations are triaged and answered day to day: the agency's unified inbox, each client's own portal, the metrics dashboard, and the agency's white-label identity."
+---
+
+Reference for how conversations are triaged and answered day to day: the
+agency's unified inbox, each client's own portal, the metrics dashboard, and the
+agency's white-label identity. For how conversations get created in the first
+place see [WhatsApp](/docs/whatsapp); for the services behind these pages see
+[Architecture](/docs/architecture).
+
+## Contents
+
+- [Unified inbox](#unified-inbox)
+- [Client portals](#client-portals)
+- [Dashboard](#dashboard)
+- [White-label](#white-label)
+
+## Unified inbox
+
+The agency-side **Inbox** page lists every `Conversation` across all channels
+(playground, WhatsApp, WhatsApp Cloud API, widget) and clients, backed by
+`GET /api/conversations/inbox`.
+
+| Query param | Type | Effect |
+| --- | --- | --- |
+| `agent_id` | UUID | Restrict to one agent. |
+| `channel` | string | `playground` \| `whatsapp` \| `whatsapp_cloud` \| `widget`. |
+| `mode` | `ai` \| `human` | Filter by who is currently answering. |
+| `unread` | bool | Only conversations with unread visitor messages. |
+| `search` | string | Case-insensitive substring match, server-side. |
+| `limit` / `offset` | int | Pagination; the UI page size is 30. |
+
+- **Search** runs entirely in SQL (`lower(...) LIKE '%term%'`) over the
+  conversation title, contact name and the last message's content — the input
+  is debounced 300 ms client-side before it's sent.
+- **Filter tabs** are **All**, **Unread**, **Human**, **AI**: the last two set
+  `mode`, Unread sets `unread=1`.
+- **Unread tracking**: a conversation is unread when it has a `Message` from a
+  `sender_type="visitor"` that is newer than the conversation's
+  `operator_read_at` (or `operator_read_at` is still unset). Opening a
+  conversation calls `POST /api/conversations/{id}/read`, which stamps
+  `operator_read_at = now()`.
+- **Pagination**: the list loads 30 rows at a time and fetches the next page as
+  the sidebar is scrolled near its bottom (`offset` advances by the page size);
+  there is no page-number UI.
+- **Human takeover**: every conversation has a `mode` column (`ai` by default).
+  `PATCH /api/conversations/{id}/mode` flips it to `human` or back to `ai`.
+  While `mode="human"`, the agent will not auto-reply (`send_message` /
+  `send_media` return `409` if attempted); the operator replies instead via
+  `POST /api/conversations/{id}/reply`, which requires `mode="human"`. For
+  `whatsapp` and `whatsapp_cloud` conversations that reply is also delivered
+  back out through the bridge / Graph API using the conversation's stored chat
+  id; for `widget` and `playground` conversations there is no external channel
+  to deliver to, so the reply is only stored and shown in the inbox.
+- The open thread and the first page refresh automatically every 8 s while
+  they're on screen (a light poll, not a websocket).
+
+## Client portals
+
+Each client can get its own branded, login-gated inbox, configured from
+**Clients → the client → Portal**: title, URL slug (`portal_slug`), an email +
+password for that client to sign in with, and a **Publish** switch
+(`portal_enabled`) that must be on for the portal to be reachable.
+
+- **Login**: `POST /api/portal/{slug}/login` with `{email, password}`
+  (rate-limited) checks the client's `portal_email` / `portal_password_hash`
+  and sets an httpOnly `portal_access_token` cookie scoped to that slug;
+  `GET /api/portal/{slug}/me` validates the session, `POST .../logout` clears
+  it.
+- **Its own inbox**: `GET /api/portal/{slug}/conversations` lists that client's
+  conversations (ordered by `updated_at`, with a last-message preview), and
+  `GET .../conversations/{id}` fetches one in full. It's a narrower version of
+  the agency inbox — no `search`, `unread` or pagination query params exist on
+  the portal endpoints, since a client only ever sees its own, typically much
+  smaller, conversation list. Mode toggling (`PATCH .../mode`) and replying
+  (`POST .../reply`, human-mode only) work exactly like the agency inbox, so a
+  client-side operator can take over from the AI the same way an agency user
+  can.
+- **Custom domains**: a client's portal can also be served on the client's own
+  domain (e.g. `chat.brand.com`) instead of `/portal/<slug>`, verified with a
+  DNS TXT record and served over automatic HTTPS by the gateway. That setup is
+  opt-in and documented in full in
+  [Self-hosting → Custom domains for client portals](/docs/self-hosting#custom-domains-for-client-portals) —
+  this page only covers the portal itself.
+
+## Dashboard
+
+The dashboard (the app's home page) is built from two backend endpoints.
+
+`GET /api/dashboard` — headline counts:
+
+| Field | Meaning |
+| --- | --- |
+| `clients` / `active_clients` | Total clients and how many are active. |
+| `agents` / `active_agents` | Total agents and how many are active. |
+| `conversations` | Total conversations for the agency. |
+| `channels` / `connected_channels` | Count of **`WhatsAppChannel`** (Baileys) rows and how many are `connected`. This does **not** include WhatsApp Cloud API channels — it's specifically the Baileys channel count. |
+| `recent_agents` | The 5 most recently created agents. |
+
+`GET /api/dashboard/metrics?days=N` (`N` 1–365, default 14) — the date-range
+panel:
+
+| Field | Meaning |
+| --- | --- |
+| `messages` | Messages sent in the window, across all conversations. |
+| `human_conversations` | Conversations created in the window that are (currently) in `human` mode. |
+| `by_channel` | Conversations created in the window, grouped by `channel`. |
+| `daily_conversations` | New conversations per day over the window, zero-filled for days with none. |
+| `top_agents` | Top 5 agents by conversation count in the window, each with a link into the agent. |
+| `tokens_in` / `tokens_out` | Summed input/output tokens from `UsageRecord` in the window. |
+| `usage_by_model` | Top 6 models by total tokens in the window, each with its own input/output split. |
+
+On the page, the range selector (7 / 14 / 30 / 90 days) only re-fetches
+`/dashboard/metrics`; the top stat cards for **Clients** and **Channels** come
+from `/dashboard`, while **Agents** and **Conversations** are read from the live
+`/api/agents` and `/api/conversations` lists instead, so those two numbers are
+always current rather than only as fresh as the last `/dashboard` call.
+
+## White-label
+
+Agency identity lives on the `Agency` model and is edited from **Settings**:
+
+| Field | Endpoint | Notes |
+| --- | --- | --- |
+| `name` | `PATCH /api/agency` | Agency display name. |
+| `slug` | `PATCH /api/agency` | Unique identifier for the agency. |
+| `brand_color` | `PATCH /api/agency` | Hex color, default `#075985`. |
+| Logo | `POST /api/agency/logo` (multipart, PNG/JPEG/WEBP/SVG) · `DELETE /api/agency/logo` | Stored as bytes in Postgres; served from `/api/agency/logo?v=<timestamp>`. |
+
+This identity is what shows up on every client-facing surface that isn't the
+agency's own dashboard: the client portal's header and login screen
+(`agency_name`, `agency_brand_color`, `agency_logo_url`), and the web chat
+widget, whose own color falls back to the agency's `brand_color` when an agent
+hasn't set its own.
+
+---
+
+See also: [WhatsApp](/docs/whatsapp) · [Architecture](/docs/architecture)

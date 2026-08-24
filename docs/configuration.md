@@ -1,0 +1,128 @@
+# Configuration
+
+Complete environment variable reference for all three services. For install,
+secrets rotation, HTTPS and production guidance see
+[Self-hosting](./self-hosting.md); for a first-run walkthrough see
+[Getting started](./getting-started.md).
+
+## Contents
+
+- [The single-origin gateway model](#the-single-origin-gateway-model)
+- [Docker / gateway](#docker--gateway)
+- [Backend (API)](#backend-api)
+- [Frontend (Web)](#frontend-web)
+- [WhatsApp bridge](#whatsapp-bridge)
+- [Run without Docker](#run-without-docker)
+
+## The single-origin gateway model
+
+The Docker stack serves the whole app from one origin through a Caddy gateway
+(`proxy` service, `docker/Caddyfile`): the browser calls the API with a
+**relative** `/api/...` path, and the gateway routes `/api/*` to the backend
+and everything else to the frontend. This is why `NEXT_PUBLIC_API_URL` is
+empty by default (`apps/web/lib/api.ts` falls back to `""`) — the frontend
+and API share an origin, so no absolute API URL is needed in the browser. Set
+`NEXT_PUBLIC_API_URL` only when the frontend must call an API on a genuinely
+separate origin; it's baked in at build time, so changing it means rebuilding
+the `web` image (or re-running `npm run build` outside Docker).
+
+## Docker / gateway
+
+`./scripts/generate-docker-env.sh` fills the secrets below into `.env.docker`
+(gitignored); to set values by hand instead, copy `.env.docker.example` to
+`.env.docker`. Host-port and image variables come from the `Makefile` /
+`docker-compose.yml` and can also be overridden inline (e.g.
+`API_PORT=8001 make up`).
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `POSTGRES_DB` | `openvoiss` | Main PostgreSQL database name. |
+| `POSTGRES_USER` | `openvoiss` | PostgreSQL role used by the `api` service. |
+| `POSTGRES_PASSWORD` | random (generated) | Password for that role. |
+| `POSTGRES_TEST_DB` | `openvoiss_test` | Isolated database created for `pytest`; wired into `TEST_DATABASE_URL` for the `api` container. |
+| `SECRET_KEY` | random (generated) | Signs agency and portal session JWTs. |
+| `ENCRYPTION_KEY` | random (generated) | Encrypts provider API keys and WhatsApp session state at rest. ⚠️ **Must never change** once secrets are stored — see [Self-hosting → Secure your install](./self-hosting.md#secure-your-install). |
+| `WHATSAPP_BRIDGE_TOKEN` | random (generated) | Authenticates backend↔bridge calls. |
+| `FRONTEND_URL` | `http://localhost:3000` | CORS origin allowed by the backend; only needed when serving the API on a separate origin. |
+| `ACCESS_TOKEN_MINUTES` | `10080` (7 days) | Session cookie / JWT lifetime, in minutes. |
+| `COOKIE_SECURE` | `false` | Set `true` behind HTTPS so the session cookie is only sent over TLS. |
+| `COOKIE_SAMESITE` | `lax` | `none` when the frontend and API are on different sites (requires `COOKIE_SECURE=true`). |
+| `WHATSAPP_LOG_LEVEL` | `silent` | Bridge log verbosity (pino); `silent` avoids logging sensitive data. |
+| `API_PORT` | `8000` | Host port for the API (also serves `/docs`). |
+| `WEB_PORT` | `3000` | Host port for the gateway — the app's URL. |
+| `DB_PORT` | `5432` | Host port for PostgreSQL. |
+| `BIND_HOST` | `127.0.0.1` | Bind address for the ports above: `127.0.0.1` (local only) or `0.0.0.0` (expose on a server). |
+| `OPENVOISS_VERSION` | `latest` | Image tag pulled by `make pull`, e.g. `v1.2.3`. |
+| `OPENVOISS_IMAGE_PREFIX` | `ghcr.io/kanazawa-dev/openvoiss` | Registry/prefix used by `make pull`, to pull from a self-hosted registry instead. |
+
+`docker-compose.yml` sets several backend/frontend/bridge variables for you
+automatically (`DATABASE_URL`, `TEST_DATABASE_URL`, `BACKEND_URL`,
+`WHATSAPP_BRIDGE_URL`, `STORAGE_DIR`, `BACKEND_INTERNAL_URL`,
+`WHATSAPP_BRIDGE_HOST`, `WHATSAPP_BRIDGE_PORT`) by wiring the containers
+together on the private Compose network — you don't set these yourself in
+`.env.docker`. They're listed in the tables below because they're real
+per-service variables you **do** set by hand when running without Docker.
+
+## Backend (API)
+
+Source of truth: `apps/api/app/config.py` (a Pydantic `Settings` class, one
+field per row below). Each variable is the field name upper-cased
+(`pydantic-settings` matches env vars case-insensitively); in Docker they're
+read from `.env.docker`, outside Docker from `apps/api/.env` (or the shared
+root `.env` — `env_file` checks the repo root first, then `apps/api/.env`).
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `APP_NAME` | `Openvoiss API` | Defined in `Settings` but not currently read anywhere else in the codebase (the FastAPI app title is hardcoded in `app/main.py`). |
+| `DATABASE_URL` | `postgresql+psycopg://openvoiss:openvoiss@localhost:5432/openvoiss` | SQLAlchemy connection string for the main database. |
+| `TEST_DATABASE_URL` | see `apps/api/tests/conftest.py` | Not a `Settings` field — read directly by `conftest.py` to point `pytest` at `openvoiss_test` instead of the dev database. |
+| `SECRET_KEY` | `dev-local-change-this-key-please` | Signs agency/portal session JWTs. Change for any real deployment. |
+| `ENCRYPTION_KEY` | `dev-local-change-this-key-too` | Encrypts provider API keys and WhatsApp session state. ⚠️ Never change once secrets exist — see [Self-hosting](./self-hosting.md#secure-your-install). |
+| `FRONTEND_URL` | `http://localhost:3000` | CORS-allowed origin. |
+| `ACCESS_TOKEN_MINUTES` | `10080` | Session lifetime, in minutes. |
+| `COOKIE_SECURE` | `false` | `true` behind HTTPS so the session cookie is TLS-only. |
+| `COOKIE_SAMESITE` | `lax` | `none` when frontend and API are on different sites (needs `COOKIE_SECURE=true`). |
+| `RATE_LIMIT_ENABLED` | `true` | Per-client-IP throttling on public/unauthenticated endpoints (auth, portal login, widget messages). Disable only for tests or when a proxy in front already rate-limits. |
+| `TOOLS_ALLOW_PRIVATE_URLS` | `false` | SSRF guard for agent HTTP tools: by default a tool URL resolving to a private/loopback address is rejected. Enable only if your deployment needs tools to reach internal services. |
+| `STORAGE_DIR` | `apps/api/storage` | Defined in `Settings` (Docker points it at `/app/backend/storage`, a mounted volume) but not currently read elsewhere in the codebase — uploads (agency logos) and knowledge PDFs are stored in PostgreSQL, not on disk. |
+| `BACKEND_URL` | `http://localhost:8000` | Defined in `Settings` (Docker sets it to `http://api:8000`) but not currently read elsewhere in the codebase. |
+| `WHATSAPP_BRIDGE_URL` | `http://localhost:3101` | Base URL the backend uses to call the WhatsApp bridge (QR requests, session actions). |
+| `WHATSAPP_BRIDGE_TOKEN` | `dev-local-change-this-bridge-token` | Must match the bridge's own `WHATSAPP_BRIDGE_TOKEN`. |
+| `META_GRAPH_BASE_URL` | `https://graph.facebook.com/v23.0` | Meta Graph API root used by the WhatsApp Cloud API channel; override to point at a mock server in tests. |
+
+## Frontend (Web)
+
+Source: `apps/web/lib/api.ts`, `apps/web/proxy.ts`, `apps/web/components/app-shell.tsx`
+and `apps/web/components/app-sidebar.tsx`. Every `NEXT_PUBLIC_*` variable is
+baked in at **build time** (Next.js inlines it into the client bundle), so
+changing one means rebuilding — `docker-compose.yml` passes them as Docker
+build args for the `web` service.
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `NEXT_PUBLIC_API_URL` | empty | Left empty so the browser calls the API through the gateway with a relative `/api` path (single-origin model above). Set only to point the frontend at an API on a separate origin. |
+| `BACKEND_INTERNAL_URL` | `http://api:8000` (Docker) | Server-side only, used by `proxy.ts` to call the API directly when resolving a verified custom portal domain. Not `NEXT_PUBLIC_*` — never reaches the browser. |
+| `NEXT_PUBLIC_EXTRA_NAV` | empty | Optional extra sidebar entries as comma-separated `label\|href\|icon` triples, so a deployment can add pages without patching the shell. |
+| `NEXT_PUBLIC_PUBLIC_PATHS` | empty | Optional comma-separated path prefixes served without a session, for the same reason. |
+
+## WhatsApp bridge
+
+Source: `apps/whatsapp/src/api.ts`, `apps/whatsapp/src/index.ts` and
+`apps/whatsapp/src/manager.ts`.
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `BACKEND_URL` | `http://localhost:8000` | Where the bridge calls the backend's inbound WhatsApp endpoints (Docker sets `http://api:8000`). |
+| `WHATSAPP_BRIDGE_TOKEN` | `dev-local-change-this-bridge-token` | Must match the backend's value. |
+| `WHATSAPP_BRIDGE_PORT` | `3101` | Port the bridge listens on. |
+| `WHATSAPP_BRIDGE_HOST` | `127.0.0.1` | Bind address; Docker sets `0.0.0.0` since the bridge is only reachable from other containers (not exposed on the host). |
+| `WHATSAPP_LOG_LEVEL` | `silent` | Log verbosity (pino). |
+
+## Run without Docker
+
+Each service reads its variables the same way; you just supply an env file
+per service instead of `.env.docker`. See
+[Self-hosting → Run without Docker](./self-hosting.md#run-without-docker) for
+the exact install and start commands (`cp .env.example .env`, then set at
+least `SECRET_KEY` and `ENCRYPTION_KEY` before running `alembic upgrade head`
+and `uvicorn`, `npm run dev`, and `npm run start` for the three services).

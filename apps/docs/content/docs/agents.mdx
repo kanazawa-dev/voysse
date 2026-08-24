@@ -1,0 +1,66 @@
+---
+title: "Agents"
+description: "An agent is the AI persona a client's customers talk to — its instructions, tone, model, generation settings and multimodal capabilities."
+---
+
+An agent is the AI persona a client's customers talk to — its instructions, tone, model, generation settings and multimodal capabilities. Each agent belongs to exactly one client. For the platform overview see the [README](https://github.com/kanazawa-dev/openvoiss/blob/main/README.md).
+
+## Contents
+
+- [Create an agent](#create-an-agent)
+- [Configure after creation](#configure-after-creation)
+- [Model & parameters reference](#model--parameters-reference)
+- [Multimodal capabilities](#multimodal-capabilities)
+- [Test it live](#test-it-live)
+
+## Create an agent
+
+From **Agents → New agent** a 5-step wizard walks through the setup. You can go back and forth between steps; nothing is created until the last one.
+
+1. **Template.** Pick an industry starter — Restaurant orders, Real estate leads, Clinic appointments, Online store support or Customer support — or **Start from scratch**. A template pre-fills the description, main instructions and personality/tone with a ready-made prompt for that use case; you can edit everything afterward.
+2. **Identity.** Choose the owning **Client** and set the agent's **Name** (required) and **Description**.
+3. **Instructions.** Write the **Main instructions** (goals, tasks, limits, rules) and the **Personality or tone**. A progress bar and a live token counter (`~N tokens`, estimated at ~4 characters per token) show how much of the model's context window the prompt text uses so far.
+4. **Model & parameters.** Set the **Timezone** (injected into the system prompt so the agent knows the local date/time), the **Provider** (OpenAI or Anthropic — the agency's API key for that provider is used, configured in Settings), the **Model**, and three generation sliders: **Temperature**, **Max response tokens** and **Conversation memory** (exact ranges and defaults in the [reference table](#model--parameters-reference) below). The context-usage bar reappears here against the selected model's context window.
+5. **Review & create.** A summary of name, client, template, provider and model before submitting.
+
+## Configure after creation
+
+An agent's detail page (`/agents/{id}`) has five tabs:
+
+- **Details** — everything from the wizard, plus a **Business brief**: optional structured fields (what the business does, products & services, target audience, key info & policies, the agent's main goal, always-do / never-do rules) that compose into the system prompt alongside the free-form instructions. All Details-tab fields, including provider/model/timezone and the three generation sliders, are edited here and saved together with **Save configuration**. A **Publish / Unpublish** toggle in the header controls whether the agent is active (an inactive agent doesn't reply and doesn't spend tokens).
+- **Knowledge** — manual context, PDF uploads and Q&A pairs. See [Knowledge base](/docs/knowledge-base).
+- **Tools** — per-agent HTTP tools and MCP servers. See [Custom tools](/docs/custom-tools).
+- **Widget** — enable/configure the embeddable web chat widget (greeting, color, position) and copy its embed snippet.
+- **Playground** — a live chat against this agent, locked to it.
+
+## Model & parameters reference
+
+| Field | Range | Default | Effect |
+| --- | --- | --- | --- |
+| Provider | `openai` \| `anthropic` | `openai` | Which AI provider's API is called; uses the agency's key for that provider (configured in Settings). See [AI providers](/docs/ai-providers). |
+| Model | any model string for the chosen provider (free text allowed) | — (blank) | The exact model requested from the provider's chat endpoint (Responses API for OpenAI, Messages API for Anthropic). |
+| Timezone | any IANA timezone | the browser's timezone at creation, `UTC` in the API | Sets the "current date and time" line injected into the system prompt. |
+| Temperature | 0.0 – 2.0, step 0.1 | 0.7 | Passed as `temperature` to the provider. Lower is more predictable/focused, higher is more creative. If the model rejects sampling parameters (e.g. some reasoning models, or Anthropic's `temperature <= 1` constraint), the backend retries once without it. |
+| Max response tokens | 256 – 8192 in the UI slider (256 step); the API accepts 1 – 32000 | 2048 | Upper bound on the length of each reply (`max_output_tokens` for OpenAI, `max_tokens` for Anthropic). |
+| Conversation memory | 0 – 100 in the UI slider (step 1); the API accepts 0 – 200 | 30 | How many of the most recent messages in the conversation are sent back to the model as history on each reply. |
+
+The API's Pydantic schema (`apps/api/app/schemas.py`) enforces slightly wider bounds (`max_tokens` up to 32000, `memory_limit` up to 200) than the dashboard sliders expose — useful to know if you're calling the API directly.
+
+## Multimodal capabilities
+
+Under **Details → Capabilities** two independent switches turn on multimodal understanding for incoming messages (WhatsApp, the web widget, and manual uploads in the playground):
+
+- **Image recognition** — when enabled, an incoming image is sent to a vision model (via the OpenAI Responses API) with an instruction to describe it; the resulting description is prepended to the message text before the agent replies. The model used is the agent's **image model** setting (default `gpt-4.1`, any vision-capable model can be typed in), falling back to the agent's main model if left blank.
+- **Audio recognition** — when enabled, an incoming voice note is sent to an OpenAI-compatible `/audio/transcriptions` endpoint; the transcript is prepended to the message text. The model used is the agent's **audio model** setting (default `whisper-1`).
+
+Both capabilities **always use the agency's OpenAI key**, regardless of which provider the agent's chat model is configured with — enabling either capability with no OpenAI key configured means incoming media falls through untranscribed/undescribed at reply time. If a capability is off, that kind of media is ignored (a placeholder is used instead of failing the conversation).
+
+## Test it live
+
+Before publishing, or any time after, use the Playground to chat with the agent exactly as an end user would, including tool calls and their results. See [Playground walkthrough](/docs/getting-started#test-it-in-the-playground) for the full walkthrough.
+
+## See also
+
+- [Knowledge base](/docs/knowledge-base)
+- [Custom tools](/docs/custom-tools)
+- [AI providers](/docs/ai-providers)

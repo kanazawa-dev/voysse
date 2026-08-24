@@ -1,0 +1,221 @@
+# WhatsApp & web chat
+
+Reference for every channel an agency can connect an agent to: the official WhatsApp
+Cloud API, WhatsApp via Baileys (QR), and the embeddable web chat widget. For
+deployment and environment variables see [Self-hosting](./self-hosting.md); for how
+these conversations are displayed and answered see [Inbox](./inbox.md).
+
+## Contents
+
+- [WhatsApp Cloud API](#whatsapp-cloud-api)
+- [WhatsApp via QR (Baileys)](#whatsapp-via-qr-baileys)
+- [Web chat widget](#web-chat-widget)
+- [Instagram DM & Messenger (planned)](#instagram-dm--messenger-planned)
+- [Caveats](#caveats)
+
+Every channel is configured per client, from **Clients → the client → Channels**,
+and is bound to one of that client's agents. A client can run a Baileys number, a
+Cloud API number and the widget at the same time — each is a separate row
+(`WhatsAppChannel`, `WhatsAppCloudChannel`, the agent's own widget flags) and they
+all feed the same `Conversation` / `Message` pipeline, so they all show up
+together in the [Inbox](./inbox.md).
+
+## WhatsApp Cloud API
+
+The official Meta WhatsApp Business Platform (Graph API), for agencies that
+already have a Meta Business app. You bring your own app credentials; Openvoiss
+never talks to Meta on your behalf beyond the calls described below.
+
+### Configure a channel
+
+Open **Clients → the client → Channels → WhatsApp Cloud API → Configure** and
+fill in:
+
+| Field | Backend column | Notes |
+| --- | --- | --- |
+| Agent | `agent_id` | Must belong to the same client. |
+| Phone number ID | `phone_number_id` | From the Meta app's WhatsApp product. |
+| WABA ID | `waba_id` | Optional, informational. |
+| Access token | `encrypted_access_token` | Password field; leave blank on an update to keep the stored value. |
+| App secret | `encrypted_app_secret` | Same blank-keeps-stored behavior; used to verify webhook signatures. |
+
+Saving calls `PUT /api/whatsapp-cloud/channels/{client_id}`. **Connect & verify**
+saves first, then calls `POST /api/whatsapp-cloud/channels/{client_id}/connect`,
+which calls the Graph API to confirm the phone number ID is valid and reads back
+`display_phone_number` and `verified_name` — the channel is marked `connected`
+only if that call succeeds; otherwise it is marked `error` with the API's message
+in `last_error`. `POST .../disconnect` marks it `disconnected` locally (it does
+not revoke the token on Meta's side).
+
+A `WhatsAppCloudChannel` row is unique per client — one Cloud API number per
+client, independent of any Baileys number on the same client.
+
+### Webhook
+
+Each channel gets its own webhook URL and a random verify token, generated the
+moment the channel is first saved:
+
+```text
+webhook_url          = {FRONTEND_URL}/api/public/whatsapp-cloud/channels/{channel_id}/webhook
+webhook_verify_token  = random (shown in the channel's Webhook card, copy-to-clipboard)
+```
+
+Paste both into the Meta app's WhatsApp → Configuration → Webhook screen and
+subscribe to the `messages` field. Two request types hit this URL:
+
+- **`GET` — verification handshake.** Meta sends `hub.mode=subscribe`,
+  `hub.verify_token` and `hub.challenge`. The router accepts only when
+  `hub.mode == "subscribe"` and `hub.verify_token` matches the channel's stored
+  token (constant-time compare); on success it echoes `hub.challenge` back as
+  plain text, otherwise `403`.
+- **`POST` — inbound events.** Every request must carry an
+  `X-Hub-Signature-256` header equal to `sha256=` + HMAC-SHA256 of the **raw**
+  request body, keyed with the channel's app secret. The router recomputes it
+  and compares with `hmac.compare_digest`; a mismatch is `403` and the payload is
+  never parsed. Once verified, it reads `entry[].changes[]` where
+  `field == "messages"`, and for each message: `text`, `image` and `audio` types
+  are mapped to the shared inbound shape (other types are skipped); the sender's
+  display name comes from the `contacts[]` block; media is fetched from the
+  Graph API when present. The endpoint is rate-limited
+  (`whatsapp_cloud_webhook_rate_limit`) and **always answers `{"status": "ok"}`**,
+  even when processing fails internally — Meta retries non-2xx responses, and a
+  payload that fails once will fail on every retry, so failures are logged to
+  `last_error` instead of surfaced to Meta.
+
+Outbound replies (AI-generated or sent by a human after taking over in the
+[Inbox](./inbox.md)) go out through the same Graph API, using the stored access
+token and phone number ID.
+
+## WhatsApp via QR (Baileys)
+
+An unofficial channel over the WhatsApp Web multi-device protocol
+(`@whiskeysockets/baileys`), for agencies without a Meta Business app. See
+[Caveats](#caveats) before relying on it for anything business-critical.
+
+### Connect
+
+1. **Clients → the client → Channels → WhatsApp → Configure.**
+2. Pick the agent that should answer, then **Connect with QR code**
+   (`PUT /api/whatsapp/channels/{client_id}` to save the agent, then
+   `POST /api/whatsapp/channels/{client_id}/connect`).
+3. A QR code (rendered as a data-URL PNG by the bridge) appears once the socket
+   reaches the `qr` state. On the phone: **WhatsApp → Settings → Linked
+   devices → Link a device**, scan it.
+4. The page polls the channel every 2.5 s; once WhatsApp confirms the link the
+   status becomes **Connected**, showing the linked number and display name.
+
+Channel status moves through `disconnected → connecting → qr → connected`, or
+`reconnecting` / `error` if the socket drops. One WhatsApp account = one client
+(`client_id` is unique on `whatsapp_channels`); a second client needs its own
+number.
+
+### Session persistence and backend↔bridge auth
+
+`apps/whatsapp/src/manager.ts` holds one live Baileys socket per connected
+channel. Every `creds.update` event from Baileys is persisted immediately by
+`PUT /api/internal/whatsapp/channels/{id}/auth`, which the backend stores as
+`encrypted_auth_state` (and the QR itself as `encrypted_qr`), both encrypted
+with `ENCRYPTION_KEY`. On bridge startup, `restoreChannels()` calls
+`GET /api/internal/whatsapp/channels` to list every enabled channel that still
+has a stored auth state, and reconnects each one — so a restart does not
+require a new QR scan unless WhatsApp logged the session out, the device was
+unlinked, or `ENCRYPTION_KEY` changed (in which case the stored state can no
+longer be decrypted). On a genuine logout (`DisconnectReason.loggedOut` /
+`badSession`) the bridge calls `DELETE .../auth`, which clears the stored state
+and marks the channel `disconnected`.
+
+Every backend↔bridge call — the internal routes above, `send`, `connect`,
+`disconnect` — is authenticated with an `X-Bridge-Token` header checked against
+`WHATSAPP_BRIDGE_TOKEN` (`hmac.compare_digest`, so no timing side channel).
+
+### Inbound message flow
+
+1. Baileys emits `messages.upsert`; the bridge only processes direct 1:1
+   messages (groups, statuses, newsletters, reactions and calls are filtered
+   out by `isDirectIncoming`).
+2. Text is read directly; image/voice-note media is downloaded
+   (`downloadMediaMessage`) and skipped if it exceeds 18 MB (the backend's own
+   cap is 20 MB).
+3. The bridge calls `POST /api/internal/whatsapp/channels/{channel_id}/inbound`
+   on the backend with the message (text/media, sender JID, external message
+   id).
+4. The backend resolves or creates the `Conversation` (`channel="whatsapp"`,
+   keyed by `whatsapp_channel_id` + the WhatsApp JID), stores the inbound
+   `Message`, and — unless the conversation is in `human` mode — runs the
+   assigned agent (knowledge retrieval, then the completion) and returns the
+   reply text plus the new message id.
+5. The bridge sends that reply back through the same socket
+   (`socket.sendMessage`) and confirms the WhatsApp message id back to the
+   backend via `POST .../outbound-confirm`, which is stored on the `Message` row
+   for de-duplication.
+
+This matches the flow documented in the project's `CLAUDE.md`.
+
+## Web chat widget
+
+An embeddable chat bubble, configured **per agent** (not per client) from the
+agent's **Widget** tab, and served publicly with no login.
+
+- **Enable & configure**: toggle `widget_enabled`, set a greeting
+  (`widget_greeting`), an accent color (`widget_color`, falls back to the
+  agency's `brand_color` if unset) and a corner (`widget_position`,
+  left/right). Saved with `PATCH /api/agents/{id}`.
+- **Embed**: the tab shows a ready-to-copy snippet —
+  ```html
+  <script src="https://your-domain/widget.js" data-agent="{widget_public_id}" data-color="#..." data-position="right" async></script>
+  ```
+  `public/widget.js` is a small vanilla-JS loader: it injects a floating toggle
+  button and an `<iframe src="/widget/{widget_public_id}">` on the host page, and
+  listens for a `postMessage({type: "ol-widget", action: "close"})` from the
+  iframe to close itself. There is no server-rendered iframe snippet to paste
+  manually — the script tag is the whole integration.
+- **Message flow**: the iframe (`apps/web/app/widget/[publicId]/page.tsx`)
+  generates a random session id on first load, stored in the visitor's
+  `localStorage` (`ol_widget_{publicId}`). Each visitor message hits
+  `POST /api/widget/{publicId}/messages` (rate-limited), which finds or creates
+  a `Conversation` with `channel="widget"` and `external_chat_id="widget:{session_id}"`
+  scoped to that agent, stores the message, and — unless the conversation is in
+  `human` mode — runs the same knowledge-retrieval-plus-completion pipeline used
+  by WhatsApp and the playground, recording token usage the same way. Because it
+  reuses the shared `Conversation`/`Message` tables, widget conversations show up
+  in the agency [Inbox](./inbox.md) like any other channel, and can be taken
+  over by a human the same way.
+- **Public config**: `GET /api/widget/{publicId}` returns the title, greeting,
+  color, position and agency name/logo used to render the bubble; none of the
+  widget endpoints require authentication, since the whole point is that it runs
+  on a third-party site.
+
+## Instagram DM & Messenger (planned)
+
+Not implemented. The Channels page and the client detail page list Instagram DM
+and Facebook Messenger as upcoming options (icons and copy only — there is no
+router, model or connection flow behind them), matching the *(planned)* label in
+the [README](../README.md#channels).
+
+## Caveats
+
+WhatsApp via QR rides on Baileys' reverse-engineered WhatsApp Web protocol, not
+the official Cloud API — this project is not affiliated with or endorsed by
+WhatsApp/Meta, and it can break or change without notice on WhatsApp's side.
+Keep in mind before relying on it:
+
+- WhatsApp can revoke a linked session/device at any time; abusive automation,
+  spam or mass sending can get a number restricted — use only numbers each
+  client actually controls and respect WhatsApp's terms.
+- The QR code links the account for as long as it's valid; never share or
+  screenshot it publicly.
+- Only direct one-to-one conversations are handled (text, plus transcribed
+  voice notes and described images when the agent's audio/image capabilities
+  are on). Groups, statuses, newsletters, documents, locations, reactions and
+  calls are ignored.
+- `apps/whatsapp/package.json` pins an exact Baileys version; bumping it is a
+  deliberate upgrade, not an automatic one.
+
+The Cloud API integration does not have these caveats — it's Meta's own
+supported protocol — but it does require an approved Meta Business app and
+phone number, and its own review process for production access.
+
+---
+
+See also: [Inbox](./inbox.md) · [Self-hosting](./self-hosting.md) ·
+[Configuration](./configuration.md)
