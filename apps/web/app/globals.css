@@ -91,7 +91,7 @@ h1, h2, h3, .brand { font-family: var(--font-manrope), sans-serif; }
 .user-meta { min-width: 0; display: flex; flex-direction: column; gap: 2px; flex: 1; }
 .user-meta strong { color: white; font-size: 12px; }
 .user-meta span { color: #808aa4; font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.main-content { min-height: 100vh; margin-left: 252px; }
+.main-content { min-height: 100vh; }
 .page { max-width: 1420px; margin: 0 auto; padding: 43px 44px 64px; }
 .page > * + * { margin-top: 21px; }
 .mobile-menu, .sidebar-close { display: none; }
@@ -257,7 +257,7 @@ h1, h2, h3, .brand { font-family: inherit; }
 .user-meta strong { color: #303646; font-size: 13px; }
 .user-meta span { color: #7b8391; font-size: 11px; }
 .icon-button.inverse { color: #707887; }
-.main-content { margin-left: 256px; }
+.main-content { }
 .page { max-width: 1360px; padding: 44px 48px 72px; }
 .narrow-page { max-width: 1120px; }
 .page-head { margin-bottom: 30px; align-items: center; }

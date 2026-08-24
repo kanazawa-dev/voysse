@@ -4,6 +4,7 @@ import "./globals.css";
 import { AppShell } from "@/components/app-shell";
 import { ToastProvider } from "@/components/toast";
 import { LanguageProvider } from "@/lib/i18n";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-geist" });
 const inter = Inter({ subsets: ["latin"], weight: ["400", "600", "900"], variable: "--font-inter" });
@@ -19,9 +20,11 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="en">
       <body className={`${geist.variable} ${inter.variable}`}>
         <LanguageProvider>
-          <ToastProvider>
-            <AppShell>{children}</AppShell>
-          </ToastProvider>
+          <TooltipProvider>
+            <ToastProvider>
+              <AppShell>{children}</AppShell>
+            </ToastProvider>
+          </TooltipProvider>
         </LanguageProvider>
       </body>
     </html>
