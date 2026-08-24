@@ -74,7 +74,7 @@ export function OpenvoissBrand({
             color={OPENVOISS_LIME}
             dotMap={dotMap ?? undefined}
             padding={0.06}
-            preset="beacon"
+            preset="breathe"
             reducedMotion="auto"
             size={size}
             state={state}
