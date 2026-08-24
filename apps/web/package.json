@@ -2,6 +2,7 @@
   "name": "openvoiss-frontend",
   "version": "0.3.0",
   "private": true,
+  "license": "FSL-1.1-MIT",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
