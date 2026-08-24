@@ -3,6 +3,7 @@
 import { useState } from "react";
 import {
   ArrowRight,
+  Bot,
   BookOpen,
   Building2,
   Check,
@@ -12,16 +13,20 @@ import {
   Globe,
   HelpCircle,
   Inbox,
+  LayoutDashboard,
   Menu,
   MessageCircle,
   MessageSquareText,
+  Radio,
   Server,
+  Settings,
   Sparkles,
   Wallet,
   Wrench,
 } from "lucide-react";
 import { useT } from "@/lib/i18n";
 import { LanguageSwitcher } from "@/components/language-switcher";
+import Grainient from "@/components/grainient";
 import styles from "./welcome.module.css";
 
 type TabId = "agents" | "knowledge" | "tools" | "channels";
@@ -130,29 +135,62 @@ export default function WelcomePage() {
           <div className={cx(styles.heroBlob, styles.heroBlobOne)} />
           <div className={cx(styles.heroBlob, styles.heroBlobTwo)} />
           <div className={cx(styles.wrap, styles.heroInner)}>
-            <div>
-              <span className={styles.eyebrow}>{t("welcome.hero.eyebrow")}</span>
-              <h1>{t("welcome.hero.titleLine1")}<br />{t("welcome.hero.titleLine2")}</h1>
-              <p className={styles.heroSub}>{t("welcome.hero.sub")}</p>
-              <div className={styles.heroCta}>
-                <a className={cx(styles.btn, styles.btnPrimary)} href="/login">
-                  {t("welcome.nav.getStarted")} <ArrowRight size={17} />
-                </a>
-                <a className={cx(styles.btn, styles.btnSecondary)} href="https://openvoiss.com/docs/getting-started">{t("welcome.hero.readDocs")}</a>
-              </div>
-              <p className={styles.heroNote}>{t("welcome.hero.note")}</p>
+            <span className={styles.eyebrow}>{t("welcome.hero.eyebrow")}</span>
+            <h1>{t("welcome.hero.titleLine1")}<br />{t("welcome.hero.titleLine2")}</h1>
+            <p className={styles.heroSub}>{t("welcome.hero.sub")}</p>
+            <div className={styles.heroCta}>
+              <a className={cx(styles.btn, styles.btnPrimary)} href="/login">
+                {t("welcome.nav.getStarted")} <ArrowRight size={17} />
+              </a>
+              <a className={cx(styles.btn, styles.btnSecondary)} href="https://openvoiss.com/docs/getting-started">{t("welcome.hero.readDocs")}</a>
             </div>
-            <div className={styles.orbWrap} aria-hidden="true">
-              <div className={styles.orbGlow} />
-              <div className={cx(styles.orbRing, styles.orbRingOne)} />
-              <div className={cx(styles.orbRing, styles.orbRingTwo)} />
-              <div className={cx(styles.orbRing, styles.orbRingThree)} />
-              <div className={styles.orbParticles}>
-                <span className={cx(styles.orbParticle, styles.orbParticleOne)} />
-                <span className={cx(styles.orbParticle, styles.orbParticleTwo)} />
-                <span className={cx(styles.orbParticle, styles.orbParticleThree)} />
+            <p className={styles.heroNote}>{t("welcome.hero.note")}</p>
+
+            <div className={styles.heroMockWrap}>
+              <div className={styles.heroMock} aria-hidden="true">
+                <div className={styles.heroMockChrome}>
+                  <span className={styles.heroMockDot} /><span className={styles.heroMockDot} /><span className={styles.heroMockDot} />
+                  <span className={styles.heroMockUrl}>app.openvoiss.com</span>
+                </div>
+                <div className={styles.heroMockBody}>
+                  <div className={styles.heroMockSidebar}>
+                    <div className={styles.heroMockBrand}><span className={styles.heroMockBrandDot} /> Openvoiss</div>
+                    <span className={cx(styles.heroMockNavItem, styles.heroMockNavItemActive)}><LayoutDashboard size={14} /> {t("nav.home")}</span>
+                    <span className={styles.heroMockNavItem}><Building2 size={14} /> {t("nav.clients")}</span>
+                    <span className={styles.heroMockNavItem}><Bot size={14} /> {t("nav.agents")}</span>
+                    <span className={styles.heroMockNavItem}><Inbox size={14} /> {t("nav.inbox")}</span>
+                    <span className={styles.heroMockNavItem}><MessageSquareText size={14} /> {t("nav.playground")}</span>
+                    <span className={styles.heroMockNavItem}><Radio size={14} /> {t("nav.channels")}</span>
+                    <span className={styles.heroMockNavItem}><Settings size={14} /> {t("nav.settings")}</span>
+                  </div>
+                  <div className={styles.heroMockMain}>
+                    <h3>{t("welcome.hero.dashboard.title")}</h3>
+                    <p>{t("welcome.hero.dashboard.subtitle")}</p>
+                    <div className={styles.heroMockStats}>
+                      <div className={styles.heroMockStat}><span>{t("welcome.hero.dashboard.statAgentsLabel")}</span><strong>{t("welcome.hero.dashboard.statAgentsValue")}</strong></div>
+                      <div className={styles.heroMockStat}><span>{t("welcome.hero.dashboard.statConvLabel")}</span><strong>{t("welcome.hero.dashboard.statConvValue")}</strong></div>
+                      <div className={styles.heroMockStat}><span>{t("welcome.hero.dashboard.statResponseLabel")}</span><strong>{t("welcome.hero.dashboard.statResponseValue")}</strong></div>
+                    </div>
+                    <div className={styles.heroMockTable}>
+                      <div className={styles.heroMockRow}>
+                        <span>{t("welcome.hero.dashboard.colClient")}</span><span>{t("welcome.hero.dashboard.colAgent")}</span><span />
+                      </div>
+                      {([1, 2, 3] as const).map((row) => (
+                        <div className={styles.heroMockRow} key={row}>
+                          <span className={styles.heroMockClient}>
+                            <span className={styles.heroMockAvatar}>{t(`welcome.hero.dashboard.row${row}Client`).slice(0, 1)}</span>
+                            {t(`welcome.hero.dashboard.row${row}Client`)}
+                          </span>
+                          <span>{t(`welcome.hero.dashboard.row${row}Agent`)}</span>
+                          <span className={cx(styles.heroMockStatus, row === 2 ? styles.heroMockStatusHuman : styles.heroMockStatusAi)}>
+                            {t(`welcome.hero.dashboard.row${row}Status`)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div className={styles.orbCore} />
             </div>
           </div>
         </section>
@@ -196,7 +234,10 @@ export default function WelcomePage() {
                 })}
               </div>
 
-              <div className={cx(styles.card, styles.tabPanel)}>
+              <div className={cx(styles.card, styles.tabPanel, styles.cardGrain)}>
+                <div className={styles.grainLayer}>
+                  <Grainient grainAnimated />
+                </div>
                 <h3>{t(`welcome.panels.${activeTab}.title`)}</h3>
                 <p>{t(`welcome.panels.${activeTab}.body`)}</p>
                 <ul className={styles.pointList}>
@@ -238,7 +279,10 @@ export default function WelcomePage() {
 
         <section className={cx(styles.section, styles.sectionTight)} id="open-source">
           <div className={styles.wrap}>
-            <div className={cx(styles.darkPanel, styles.darkGrid)}>
+            <div className={cx(styles.darkPanel, styles.darkGrid, styles.cardGrain)}>
+              <div className={styles.grainLayer}>
+                <Grainient grainAnimated />
+              </div>
               <div>
                 <span className={styles.eyebrow}>{t("welcome.stack.eyebrow")}</span>
                 <h2>{t("welcome.stack.title")}</h2>
@@ -282,7 +326,10 @@ export default function WelcomePage() {
                 </ul>
                 <a className={cx(styles.btn, styles.btnPrimary, styles.planCta)} href="/login">{t("welcome.plans.selfhost.cta")}</a>
               </div>
-              <div className={cx(styles.card, styles.planCard, styles.planCardCloud)}>
+              <div className={cx(styles.card, styles.planCard, styles.planCardCloud, styles.cardGrain)}>
+                <div className={styles.grainLayer}>
+                  <Grainient grainAnimated />
+                </div>
                 <span className={cx(styles.planTag, styles.planTagSoon)}>{t("welcome.plans.cloud.tag")}</span>
                 <div>
                   <h3>{t("welcome.plans.cloud.title")}</h3>
@@ -325,7 +372,10 @@ export default function WelcomePage() {
 
         <section className={cx(styles.section, styles.sectionTight)}>
           <div className={styles.wrap}>
-            <div className={cx(styles.card, styles.ctaPanel)}>
+            <div className={cx(styles.card, styles.ctaPanel, styles.cardGrain)}>
+              <div className={styles.grainLayer}>
+                <Grainient grainAnimated />
+              </div>
               <h2>{t("welcome.cta.title")}</h2>
               <p>{t("welcome.cta.body")}</p>
               <div className={styles.ctaActions}>
