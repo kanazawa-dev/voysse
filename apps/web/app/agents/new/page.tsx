@@ -5,6 +5,10 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, Check, LoaderCircle, PencilLine, Sparkles } from "lucide-react";
 import { Alert } from "@/components/ui";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/toast";
 import { api, messageFrom } from "@/lib/api";
 import { useLanguage } from "@/lib/i18n";
@@ -121,15 +125,15 @@ export default function NewAgentPage() {
         <div className="wizard-copy"><h2>{t("agents.wizard.identityTitle")}</h2><p>{t("agents.wizard.identitySubtitle")}</p></div>
         <div className="form-grid">
           <label>{t("agents.new.clientLabel")}<select value={clientId} onChange={(e) => setClientId(e.target.value)}>{clients.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
-          <label>{t("agents.new.nameLabel")}<input value={name} onChange={(e) => setName(e.target.value)} required autoFocus placeholder={t("agents.new.namePlaceholder")} /></label>
+          <div className="flex flex-col gap-1.5"><Label htmlFor="agent-name">{t("agents.new.nameLabel")}</Label><Input id="agent-name" value={name} onChange={(e) => setName(e.target.value)} required autoFocus placeholder={t("agents.new.namePlaceholder")} /></div>
         </div>
-        <label>{t("agents.new.descriptionLabel")}<textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} placeholder={t("agents.new.descriptionPlaceholder")} /></label>
+        <div className="flex flex-col gap-1.5"><Label htmlFor="agent-description">{t("agents.new.descriptionLabel")}</Label><Textarea id="agent-description" value={description} onChange={(e) => setDescription(e.target.value)} rows={3} placeholder={t("agents.new.descriptionPlaceholder")} /></div>
       </div>}
 
       {step === 2 && <div className="wizard-fields">
         <div className="wizard-copy"><h2>{t("agents.wizard.promptTitle")}</h2><p>{t("agents.wizard.promptSubtitle")}</p></div>
-        <label>{t("agents.new.instructionsLabel")}<textarea value={instructions} onChange={(e) => setInstructions(e.target.value)} rows={10} placeholder={t("agents.new.instructionsPlaceholder")} /></label>
-        <label>{t("agents.new.personalityLabel")}<textarea value={personality} onChange={(e) => setPersonality(e.target.value)} rows={3} placeholder={t("agents.new.personalityPlaceholder")} /></label>
+        <div className="flex flex-col gap-1.5"><Label htmlFor="agent-instructions">{t("agents.new.instructionsLabel")}</Label><Textarea id="agent-instructions" value={instructions} onChange={(e) => setInstructions(e.target.value)} rows={10} placeholder={t("agents.new.instructionsPlaceholder")} /></div>
+        <div className="flex flex-col gap-1.5"><Label htmlFor="agent-personality">{t("agents.new.personalityLabel")}</Label><Textarea id="agent-personality" value={personality} onChange={(e) => setPersonality(e.target.value)} rows={3} placeholder={t("agents.new.personalityPlaceholder")} /></div>
         <div className="token-meter"><span><Sparkles size={13} /> {t("agents.wizard.tokens", { count: promptTokens.toLocaleString(lang) })}</span></div>
       </div>}
 
@@ -159,11 +163,11 @@ export default function NewAgentPage() {
     </section>
 
     <div className="wizard-nav">
-      <button className="button secondary" onClick={() => setStep((s) => Math.max(0, s - 1))} disabled={step === 0 || busy}><ArrowLeft size={16} /> {t("agents.wizard.back")}</button>
+      <Button variant="secondary" onClick={() => setStep((s) => Math.max(0, s - 1))} disabled={step === 0 || busy}><ArrowLeft size={16} /> {t("agents.wizard.back")}</Button>
       <span className="wizard-progress">{t("agents.wizard.stepOf", { n: step + 1, total: STEP_KEYS.length })}</span>
       {step < STEP_KEYS.length - 1
-        ? <button className="button primary" onClick={() => canNext && setStep((s) => s + 1)} disabled={!canNext}>{t("agents.wizard.next")} <ArrowRight size={16} /></button>
-        : <button className="button primary" onClick={create} disabled={busy || !name.trim()}>{busy ? <LoaderCircle className="spin" size={16} /> : <Check size={16} />} {t("agents.new.createAgent")}</button>}
+        ? <Button onClick={() => canNext && setStep((s) => s + 1)} disabled={!canNext}>{t("agents.wizard.next")} <ArrowRight size={16} /></Button>
+        : <Button onClick={create} disabled={busy || !name.trim()}>{busy ? <LoaderCircle className="spin" size={16} /> : <Check size={16} />} {t("agents.new.createAgent")}</Button>}
     </div>
   </div>;
 }

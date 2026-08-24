@@ -5,6 +5,9 @@ import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ArrowLeft, BadgeCheck, Bot, CheckCircle2, CircleAlert, ClipboardCopy, KeyRound, LoaderCircle, Plug, Power, RefreshCw, ShieldCheck, Smartphone, Webhook } from "lucide-react";
 import { Alert } from "@/components/ui";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { api, ApiError, messageFrom } from "@/lib/api";
 import { useT, type I18nKey } from "@/lib/i18n";
 import type { Client, WhatsAppCloudChannel } from "@/types";
@@ -24,8 +27,8 @@ function CopyField({ label, value }: { label: string; value: string }) {
     window.setTimeout(() => setCopied(false), 1600);
   }
   return <div className="wa-copy-field">
-    <label>{label}<input readOnly value={value} onFocus={(event) => event.currentTarget.select()} /></label>
-    <button type="button" className="button secondary" onClick={copy}><ClipboardCopy size={15} /> {copied ? t("clients.whatsappCloud.copied") : t("clients.whatsappCloud.copy")}</button>
+    <div className="flex flex-col gap-1.5"><Label>{label}</Label><Input readOnly value={value} onFocus={(event) => event.currentTarget.select()} /></div>
+    <Button type="button" variant="secondary" onClick={copy}><ClipboardCopy size={15} /> {copied ? t("clients.whatsappCloud.copied") : t("clients.whatsappCloud.copy")}</Button>
   </div>;
 }
 
@@ -103,17 +106,17 @@ export default function WhatsAppCloudChannelPage() {
       <section className="wa-panel"><div className="wa-panel-head"><span><Bot size={19} /></span><div><h2>{t("clients.whatsapp.assignedAgent")}</h2><p>{t("clients.whatsapp.assignedAgentCopy")}</p></div></div><div className="wa-agent-row"><label>{t("clients.whatsapp.agentToRespond")}<select value={agentId} onChange={(event) => setAgentId(event.target.value)} disabled={busy}><option value="">{t("clients.whatsapp.selectAgent")}</option>{client.agents.map((agent) => <option key={agent.id} value={agent.id}>{agent.name}{agent.is_active ? "" : t("clients.whatsapp.inactiveSuffix")}</option>)}</select></label></div>{!client.agents.length && <Alert>{t("clients.whatsapp.needsAgent")}</Alert>}</section>
       <section className="wa-panel"><div className="wa-panel-head"><span><KeyRound size={19} /></span><div><h2>{t("clients.whatsappCloud.credentialsTitle")}</h2><p>{t("clients.whatsappCloud.credentialsCopy")}</p></div></div>
         <div className="wa-cloud-form">
-          <label>{t("clients.whatsappCloud.phoneNumberIdLabel")}<input value={phoneNumberId} onChange={(event) => setPhoneNumberId(event.target.value)} disabled={busy} /></label>
-          <label>{t("clients.whatsappCloud.wabaIdLabel")}<input value={wabaId} onChange={(event) => setWabaId(event.target.value)} disabled={busy} /></label>
-          <label>{t("clients.whatsappCloud.accessTokenLabel")}<input type="password" value={accessToken} onChange={(event) => setAccessToken(event.target.value)} placeholder={channel?.has_access_token ? t("clients.whatsappCloud.secretSavedPlaceholder") : ""} disabled={busy} /></label>
-          <label>{t("clients.whatsappCloud.appSecretLabel")}<input type="password" value={appSecret} onChange={(event) => setAppSecret(event.target.value)} placeholder={channel?.has_app_secret ? t("clients.whatsappCloud.secretSavedPlaceholder") : ""} disabled={busy} /></label>
+          <div className="flex flex-col gap-1.5"><Label htmlFor="wa-phone-number-id">{t("clients.whatsappCloud.phoneNumberIdLabel")}</Label><Input id="wa-phone-number-id" value={phoneNumberId} onChange={(event) => setPhoneNumberId(event.target.value)} disabled={busy} /></div>
+          <div className="flex flex-col gap-1.5"><Label htmlFor="wa-waba-id">{t("clients.whatsappCloud.wabaIdLabel")}</Label><Input id="wa-waba-id" value={wabaId} onChange={(event) => setWabaId(event.target.value)} disabled={busy} /></div>
+          <div className="flex flex-col gap-1.5"><Label htmlFor="wa-access-token">{t("clients.whatsappCloud.accessTokenLabel")}</Label><Input id="wa-access-token" type="password" value={accessToken} onChange={(event) => setAccessToken(event.target.value)} placeholder={channel?.has_access_token ? t("clients.whatsappCloud.secretSavedPlaceholder") : ""} disabled={busy} /></div>
+          <div className="flex flex-col gap-1.5"><Label htmlFor="wa-app-secret">{t("clients.whatsappCloud.appSecretLabel")}</Label><Input id="wa-app-secret" type="password" value={appSecret} onChange={(event) => setAppSecret(event.target.value)} placeholder={channel?.has_app_secret ? t("clients.whatsappCloud.secretSavedPlaceholder") : ""} disabled={busy} /></div>
         </div>
         {channel?.status === "connected" && <div className="wa-connected"><div className="wa-phone"><Smartphone size={24} /><span><small>{t("clients.whatsapp.connectedNumber")}</small><strong>{channel.phone_number || channel.phone_number_id}</strong>{channel.display_name && <em>{channel.display_name}</em>}</span></div><div className="wa-ready"><CheckCircle2 size={18} /> {t("clients.whatsapp.readyForMessages")}</div></div>}
         {channel?.last_error && <Alert>{channel.last_error}</Alert>}
         <div className="wa-actions">
-          <button className="button secondary" onClick={saveOnly} disabled={!agentId || busy}>{t("clients.whatsappCloud.save")}</button>
-          <button className="button primary" onClick={saveAndConnect} disabled={!canConnect}>{busy ? <LoaderCircle className="spin" size={17} /> : <Plug size={17} />} {t("clients.whatsappCloud.connectVerify")}</button>
-          {channel?.status === "connected" && <button className="button danger" onClick={disconnect} disabled={busy}><Power size={17} /> {t("clients.whatsappCloud.disconnect")}</button>}
+          <Button variant="secondary" onClick={saveOnly} disabled={!agentId || busy}>{t("clients.whatsappCloud.save")}</Button>
+          <Button onClick={saveAndConnect} disabled={!canConnect}>{busy ? <LoaderCircle className="spin" size={17} /> : <Plug size={17} />} {t("clients.whatsappCloud.connectVerify")}</Button>
+          {channel?.status === "connected" && <Button variant="destructive" onClick={disconnect} disabled={busy}><Power size={17} /> {t("clients.whatsappCloud.disconnect")}</Button>}
         </div>
       </section>
       {channel && <section className="wa-panel"><div className="wa-panel-head"><span><Webhook size={19} /></span><div><h2>{t("clients.whatsappCloud.webhookTitle")}</h2><p>{t("clients.whatsappCloud.webhookCopy")}</p></div></div>

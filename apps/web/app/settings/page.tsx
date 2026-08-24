@@ -3,6 +3,9 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { CheckCircle2, Eye, EyeOff, ImagePlus, LoaderCircle, Save, ShieldCheck, Trash2 } from "lucide-react";
 import { PageHead } from "@/components/ui";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/toast";
 import { api, messageFrom } from "@/lib/api";
 import { useT, type TranslateFn } from "@/lib/i18n";
@@ -58,7 +61,7 @@ export default function SettingsPage() {
   if (!agency) return <div className="page-loading"><LoaderCircle className="spin" /> {t("settings.index.loading")}</div>;
   return <div className="page"><PageHead eyebrow={t("settings.index.eyebrow")} title={t("settings.index.title")} description={t("settings.index.description")} />
 
-    <form className="page-form" onSubmit={saveIdentity}><section className="form-section"><div className="section-copy"><h2>{t("settings.index.identityHeading")}</h2><p>{t("settings.index.identityCopy")}</p></div><div className="form-fields"><div className="logo-editor"><button type="button" className="logo-preview" onClick={() => fileRef.current?.click()}>{agency.logo_url ? <img src={`${agency.logo_url}?v=${logoVersion}`} alt={t("settings.index.logoAlt")} /> : <ImagePlus size={24} />}</button><div><strong>{t("settings.index.logoLabel")}</strong><small>{t("settings.index.logoHint")}</small><div><button type="button" className="text-button" onClick={() => fileRef.current?.click()}>{t("settings.index.change")}</button>{agency.logo_url && <button type="button" className="text-button danger-text" onClick={deleteLogo}><Trash2 size={14} /> {t("settings.index.remove")}</button>}</div></div><input ref={fileRef} hidden type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" onChange={(e) => uploadLogo(e.target.files?.[0])} /></div><div className="form-grid"><label>{t("settings.index.agencyName")}<input name="name" required defaultValue={agency.name} /></label><label>{t("settings.index.identifier")}<input name="slug" required defaultValue={agency.slug} /></label></div><label>{t("settings.index.brandColor")}<div className="color-input"><input type="color" name="brand_color" defaultValue={agency.brand_color} /><input defaultValue={agency.brand_color} readOnly /></div></label><button className="button primary align-start" disabled={busy}>{busy ? <LoaderCircle size={17} className="spin" /> : <Save size={17} />} {t("settings.index.saveIdentity")}</button></div></section></form>
+    <form className="page-form" onSubmit={saveIdentity}><section className="form-section"><div className="section-copy"><h2>{t("settings.index.identityHeading")}</h2><p>{t("settings.index.identityCopy")}</p></div><div className="form-fields"><div className="logo-editor"><button type="button" className="logo-preview" onClick={() => fileRef.current?.click()}>{agency.logo_url ? <img src={`${agency.logo_url}?v=${logoVersion}`} alt={t("settings.index.logoAlt")} /> : <ImagePlus size={24} />}</button><div><strong>{t("settings.index.logoLabel")}</strong><small>{t("settings.index.logoHint")}</small><div><button type="button" className="text-button" onClick={() => fileRef.current?.click()}>{t("settings.index.change")}</button>{agency.logo_url && <button type="button" className="text-button danger-text" onClick={deleteLogo}><Trash2 size={14} /> {t("settings.index.remove")}</button>}</div></div><input ref={fileRef} hidden type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" onChange={(e) => uploadLogo(e.target.files?.[0])} /></div><div className="form-grid"><div className="flex flex-col gap-1.5"><Label htmlFor="agency-name">{t("settings.index.agencyName")}</Label><Input id="agency-name" name="name" required defaultValue={agency.name} /></div><div className="flex flex-col gap-1.5"><Label htmlFor="agency-slug">{t("settings.index.identifier")}</Label><Input id="agency-slug" name="slug" required defaultValue={agency.slug} /></div></div><label>{t("settings.index.brandColor")}<div className="color-input"><input type="color" name="brand_color" defaultValue={agency.brand_color} /><input defaultValue={agency.brand_color} readOnly /></div></label><Button type="submit" className="align-start" disabled={busy}>{busy ? <LoaderCircle size={17} className="spin" /> : <Save size={17} />} {t("settings.index.saveIdentity")}</Button></div></section></form>
 
     <section className="section-block"><div className="section-heading"><div><h2>{t("settings.providers.heading")}</h2><p>{t("settings.providers.copy")}</p></div></div>
       <div className="security-note"><ShieldCheck size={20} /><span><strong>{t("settings.index.privateCredentials")}</strong> {t("settings.index.privateCredentialsCopy")}</span></div>
@@ -86,21 +89,22 @@ function ProviderKeyCard({ preset, state, busy, onSave, onRemove, t }: { preset:
           <div className="key-configured">
             <span className="key-configured-status"><CheckCircle2 size={18} /> {t("settings.providers.configured", { label: preset.label })}</span>
             <div className="key-configured-actions">
-              <button type="button" className="button ghost" disabled={busy} onClick={() => { setKey(""); setReplacing(true); }}>{t("settings.providers.replace")}</button>
-              <button type="button" className="button danger" disabled={busy} onClick={() => onRemove(preset.id)}><Trash2 size={15} /> {t("settings.providers.remove")}</button>
+              <Button type="button" variant="ghost" disabled={busy} onClick={() => { setKey(""); setReplacing(true); }}>{t("settings.providers.replace")}</Button>
+              <Button type="button" variant="destructive" disabled={busy} onClick={() => onRemove(preset.id)}><Trash2 size={15} /> {t("settings.providers.remove")}</Button>
             </div>
           </div>
         ) : (
           <>
-            <label>{t("settings.providers.apiKey", { label: preset.label })}
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="provider-key">{t("settings.providers.apiKey", { label: preset.label })}</Label>
               <div className="key-input">
-                <input type={reveal ? "text" : "password"} value={key} autoComplete="new-password" onChange={(e) => setKey(e.target.value)} placeholder={preset.keyPlaceholder} />
+                <Input id="provider-key" type={reveal ? "text" : "password"} value={key} autoComplete="new-password" onChange={(e) => setKey(e.target.value)} placeholder={preset.keyPlaceholder} />
                 <button type="button" className="reveal" onClick={() => setReveal((v) => !v)} aria-label={t(reveal ? "settings.providers.hide" : "settings.providers.reveal")}>{reveal ? <EyeOff size={16} /> : <Eye size={16} />}</button>
               </div>
-            </label>
+            </div>
             <div className="form-footer split">
-              {state?.configured ? <button type="button" className="button ghost" disabled={busy} onClick={() => { setKey(""); setReplacing(false); }}>{t("common.cancel")}</button> : <span />}
-              <button type="button" className="button primary" disabled={busy || !key.trim()} onClick={save}>{busy ? <LoaderCircle className="spin" size={16} /> : <Save size={16} />} {t("settings.providers.save")}</button>
+              {state?.configured ? <Button type="button" variant="ghost" disabled={busy} onClick={() => { setKey(""); setReplacing(false); }}>{t("common.cancel")}</Button> : <span />}
+              <Button type="button" disabled={busy || !key.trim()} onClick={save}>{busy ? <LoaderCircle className="spin" size={16} /> : <Save size={16} />} {t("settings.providers.save")}</Button>
             </div>
           </>
         )}

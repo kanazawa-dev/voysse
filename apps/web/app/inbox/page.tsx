@@ -3,6 +3,7 @@
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { BadgeCheck, FlaskConical, Globe, Inbox as InboxIcon, LoaderCircle, MessageCircle, Search, UserRound } from "lucide-react";
 import { PageHead } from "@/components/ui";
+import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/toast";
 import { api, messageFrom } from "@/lib/api";
 import { formatWhen, isNearBottom, isSameOpenThread } from "@/lib/datetime";
@@ -171,7 +172,7 @@ export default function InboxPage() {
 
     <div className="inbox-layout">
       <aside className="inbox-list" onScroll={onScroll}>
-        <div className="inbox-search"><Search size={16} /><input value={searchInput} onChange={(e) => setSearchInput(e.target.value)} placeholder={t("inbox.searchPlaceholder")} /></div>
+        <div className="inbox-search"><Search size={16} /><Input value={searchInput} onChange={(e) => setSearchInput(e.target.value)} placeholder={t("inbox.searchPlaceholder")} /></div>
         <div className="inbox-tabs">
           <button className={tab === "all" ? "active" : ""} onClick={() => setTab("all")}>{t("inbox.tabAll")}</button>
           <button className={tab === "unread" ? "active" : ""} onClick={() => setTab("unread")}>{t("inbox.tabUnread")}</button>

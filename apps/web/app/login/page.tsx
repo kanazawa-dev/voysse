@@ -6,6 +6,9 @@ import { Bot, Building2, LoaderCircle, MessageSquareText, ShieldCheck } from "lu
 import { api, messageFrom } from "@/lib/api";
 import { useT } from "@/lib/i18n";
 import { Alert } from "@/components/ui";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export default function LoginPage() {
   const t = useT();
@@ -62,13 +65,25 @@ export default function LoginPage() {
             </div>
             <form onSubmit={submit} className="access-form">
               {mode === "register" && <>
-                <label>{t("auth.agencyName")}<input name="agency_name" required minLength={2} placeholder={t("auth.agencyNamePlaceholder")} /></label>
-                <label>{t("auth.yourName")}<input name="name" required minLength={2} placeholder={t("auth.yourNamePlaceholder")} /></label>
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="agency_name">{t("auth.agencyName")}</Label>
+                  <Input id="agency_name" name="agency_name" required minLength={2} placeholder={t("auth.agencyNamePlaceholder")} />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="name">{t("auth.yourName")}</Label>
+                  <Input id="name" name="name" required minLength={2} placeholder={t("auth.yourNamePlaceholder")} />
+                </div>
               </>}
-              <label>{t("auth.email")}<input name="email" required type="email" placeholder={t("auth.emailPlaceholder")} /></label>
-              <label>{t("auth.password")}<input name="password" required type="password" minLength={8} placeholder={t("auth.passwordPlaceholder")} /></label>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="email">{t("auth.email")}</Label>
+                <Input id="email" name="email" required type="email" placeholder={t("auth.emailPlaceholder")} />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="password">{t("auth.password")}</Label>
+                <Input id="password" name="password" required type="password" minLength={8} placeholder={t("auth.passwordPlaceholder")} />
+              </div>
               {error && <Alert>{error}</Alert>}
-              <button className="button primary full" disabled={busy}>{busy && <LoaderCircle className="spin" size={17} />}{mode === "register" ? t("auth.submitRegister") : t("auth.submitLogin")}</button>
+              <Button type="submit" className="w-full" disabled={busy}>{busy && <LoaderCircle className="spin" size={17} />}{mode === "register" ? t("auth.submitRegister") : t("auth.submitLogin")}</Button>
             </form>
             <p className="access-security"><ShieldCheck size={14} /> {t("auth.securityNote")}</p>
           </div>
