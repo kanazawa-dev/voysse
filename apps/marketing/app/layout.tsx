@@ -8,8 +8,8 @@ const ibmPlexSansHeading = IBM_Plex_Sans({ subsets: ["latin"], variable: "--font
 const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-mono" });
 
 export const metadata: Metadata = {
-  title: "Openvoiss — Open source AI agents for your agency",
-  description: "Self-hosted platform to build and manage AI agents for your clients. MIT licensed.",
+  title: "Openvoiss — Source-available AI agents for your agency",
+  description: "Self-hosted platform to build and manage AI agents for your clients. FSL-1.1-MIT licensed.",
   icons: { icon: "/brand/only-logo.png", apple: "/brand/only-logo.png" },
 };
 

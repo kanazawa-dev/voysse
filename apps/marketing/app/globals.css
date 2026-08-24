@@ -132,9 +132,37 @@
   to { transform: translateX(-50%); }
 }
 
+@keyframes marketing-hero-cursor {
+  0%, 4% { top: 35%; left: 9%; opacity: 0; }
+  10% { opacity: 1; }
+  16%, 30% { top: 35%; left: 9%; opacity: 1; }
+  44%, 68% { top: 60%; left: 40%; opacity: 1; }
+  84%, 92% { top: 35%; left: 9%; opacity: 1; }
+  96%, 100% { top: 35%; left: 9%; opacity: 0; }
+}
+
+@keyframes marketing-hero-click-nav {
+  0%, 18% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+  23% { opacity: 0.7; transform: translate(-50%, -50%) scale(0.9); }
+  37%, 100% { opacity: 0; transform: translate(-50%, -50%) scale(1.8); }
+}
+
+.marketing-hero-cursor {
+  animation: marketing-hero-cursor 9s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+
+.marketing-hero-click-nav {
+  animation: marketing-hero-click-nav 9s ease-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .marketing-marquee-track {
     animation: none !important;
+  }
+  .marketing-hero-cursor,
+  .marketing-hero-click-nav {
+    animation: none !important;
+    opacity: 0 !important;
   }
 }
 
@@ -143,4 +171,6 @@
   .openvoiss-brand canvas { display: none !important; }
   .grainient-container canvas { display: none !important; }
   .marketing-marquee-track { animation: none !important; }
+  .marketing-hero-cursor,
+  .marketing-hero-click-nav { display: none !important; }
 }

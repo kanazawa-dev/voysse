@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ArrowRight,
   Bot,
@@ -17,10 +17,12 @@ import {
   Menu,
   MessageCircle,
   MessageSquareText,
+  MousePointer2,
   Radio,
   Server,
   Settings,
   Sparkles,
+  UserRound,
   Wallet,
   Wrench,
 } from "lucide-react";
@@ -28,6 +30,9 @@ import { useT } from "@/lib/i18n";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import Grainient from "@/components/grainient";
 import { OpenvoissBrand } from "@/components/openvoiss-brand";
+import { Safari } from "@/components/ui/safari";
+import { AnimatedSpan, Terminal, TypingAnimation } from "@/components/ui/terminal";
+import { BorderBeam } from "@/components/ui/border-beam";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -39,12 +44,18 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { BentoCard, BentoGrid } from "@/components/ui/bento-grid";
 import { cn } from "@/lib/utils";
 
 type TabId = "agents" | "knowledge" | "tools" | "channels";
 
 const TAB_IDS: TabId[] = ["agents", "knowledge", "tools", "channels"];
+const BENTO_SPAN: Record<TabId, string> = {
+  agents: "col-span-1 sm:col-span-2 sm:row-span-2",
+  knowledge: "col-span-1",
+  tools: "col-span-1",
+  channels: "col-span-1 sm:col-span-3",
+};
 const TAB_ICONS: Record<TabId, typeof MessageSquareText> = {
   agents: MessageSquareText,
   knowledge: BookOpen,
@@ -107,8 +118,24 @@ export default function LandingPage() {
   // the dashboard is deployed on a different origin than the marketing site
   // (e.g. https://app.openvoiss.com).
   const appUrl = (process.env.NEXT_PUBLIC_APP_URL || "").replace(/\/$/, "");
-  const [activeTab, setActiveTab] = useState<TabId>("agents");
   const [openFaq, setOpenFaq] = useState<Set<number>>(new Set());
+  const [heroActiveNav, setHeroActiveNav] = useState<"home" | "playground">("home");
+
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    let revertTimer: ReturnType<typeof setTimeout>;
+    const click = () => {
+      setHeroActiveNav("playground");
+      revertTimer = setTimeout(() => setHeroActiveNav("home"), 6480);
+    };
+    const firstClick = setTimeout(click, 2070);
+    const loop = setInterval(click, 9000);
+    return () => {
+      clearTimeout(firstClick);
+      clearInterval(loop);
+      clearTimeout(revertTimer);
+    };
+  }, []);
 
   const resourceLinks: NavRow[] = [
     { href: "#channels", icon: MessageCircle, title: t("welcome.nav.channels"), desc: t("welcome.nav.resourcesMenu.channelsDesc") },
@@ -172,10 +199,10 @@ export default function LandingPage() {
 
           <div className="flex shrink-0 items-center gap-1 sm:gap-2">
             <LanguageSwitcher />
-            <Button className="hidden sm:inline-flex" variant="outline" size="sm" render={<a href="https://github.com/kanazawa-dev/openvoiss" />}>
+            <Button className="hidden sm:inline-flex" variant="outline" size="sm" render={<a href="https://github.com/kanazawa-dev/openvoiss" />} nativeButton={false}>
               <Github className="size-4" /> <span className="hidden xl:inline">GitHub</span>
             </Button>
-            <Button className="hidden min-[370px]:inline-flex" size="sm" render={<a href={`${appUrl}/login`} />}>
+            <Button className="hidden min-[370px]:inline-flex" size="sm" render={<a href={`${appUrl}/login`} />} nativeButton={false}>
               {t("welcome.nav.getStarted")}
             </Button>
           </div>
@@ -193,57 +220,123 @@ export default function LandingPage() {
             </h1>
             <p className="mt-8 max-w-2xl text-base leading-7 text-muted-foreground sm:text-lg">{t("welcome.hero.sub")}</p>
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-              <Button className={ctaClass} render={<a href={`${appUrl}/login`} />}>
+              <Button className={ctaClass} render={<a href={`${appUrl}/login`} />} nativeButton={false}>
                 {t("welcome.nav.getStarted")} <ArrowRight className="size-4" />
               </Button>
-              <Button className={ctaClass} variant="secondary" render={<a href="https://openvoiss.com/docs/getting-started" />}>
+              <Button className={ctaClass} variant="secondary" render={<a href="https://openvoiss.com/docs/getting-started" />} nativeButton={false}>
                 {t("welcome.hero.readDocs")}
               </Button>
             </div>
             <p className="mt-4 text-xs text-muted-foreground">{t("welcome.hero.note")}</p>
 
-            <div className="mt-12 w-full lg:mt-16">
-              <Card className="mx-auto w-full max-w-[960px] gap-0 overflow-hidden py-0 text-left shadow-2xl shadow-foreground/10">
-                <div className="flex items-center gap-2 border-b bg-muted/60 px-4 py-3" aria-hidden="true">
-                  <span className="size-2.5 rounded-full bg-foreground/15" /><span className="size-2.5 rounded-full bg-foreground/15" /><span className="size-2.5 rounded-full bg-foreground/15" />
-                  <span className="mx-auto rounded-2xl bg-background/80 px-4 py-1 font-mono text-[11px] text-muted-foreground">app.openvoiss.com</span>
-                </div>
-                <div className="grid min-h-[340px] md:grid-cols-[200px_1fr]">
-                  <div className="flex flex-row flex-wrap gap-1 bg-foreground p-3 text-background md:flex-col md:p-4">
+            <div className="relative mt-12 w-full [perspective:1400px] lg:mt-16">
+              <div
+                className="absolute inset-x-6 top-6 -z-10 h-[560px] rounded-[3rem] bg-primary/30 blur-3xl sm:inset-x-16"
+                aria-hidden="true"
+              />
+              <Safari
+                url="app.openvoiss.com"
+                mode="simple"
+                className={cn(
+                  "group mx-auto w-full max-w-[1060px] origin-top text-left",
+                  "drop-shadow-2xl",
+                  "transition-transform duration-700 ease-out will-change-transform",
+                  "[transform:rotateX(14deg)_scale(0.94)] hover:[transform:rotateX(2deg)_scale(1)]",
+                  "[mask-image:linear-gradient(to_bottom,black_78%,transparent_100%)]",
+                  "[-webkit-mask-image:linear-gradient(to_bottom,black_78%,transparent_100%)]",
+                )}
+              >
+                <div className="relative grid h-full md:grid-cols-[212px_1fr]">
+                  <div className="flex flex-row flex-wrap gap-1 border-sidebar-border bg-sidebar p-3 text-sidebar-foreground md:flex-col md:border-r md:p-4">
                     <div className="flex min-h-9 items-center px-1 pb-2 md:pb-3"><OpenvoissBrand decorative size={20} /></div>
-                    <span className="flex items-center gap-2 rounded-xl bg-primary/20 px-2.5 py-2 text-xs text-background"><LayoutDashboard className="size-3.5" /> {t("nav.home")}</span>
-                    <span className="flex items-center gap-2 rounded-xl px-2.5 py-2 text-xs text-background/65"><Building2 className="size-3.5" /> {t("nav.clients")}</span>
-                    <span className="flex items-center gap-2 rounded-xl px-2.5 py-2 text-xs text-background/65"><Bot className="size-3.5" /> {t("nav.agents")}</span>
-                    <span className="flex items-center gap-2 rounded-xl px-2.5 py-2 text-xs text-background/65"><Inbox className="size-3.5" /> {t("nav.inbox")}</span>
-                    <span className="flex items-center gap-2 rounded-xl px-2.5 py-2 text-xs text-background/65"><MessageSquareText className="size-3.5" /> {t("nav.playground")}</span>
-                    <span className="flex items-center gap-2 rounded-xl px-2.5 py-2 text-xs text-background/65"><Radio className="size-3.5" /> {t("nav.channels")}</span>
-                    <span className="flex items-center gap-2 rounded-xl px-2.5 py-2 text-xs text-background/65"><Settings className="size-3.5" /> {t("nav.settings")}</span>
+                    {(
+                      [
+                        { key: "home" as const, icon: LayoutDashboard, label: t("nav.home") },
+                        { key: "clients" as const, icon: Building2, label: t("nav.clients") },
+                        { key: "agents" as const, icon: Bot, label: t("nav.agents") },
+                        { key: "inbox" as const, icon: Inbox, label: t("nav.inbox") },
+                        { key: "playground" as const, icon: MessageSquareText, label: t("nav.playground") },
+                        { key: "channels" as const, icon: Radio, label: t("nav.channels") },
+                        { key: "settings" as const, icon: Settings, label: t("nav.settings") },
+                      ]
+                    ).map((item) => (
+                      <span
+                        key={item.key}
+                        className={cn(
+                          "flex items-center gap-2 rounded-xl px-3 py-2 text-sm transition-colors",
+                          item.key === heroActiveNav
+                            ? "bg-sidebar-accent font-medium text-sidebar-accent-foreground"
+                            : "text-sidebar-foreground/70",
+                        )}
+                      >
+                        <item.icon className="size-4" /> {item.label}
+                      </span>
+                    ))}
                   </div>
-                  <div className="p-5 sm:p-6">
-                    <h3 className="font-heading text-lg font-medium">{t("welcome.hero.dashboard.title")}</h3>
-                    <p className="mt-1 text-xs text-muted-foreground">{t("welcome.hero.dashboard.subtitle")}</p>
-                    <div className="mt-5 grid gap-3 sm:grid-cols-3">
-                      <Card size="sm" className="gap-1 rounded-2xl bg-muted/40 py-3 shadow-none"><CardContent><span className="block text-[10px] tracking-wide text-muted-foreground uppercase">{t("welcome.hero.dashboard.statAgentsLabel")}</span><strong className="mt-1 block text-lg">{t("welcome.hero.dashboard.statAgentsValue")}</strong></CardContent></Card>
-                      <Card size="sm" className="gap-1 rounded-2xl bg-muted/40 py-3 shadow-none"><CardContent><span className="block text-[10px] tracking-wide text-muted-foreground uppercase">{t("welcome.hero.dashboard.statConvLabel")}</span><strong className="mt-1 block text-lg">{t("welcome.hero.dashboard.statConvValue")}</strong></CardContent></Card>
-                      <Card size="sm" className="gap-1 rounded-2xl bg-muted/40 py-3 shadow-none"><CardContent><span className="block text-[10px] tracking-wide text-muted-foreground uppercase">{t("welcome.hero.dashboard.statResponseLabel")}</span><strong className="mt-1 block text-lg">{t("welcome.hero.dashboard.statResponseValue")}</strong></CardContent></Card>
+                  <div className="relative h-full">
+                    <div
+                      className={cn(
+                        "absolute inset-0 p-5 transition-opacity duration-500 sm:p-8",
+                        heroActiveNav === "playground" ? "pointer-events-none opacity-0" : "opacity-100",
+                      )}
+                    >
+                      <h3 className="font-heading text-lg font-medium">{t("welcome.hero.dashboard.title")}</h3>
+                      <p className="mt-1 text-xs text-muted-foreground">{t("welcome.hero.dashboard.subtitle")}</p>
+                      <div className="mt-6 grid gap-3 sm:grid-cols-3">
+                        <Card size="sm" className="gap-1 rounded-2xl bg-muted/40 py-3 shadow-none"><CardContent><span className="block text-[10px] tracking-wide text-muted-foreground uppercase">{t("welcome.hero.dashboard.statAgentsLabel")}</span><strong className="mt-1 block text-lg">{t("welcome.hero.dashboard.statAgentsValue")}</strong></CardContent></Card>
+                        <Card size="sm" className="gap-1 rounded-2xl bg-muted/40 py-3 shadow-none"><CardContent><span className="block text-[10px] tracking-wide text-muted-foreground uppercase">{t("welcome.hero.dashboard.statConvLabel")}</span><strong className="mt-1 block text-lg">{t("welcome.hero.dashboard.statConvValue")}</strong></CardContent></Card>
+                        <Card size="sm" className="gap-1 rounded-2xl bg-muted/40 py-3 shadow-none"><CardContent><span className="block text-[10px] tracking-wide text-muted-foreground uppercase">{t("welcome.hero.dashboard.statResponseLabel")}</span><strong className="mt-1 block text-lg">{t("welcome.hero.dashboard.statResponseValue")}</strong></CardContent></Card>
+                      </div>
+                      <div className="mt-6 overflow-hidden rounded-2xl border">
+                        <Table>
+                          <TableHeader><TableRow className="bg-muted/50 hover:bg-muted/50"><TableHead>{t("welcome.hero.dashboard.colClient")}</TableHead><TableHead>{t("welcome.hero.dashboard.colAgent")}</TableHead><TableHead /></TableRow></TableHeader>
+                          <TableBody>
+                            {([1, 2, 3] as const).map((row) => (
+                              <TableRow key={row}>
+                                <TableCell><span className="flex items-center gap-2 font-medium"><span className="grid size-6 place-items-center rounded-full bg-primary/30 text-[10px] text-primary-foreground">{t(`welcome.hero.dashboard.row${row}Client`).slice(0, 1)}</span>{t(`welcome.hero.dashboard.row${row}Client`)}</span></TableCell>
+                                <TableCell>{t(`welcome.hero.dashboard.row${row}Agent`)}</TableCell>
+                                <TableCell className="text-right"><Badge variant={row === 2 ? "secondary" : "default"}>{t(`welcome.hero.dashboard.row${row}Status`)}</Badge></TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
                     </div>
-                    <div className="mt-5 overflow-hidden rounded-2xl border">
-                      <Table>
-                        <TableHeader><TableRow className="bg-muted/50 hover:bg-muted/50"><TableHead>{t("welcome.hero.dashboard.colClient")}</TableHead><TableHead>{t("welcome.hero.dashboard.colAgent")}</TableHead><TableHead /></TableRow></TableHeader>
-                        <TableBody>
-                          {([1, 2, 3] as const).map((row) => (
-                            <TableRow key={row}>
-                              <TableCell><span className="flex items-center gap-2 font-medium"><span className="grid size-6 place-items-center rounded-full bg-primary/30 text-[10px] text-primary-foreground">{t(`welcome.hero.dashboard.row${row}Client`).slice(0, 1)}</span>{t(`welcome.hero.dashboard.row${row}Client`)}</span></TableCell>
-                              <TableCell>{t(`welcome.hero.dashboard.row${row}Agent`)}</TableCell>
-                              <TableCell className="text-right"><Badge variant={row === 2 ? "secondary" : "default"}>{t(`welcome.hero.dashboard.row${row}Status`)}</Badge></TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
+
+                    <div
+                      className={cn(
+                        "absolute inset-0 p-5 transition-opacity duration-500 sm:p-8",
+                        heroActiveNav === "playground" ? "opacity-100" : "pointer-events-none opacity-0",
+                      )}
+                    >
+                      <h3 className="font-heading text-lg font-medium">{t("nav.playground")}</h3>
+                      <p className="mt-1 text-xs text-muted-foreground">{t("welcome.hero.playgroundMock.subtitle")}</p>
+                      <div className="mt-6 flex items-center gap-3 rounded-2xl border bg-muted/40 px-4 py-3">
+                        <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"><Bot className="size-4" /></span>
+                        <div>
+                          <strong className="block text-sm">{t("welcome.hero.dashboard.row1Agent")}</strong>
+                          <span className="flex items-center gap-1.5 text-xs text-muted-foreground"><span className="size-1.5 rounded-full bg-emerald-500" />{t("welcome.hero.playgroundMock.modelConfigured")}</span>
+                        </div>
+                      </div>
+                      <div className="mt-6 space-y-4">
+                        <div className="flex flex-row-reverse gap-3">
+                          <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary"><UserRound className="size-4" /></span>
+                          <div className="max-w-[75%] rounded-xl border bg-background p-3 text-sm shadow-sm">{t("welcome.hero.playgroundMock.userMsg")}</div>
+                        </div>
+                        <div className="flex gap-3">
+                          <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary"><Bot className="size-4" /></span>
+                          <div className="max-w-[75%] rounded-xl border bg-background p-3 text-sm shadow-sm">{t("welcome.hero.playgroundMock.agentMsg")}</div>
+                        </div>
+                      </div>
                     </div>
+                  </div>
+
+                  <div className="pointer-events-none absolute inset-0 hidden sm:block" aria-hidden="true">
+                    <span className="marketing-hero-click-nav absolute top-[35%] left-[9%] size-8 rounded-full border-2 border-primary" />
+                    <MousePointer2 className="marketing-hero-cursor absolute z-10 size-5 fill-white text-black drop-shadow-[0_1px_4px_rgba(0,0,0,0.55)]" />
                   </div>
                 </div>
-              </Card>
+              </Safari>
             </div>
           </div>
         </section>
@@ -270,33 +363,67 @@ export default function LandingPage() {
               <h2 className="font-heading text-3xl font-semibold tracking-tight sm:text-4xl">{t("welcome.features.title")}</h2>
               <p className="text-base leading-7 text-muted-foreground">{t("welcome.features.sub")}</p>
             </div>
-            <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as TabId)} className="grid gap-4 lg:grid-cols-[.8fr_1.2fr]">
-              <TabsList className="grid h-auto w-full grid-cols-2 justify-start gap-2 rounded-none bg-transparent p-1 lg:flex lg:flex-col lg:items-stretch">
-                {TAB_IDS.map((id) => {
-                  const Icon = TAB_ICONS[id];
-                  return (
-                    <TabsTrigger key={id} value={id} className="h-auto w-full min-w-0 flex-none justify-start gap-3 rounded-2xl p-3 text-left data-active:bg-foreground data-active:text-background sm:p-4 lg:w-full">
-                      <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary/20 text-primary-foreground"><Icon className="size-4" /></span>
-                      <span><strong className="block font-medium">{t(`welcome.tabs.${id}.label`)}</strong><span className="mt-0.5 block text-xs opacity-70">{t(`welcome.tabs.${id}.sub`)}</span></span>
-                    </TabsTrigger>
-                  );
-                })}
-              </TabsList>
-              <TabsContent value={activeTab} className="min-h-full">
-                <Card className="relative isolate h-full min-h-[360px] justify-center border-0 bg-primary text-primary-foreground ring-primary/20">
-                  <GrainLayer />
-                  <CardHeader className="relative z-10"><CardTitle className="text-2xl sm:text-3xl">{t(`welcome.panels.${activeTab}.title`)}</CardTitle></CardHeader>
-                  <CardContent className="relative z-10 space-y-6">
-                    <p className="max-w-xl text-base leading-7 text-primary-foreground/80">{t(`welcome.panels.${activeTab}.body`)}</p>
-                    <ul className="space-y-3">
-                      <li className="flex gap-3"><Check className="mt-0.5 size-4 shrink-0" /> {t(`welcome.panels.${activeTab}.p1`)}</li>
-                      <li className="flex gap-3"><Check className="mt-0.5 size-4 shrink-0" /> {t(`welcome.panels.${activeTab}.p2`)}</li>
-                      <li className="flex gap-3"><Check className="mt-0.5 size-4 shrink-0" /> {t(`welcome.panels.${activeTab}.p3`)}</li>
-                    </ul>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
+            <BentoGrid className="auto-rows-[minmax(16rem,auto)] grid-cols-1 gap-4 sm:grid-cols-3">
+              {TAB_IDS.map((id) => {
+                const Icon = TAB_ICONS[id];
+                const isAgents = id === "agents";
+                return (
+                  <BentoCard
+                    key={id}
+                    name={isAgents ? t(`welcome.panels.${id}.title`) : t(`welcome.tabs.${id}.label`)}
+                    description={isAgents ? t(`welcome.panels.${id}.body`) : t(`welcome.tabs.${id}.sub`)}
+                    Icon={Icon}
+                    className={BENTO_SPAN[id]}
+                    background={<Icon aria-hidden="true" className="pointer-events-none absolute -top-8 -right-8 size-40 text-primary/5" />}
+                  >
+                    {id === "agents" ? (
+                      <>
+                        <ul className="mt-4 space-y-2.5">
+                          <li className="flex gap-2.5 text-sm text-foreground"><Check className="mt-0.5 size-4 shrink-0 text-primary" /> {t(`welcome.panels.${id}.p1`)}</li>
+                          <li className="flex gap-2.5 text-sm text-foreground"><Check className="mt-0.5 size-4 shrink-0 text-primary" /> {t(`welcome.panels.${id}.p2`)}</li>
+                          <li className="flex gap-2.5 text-sm text-foreground"><Check className="mt-0.5 size-4 shrink-0 text-primary" /> {t(`welcome.panels.${id}.p3`)}</li>
+                        </ul>
+                        <div className="mt-5 flex flex-wrap gap-2">
+                          <Badge variant="secondary" className="font-mono text-[11px] font-normal">gpt-4o-mini</Badge>
+                          <Badge variant="secondary" className="font-mono text-[11px] font-normal">temp 0.7</Badge>
+                          <Badge variant="secondary" className="font-mono text-[11px] font-normal">vision on</Badge>
+                        </div>
+                      </>
+                    ) : null}
+                    {id === "knowledge" ? (
+                      <div className="mt-4 space-y-2">
+                        {["Pricing.pdf", "Onboarding.pdf"].map((file) => (
+                          <div key={file} className="flex items-center gap-2 rounded-lg border bg-muted/30 px-2.5 py-2 text-xs">
+                            <FileText className="size-3.5 shrink-0 text-muted-foreground" />
+                            <span className="flex-1 truncate">{file}</span>
+                            <span className="size-1.5 shrink-0 rounded-full bg-emerald-500" />
+                          </div>
+                        ))}
+                      </div>
+                    ) : null}
+                    {id === "tools" ? (
+                      <div className="mt-4 space-y-2">
+                        <div className="flex items-center gap-2 rounded-lg border bg-muted/30 px-2.5 py-2 font-mono text-xs">
+                          <Badge variant="secondary" className="px-1.5 py-0 text-[10px] font-normal">POST</Badge>
+                          <span className="truncate text-muted-foreground">/webhook/order-created</span>
+                        </div>
+                        <div className="flex items-center gap-2 rounded-lg border bg-muted/30 px-2.5 py-2 font-mono text-xs">
+                          <Badge variant="secondary" className="px-1.5 py-0 text-[10px] font-normal">GET</Badge>
+                          <span className="truncate text-muted-foreground">/crm/customer/:id</span>
+                        </div>
+                      </div>
+                    ) : null}
+                    {id === "channels" ? (
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        <span className="inline-flex items-center gap-2 rounded-full border bg-muted/30 py-1.5 pr-3 pl-1.5 text-xs font-medium"><span className="grid size-5 place-items-center rounded-full bg-emerald-500/15 text-emerald-600"><Radio className="size-3" /></span>WhatsApp Cloud API</span>
+                        <span className="inline-flex items-center gap-2 rounded-full border bg-muted/30 py-1.5 pr-3 pl-1.5 text-xs font-medium"><span className="grid size-5 place-items-center rounded-full bg-emerald-500/15 text-emerald-600"><Radio className="size-3" /></span>WhatsApp QR</span>
+                        <span className="inline-flex items-center gap-2 rounded-full border bg-muted/30 py-1.5 pr-3 pl-1.5 text-xs font-medium"><span className="grid size-5 place-items-center rounded-full bg-primary/15 text-primary"><MessageCircle className="size-3" /></span>Web widget</span>
+                      </div>
+                    ) : null}
+                  </BentoCard>
+                );
+              })}
+            </BentoGrid>
           </div>
         </section>
 
@@ -307,40 +434,93 @@ export default function LandingPage() {
               <h2 className="font-heading text-3xl font-semibold tracking-tight sm:text-4xl">{t("welcome.ops.title")}</h2>
               <p className="text-base leading-7 text-muted-foreground">{t("welcome.ops.sub")}</p>
             </div>
-            <div className="grid gap-5 md:grid-cols-3">
-              <Card className="transition-transform duration-200 hover:-translate-y-1">
-                <CardHeader><span className="mb-3 grid size-11 place-items-center rounded-2xl bg-primary/20 text-primary-foreground"><Inbox className="size-5" /></span><CardTitle className="text-lg">{t("welcome.ops.inbox.title")}</CardTitle></CardHeader>
-                <CardContent><p className="leading-6 text-muted-foreground">{t("welcome.ops.inbox.body")}</p></CardContent>
-              </Card>
-              <Card className="transition-transform duration-200 hover:-translate-y-1">
-                <CardHeader><span className="mb-3 grid size-11 place-items-center rounded-2xl bg-primary/20 text-primary-foreground"><Globe className="size-5" /></span><CardTitle className="text-lg">{t("welcome.ops.portals.title")}</CardTitle></CardHeader>
-                <CardContent><p className="leading-6 text-muted-foreground">{t("welcome.ops.portals.body")}</p></CardContent>
-              </Card>
-              <Card className="transition-transform duration-200 hover:-translate-y-1">
-                <CardHeader><span className="mb-3 grid size-11 place-items-center rounded-2xl bg-primary/20 text-primary-foreground"><Building2 className="size-5" /></span><CardTitle className="text-lg">{t("welcome.ops.whitelabel.title")}</CardTitle></CardHeader>
-                <CardContent><p className="leading-6 text-muted-foreground">{t("welcome.ops.whitelabel.body")}</p></CardContent>
-              </Card>
-            </div>
+            <BentoGrid className="auto-rows-[minmax(20rem,auto)] grid-cols-1 gap-4 sm:grid-cols-3">
+              <BentoCard
+                name={t("welcome.ops.inbox.title")}
+                description={t("welcome.ops.inbox.body")}
+                Icon={Inbox}
+                className="col-span-1"
+                background={<Inbox aria-hidden="true" className="pointer-events-none absolute -top-8 -right-8 size-40 text-primary/5" />}
+              >
+                <div className="mt-4 space-y-2">
+                  <div className="flex items-center justify-between gap-2 rounded-lg border bg-muted/30 px-2.5 py-2 text-xs">
+                    <span className="flex min-w-0 items-center gap-2">
+                      <span className="grid size-5 shrink-0 place-items-center rounded-full bg-primary/30 text-[10px] font-medium text-primary-foreground">N</span>
+                      <span className="truncate">Nova Studio</span>
+                    </span>
+                    <Badge className="shrink-0 px-1.5 py-0 text-[10px] font-normal">3</Badge>
+                  </div>
+                  <div className="flex items-center justify-between gap-2 rounded-lg border bg-muted/30 px-2.5 py-2 text-xs">
+                    <span className="flex min-w-0 items-center gap-2">
+                      <span className="grid size-5 shrink-0 place-items-center rounded-full bg-primary/30 text-[10px] font-medium text-primary-foreground">B</span>
+                      <span className="truncate">Bright Bakery</span>
+                    </span>
+                    <span className="shrink-0 text-muted-foreground">2m</span>
+                  </div>
+                </div>
+              </BentoCard>
+              <BentoCard
+                name={t("welcome.ops.portals.title")}
+                description={t("welcome.ops.portals.body")}
+                Icon={Globe}
+                className="col-span-1"
+                background={<Globe aria-hidden="true" className="pointer-events-none absolute -top-8 -right-8 size-40 text-primary/5" />}
+              >
+                <div className="mt-4 flex items-center gap-2 rounded-lg border bg-muted/30 px-3 py-2 font-mono text-xs">
+                  <Globe className="size-3.5 shrink-0 text-muted-foreground" />
+                  <span className="flex-1 truncate">portal.novastudio.com</span>
+                  <span className="size-1.5 shrink-0 rounded-full bg-emerald-500" />
+                </div>
+              </BentoCard>
+              <BentoCard
+                name={t("welcome.ops.whitelabel.title")}
+                description={t("welcome.ops.whitelabel.body")}
+                Icon={Building2}
+                className="col-span-1"
+                background={<Building2 aria-hidden="true" className="pointer-events-none absolute -top-8 -right-8 size-40 text-primary/5" />}
+              >
+                <div className="mt-4 flex items-center gap-2 rounded-lg border bg-muted/30 px-3 py-2 text-xs">
+                  <span className="flex shrink-0">
+                    <span className="size-4 rounded-full bg-primary ring-2 ring-background" />
+                    <span className="-ml-2 size-4 rounded-full bg-foreground ring-2 ring-background" />
+                  </span>
+                  <span className="flex-1 truncate">Nova Studio brand</span>
+                </div>
+              </BentoCard>
+            </BentoGrid>
           </div>
         </section>
 
         <section className="pb-14 md:pb-20 lg:pb-24" id="open-source">
           <div className={containerClass}>
-            <Card className="relative isolate grid gap-10 border-0 bg-primary px-2 py-8 text-primary-foreground ring-primary/20 sm:px-6 lg:grid-cols-[1.1fr_.9fr] lg:items-center lg:px-10 lg:py-12">
+            <Card className="relative isolate grid gap-10 border-0 bg-primary px-2 py-8 text-primary-foreground ring-primary/20 sm:px-6 lg:grid-cols-[1fr_1fr] lg:items-center lg:px-10 lg:py-12">
               <GrainLayer />
               <div className="relative z-10 px-5">
                 <Eyebrow inverse>{t("welcome.stack.eyebrow")}</Eyebrow>
                 <h2 className="mt-4 font-heading text-3xl font-semibold tracking-tight sm:text-4xl">{t("welcome.stack.title")}</h2>
                 <p className="mt-6 max-w-xl text-base leading-7 text-primary-foreground/80">{t("welcome.stack.body")}</p>
                 <div className="mt-7 flex flex-wrap gap-3">
-                  <Button className={ctaClass} render={<a href="https://openvoiss.com/docs/self-hosting" />}>{t("welcome.stack.guideBtn")}</Button>
-                  <Button className={ctaClass} variant="secondary" render={<a href="https://openvoiss.com/docs/architecture" />}>{t("welcome.stack.archBtn")}</Button>
+                  <Button className={ctaClass} render={<a href="https://openvoiss.com/docs/self-hosting" />} nativeButton={false}>{t("welcome.stack.guideBtn")}</Button>
+                  <Button className={ctaClass} variant="secondary" render={<a href="https://openvoiss.com/docs/architecture" />} nativeButton={false}>{t("welcome.stack.archBtn")}</Button>
                 </div>
               </div>
-              <div className="relative z-10 space-y-5 px-5">
+              <div className="relative z-10 px-5">
+                <Terminal className="w-full max-w-none border-black/10 bg-background font-mono shadow-xl">
+                  <TypingAnimation className="text-foreground">$ git clone https://github.com/kanazawa-dev/openvoiss.git</TypingAnimation>
+                  <TypingAnimation className="text-foreground">$ cd openvoiss</TypingAnimation>
+                  <TypingAnimation className="text-foreground">$ make setup</TypingAnimation>
+                  <TypingAnimation className="text-foreground">$ make up</TypingAnimation>
+                  <AnimatedSpan className="text-emerald-600">{"✔ api        running   :8000"}</AnimatedSpan>
+                  <AnimatedSpan className="text-emerald-600">{"✔ web        running   :3000"}</AnimatedSpan>
+                  <AnimatedSpan className="text-emerald-600">{"✔ whatsapp   running   :3101"}</AnimatedSpan>
+                  <AnimatedSpan className="text-emerald-600">{"✔ db         running   :5432"}</AnimatedSpan>
+                  <AnimatedSpan className="text-muted-foreground">Open http://localhost — your agency is live.</AnimatedSpan>
+                </Terminal>
+              </div>
+              <div className="relative z-10 col-span-full grid gap-5 border-t border-primary-foreground/15 px-5 pt-8 sm:grid-cols-3">
                 {(["step1", "step2", "step3"] as const).map((step, index) => (
-                  <div className="flex gap-4" key={step}>
-                    <span className="w-11 shrink-0 font-mono text-2xl font-medium">{String(index + 1).padStart(2, "0")}</span>
+                  <div className="flex gap-3" key={step}>
+                    <span className="shrink-0 font-mono text-sm font-medium text-primary-foreground/60">{String(index + 1).padStart(2, "0")}</span>
                     <div><strong className="block font-heading font-medium">{t(`welcome.stack.${step}.title`)}</strong><span className="mt-1 block text-sm text-primary-foreground/75">{t(`welcome.stack.${step}.body`)}</span></div>
                   </div>
                 ))}
@@ -360,20 +540,21 @@ export default function LandingPage() {
               <Card>
                 <CardHeader><Badge className="mb-2" variant="default">{t("welcome.plans.selfhost.tag")}</Badge><CardTitle className="text-2xl">{t("welcome.plans.selfhost.title")}</CardTitle><div className="font-heading text-3xl font-semibold text-primary-foreground">{t("welcome.plans.selfhost.price")}</div></CardHeader>
                 <CardContent className="flex flex-1 flex-col gap-5"><p className="leading-6 text-muted-foreground">{t("welcome.plans.selfhost.desc")}</p><ul className="space-y-2.5"><li className="flex gap-2.5"><Check className="mt-0.5 size-4 shrink-0 text-primary-foreground" />{t("welcome.plans.selfhost.p1")}</li><li className="flex gap-2.5"><Check className="mt-0.5 size-4 shrink-0 text-primary-foreground" />{t("welcome.plans.selfhost.p2")}</li><li className="flex gap-2.5"><Check className="mt-0.5 size-4 shrink-0 text-primary-foreground" />{t("welcome.plans.selfhost.p3")}</li><li className="flex gap-2.5"><Check className="mt-0.5 size-4 shrink-0 text-primary-foreground" />{t("welcome.plans.selfhost.p4")}</li></ul></CardContent>
-                <CardFooter><Button className={ctaClass} render={<a href={`${appUrl}/login`} />}>{t("welcome.plans.selfhost.cta")}</Button></CardFooter>
+                <CardFooter><Button className={ctaClass} render={<a href={`${appUrl}/login`} />} nativeButton={false}>{t("welcome.plans.selfhost.cta")}</Button></CardFooter>
               </Card>
 
               <Card className="relative isolate border-0 bg-primary text-primary-foreground ring-primary/20">
                 <GrainLayer />
+                <BorderBeam duration={8} size={160} colorFrom="#9fe870" colorTo="#ffffff" />
                 <CardHeader className="relative z-10"><Badge className="mb-2 bg-primary-foreground/10 text-primary-foreground" variant="secondary">{t("welcome.plans.cloud.tag")}</Badge><CardTitle className="text-2xl">{t("welcome.plans.cloud.title")}</CardTitle><div><div className="font-heading text-3xl font-semibold">{t("welcome.plans.cloud.price")}</div><div className="mt-1 text-sm text-primary-foreground/75">{t("welcome.plans.cloud.included")}</div></div></CardHeader>
                 <CardContent className="relative z-10 flex flex-1 flex-col gap-5"><p className="leading-6 text-primary-foreground/80">{t("welcome.plans.cloud.desc")}</p><ul className="space-y-2.5"><li className="flex gap-2.5"><Check className="mt-0.5 size-4 shrink-0" />{t("welcome.plans.cloud.p1")}</li><li className="flex gap-2.5"><Check className="mt-0.5 size-4 shrink-0" />{t("welcome.plans.cloud.p2")}</li><li className="flex gap-2.5"><Check className="mt-0.5 size-4 shrink-0" />{t("welcome.plans.cloud.p3")}</li><li className="flex gap-2.5"><Check className="mt-0.5 size-4 shrink-0" />{t("welcome.plans.cloud.p4")}</li></ul></CardContent>
-                <CardFooter className="relative z-10"><Button className={ctaClass} variant="secondary" render={<a href="https://github.com/kanazawa-dev/openvoiss/discussions" />}>{t("welcome.plans.cloud.cta")}</Button></CardFooter>
+                <CardFooter className="relative z-10"><Button className={ctaClass} variant="secondary" render={<a href="https://github.com/kanazawa-dev/openvoiss/discussions" />} nativeButton={false}>{t("welcome.plans.cloud.cta")}</Button></CardFooter>
               </Card>
 
               <Card>
                 <CardHeader><Badge className="mb-2" variant="secondary">{t("welcome.plans.enterprise.tag")}</Badge><CardTitle className="text-2xl">{t("welcome.plans.enterprise.title")}</CardTitle><div><div className="font-heading text-3xl font-semibold text-primary-foreground">{t("welcome.plans.enterprise.price")}</div><div className="mt-1 text-sm text-muted-foreground">{t("welcome.plans.enterprise.included")}</div></div></CardHeader>
                 <CardContent className="flex flex-1 flex-col gap-5"><p className="leading-6 text-muted-foreground">{t("welcome.plans.enterprise.desc")}</p><ul className="space-y-2.5"><li className="flex gap-2.5"><Check className="mt-0.5 size-4 shrink-0 text-primary-foreground" />{t("welcome.plans.enterprise.p1")}</li><li className="flex gap-2.5"><Check className="mt-0.5 size-4 shrink-0 text-primary-foreground" />{t("welcome.plans.enterprise.p2")}</li><li className="flex gap-2.5"><Check className="mt-0.5 size-4 shrink-0 text-primary-foreground" />{t("welcome.plans.enterprise.p3")}</li><li className="flex gap-2.5"><Check className="mt-0.5 size-4 shrink-0 text-primary-foreground" />{t("welcome.plans.enterprise.p4")}</li></ul></CardContent>
-                <CardFooter><Button className={ctaClass} variant="secondary" render={<a href="mailto:enterprise@openvoiss.com" />}>{t("welcome.plans.enterprise.cta")}</Button></CardFooter>
+                <CardFooter><Button className={ctaClass} variant="secondary" render={<a href="mailto:enterprise@openvoiss.com" />} nativeButton={false}>{t("welcome.plans.enterprise.cta")}</Button></CardFooter>
               </Card>
             </div>
 
@@ -382,7 +563,8 @@ export default function LandingPage() {
               <h2 className="font-heading text-3xl font-semibold tracking-tight sm:text-4xl">{t("welcome.compare.title")}</h2>
               <p className="text-base leading-7 text-muted-foreground">{t("welcome.compare.sub")}</p>
             </div>
-            <Card className="gap-0 overflow-hidden py-0">
+            <Card className="relative gap-0 overflow-hidden py-0">
+              <BorderBeam duration={10} size={200} colorFrom="#9fe870" colorTo="#ffffff" />
               <Table className="min-w-[720px]">
                 <TableHeader><TableRow className="bg-muted/50 hover:bg-muted/50"><TableHead>{t("welcome.compare.colFeature")}</TableHead><TableHead>{t("welcome.plans.selfhost.title")}</TableHead><TableHead className="bg-primary text-primary-foreground">{t("welcome.plans.cloud.title")}</TableHead><TableHead>{t("welcome.plans.enterprise.title")}</TableHead></TableRow></TableHeader>
                 <TableBody>
@@ -429,8 +611,8 @@ export default function LandingPage() {
               <CardHeader className="relative z-10 w-full justify-items-center"><CardTitle className="w-full max-w-3xl text-3xl sm:text-5xl">{t("welcome.cta.title")}</CardTitle></CardHeader>
               <CardContent className="relative z-10"><p className="max-w-lg text-base leading-7 text-primary-foreground/80">{t("welcome.cta.body")}</p></CardContent>
               <CardFooter className="relative z-10 flex-wrap justify-center gap-3">
-                <Button className={ctaClass} render={<a href={`${appUrl}/login`} />}>{t("welcome.nav.getStarted")}</Button>
-                <Button className={ctaClass} variant="secondary" render={<a href="https://github.com/kanazawa-dev/openvoiss" />}>{t("welcome.cta.star")}</Button>
+                <Button className={ctaClass} render={<a href={`${appUrl}/login`} />} nativeButton={false}>{t("welcome.nav.getStarted")}</Button>
+                <Button className={ctaClass} variant="secondary" render={<a href="https://github.com/kanazawa-dev/openvoiss" />} nativeButton={false}>{t("welcome.cta.star")}</Button>
               </CardFooter>
             </Card>
           </div>
