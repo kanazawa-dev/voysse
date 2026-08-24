@@ -27,7 +27,20 @@ import {
 import { useT } from "@/lib/i18n";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import Grainient from "@/components/grainient";
-import styles from "./page.module.css";
+import { OpenvoissBrand } from "@/components/openvoiss-brand";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { cn } from "@/lib/utils";
 
 type TabId = "agents" | "knowledge" | "tools" | "channels";
 
@@ -64,8 +77,27 @@ const COMPARE_ROW_IDS = [
   "opsOwner",
 ] as const;
 
-function cx(...classes: (string | false | undefined)[]) {
-  return classes.filter(Boolean).join(" ");
+const containerClass = "mx-auto w-full max-w-[1180px] px-5 sm:px-8 lg:px-14";
+const sectionClass = "py-14 md:py-20 lg:py-24";
+
+type NavRow = { href: string; icon: typeof MessageCircle; title: string; desc: string };
+
+function GrainLayer({ className }: { className?: string }) {
+  return (
+    <div className={cn("pointer-events-none absolute inset-0 -z-10 overflow-hidden", className)} aria-hidden="true">
+      <Grainient className="absolute inset-0" grainAnimated />
+      <div className="absolute inset-0 bg-background/40" />
+    </div>
+  );
+}
+
+function Eyebrow({ children, inverse = false }: { children: React.ReactNode; inverse?: boolean }) {
+  return (
+    <span className={cn("inline-flex items-center gap-2 text-xs font-semibold tracking-[0.16em] uppercase", inverse ? "text-primary-foreground" : "text-primary-foreground")}>
+      <span className={cn("size-1.5 rounded-full", inverse ? "bg-primary-foreground" : "bg-primary")} />
+      {children}
+    </span>
+  );
 }
 
 export default function LandingPage() {
@@ -76,19 +108,8 @@ export default function LandingPage() {
   // (e.g. https://app.openvoiss.com).
   const appUrl = (process.env.NEXT_PUBLIC_APP_URL || "").replace(/\/$/, "");
   const [activeTab, setActiveTab] = useState<TabId>("agents");
-  const [menuOpen, setMenuOpen] = useState(false);
   const [openFaq, setOpenFaq] = useState<Set<number>>(new Set());
 
-  function toggleFaq(id: number) {
-    setOpenFaq((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }
-
-  type NavRow = { href: string; icon: typeof MessageCircle; title: string; desc: string };
   const resourceLinks: NavRow[] = [
     { href: "#channels", icon: MessageCircle, title: t("welcome.nav.channels"), desc: t("welcome.nav.resourcesMenu.channelsDesc") },
     { href: "#open-source", icon: Server, title: t("welcome.nav.selfhost"), desc: t("welcome.nav.resourcesMenu.selfhostDesc") },
@@ -101,411 +122,335 @@ export default function LandingPage() {
     ...resourceLinks,
   ];
 
-  function menuRows(rows: NavRow[]) {
+  function menuItems(rows: NavRow[]) {
     return rows.map(({ href, icon: Icon, title, desc }) => (
-      <a key={href} href={href} className={styles.menuRow} onClick={() => setMenuOpen(false)}>
-        <span className={styles.menuRowIcon}><Icon size={18} /></span>
-        <span>
-          <span className={styles.menuRowTitle}>{title}</span>
-          <span className={styles.menuRowDesc}>{desc}</span>
+      <DropdownMenuItem key={href} className="items-start py-2.5" render={<a href={href} />}>
+        <span className="mt-0.5 grid size-9 shrink-0 place-items-center rounded-xl bg-foreground/10">
+          <Icon className="size-4" />
         </span>
-      </a>
+        <span className="min-w-0">
+          <span className="block font-medium">{title}</span>
+          <span className="mt-0.5 block text-xs leading-relaxed text-muted-foreground">{desc}</span>
+        </span>
+      </DropdownMenuItem>
     ));
   }
 
+  const ctaClass = "h-11 rounded-2xl px-5 text-sm sm:h-12 sm:px-6 sm:text-base";
+
   return (
-    <div className={styles.page}>
-      <nav className={styles.topbar}>
-        <div className={cx(styles.wrap, styles.topbarInner)}>
-          <a href="#top" aria-label="Openvoiss"><img className={styles.wordmark} src="/brand/word-logo.png" alt="Openvoiss" /></a>
+    <div className="min-h-screen overflow-x-clip bg-background text-foreground">
+      <nav className="sticky top-0 z-40 border-b bg-background/85 backdrop-blur-xl">
+        <div className={cn(containerClass, "flex h-[74px] items-center gap-2 sm:gap-4")}>
+          <a href="#top" aria-label="Openvoiss" className="shrink-0">
+            <OpenvoissBrand effect="benday" showName size={36} state="thinking" />
+          </a>
 
-          <div className={styles.navLinks}>
-            <a href="#features">{t("welcome.nav.features")}</a>
-            <a href="#pricing">{t("welcome.nav.pricing")}</a>
-            <div className={styles.navMenuWrap}>
-              <button className={styles.resourcesTrigger} onClick={() => setMenuOpen((v) => !v)} aria-expanded={menuOpen}>
-                {t("welcome.nav.resources")}
-                <ChevronDown size={14} className={cx(styles.menuChevron, menuOpen && styles.menuChevronOpen)} />
-              </button>
-              {menuOpen && (
-                <>
-                  <div className={styles.menuBackdrop} onClick={() => setMenuOpen(false)} />
-                  <div className={styles.menuDropdown}>{menuRows(resourceLinks)}</div>
-                </>
-              )}
-            </div>
+          <div className="hidden flex-1 items-center justify-center gap-7 lg:flex">
+            <a className="text-sm font-medium text-foreground/80 transition-colors hover:text-foreground" href="#features">{t("welcome.nav.features")}</a>
+            <a className="text-sm font-medium text-foreground/80 transition-colors hover:text-foreground" href="#pricing">{t("welcome.nav.pricing")}</a>
+            <DropdownMenu>
+              <DropdownMenuTrigger render={<Button type="button" variant="ghost" size="sm" />}>
+                {t("welcome.nav.resources")} <ChevronDown className="size-3.5 transition-transform group-aria-expanded/button:rotate-180" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="center" sideOffset={12} className="w-80">
+                {menuItems(resourceLinks)}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
-          <div className={styles.mobileNavWrap}>
-            <button className={styles.mobileMenuTrigger} onClick={() => setMenuOpen((v) => !v)} aria-expanded={menuOpen} aria-label={t("welcome.nav.resources")}>
-              <Menu size={18} />
-            </button>
-            {menuOpen && (
-              <>
-                <div className={styles.menuBackdrop} onClick={() => setMenuOpen(false)} />
-                <div className={cx(styles.menuDropdown, styles.menuDropdownLeft)}>{menuRows(allLinks)}</div>
-              </>
-            )}
+          <div className="ml-auto lg:hidden">
+            <DropdownMenu>
+              <DropdownMenuTrigger render={<Button type="button" size="icon" variant="ghost" aria-label={t("welcome.nav.resources")} />}>
+                <Menu className="size-4" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" sideOffset={12} className="w-[min(20rem,calc(100vw-2rem))]">
+                {menuItems(allLinks)}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
-          <div className={styles.navActions}>
-            <span className={styles.langSwitchWrap}><LanguageSwitcher /></span>
-            <a className={cx(styles.btn, styles.btnGhost, styles.btnSm, styles.navGhostLink)} href="https://github.com/kanazawa-dev/openvoiss">
-              <Github size={16} className={styles.icon} /> <span className={styles.navGhostLabel}>GitHub</span>
-            </a>
-            <a className={cx(styles.btn, styles.btnPrimary, styles.btnSm)} href={`${appUrl}/login`}>{t("welcome.nav.getStarted")}</a>
+          <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+            <LanguageSwitcher />
+            <Button className="hidden sm:inline-flex" variant="outline" size="sm" render={<a href="https://github.com/kanazawa-dev/openvoiss" />}>
+              <Github className="size-4" /> <span className="hidden xl:inline">GitHub</span>
+            </Button>
+            <Button className="hidden min-[370px]:inline-flex" size="sm" render={<a href={`${appUrl}/login`} />}>
+              {t("welcome.nav.getStarted")}
+            </Button>
           </div>
         </div>
       </nav>
 
       <main id="top">
-        <section className={styles.hero}>
-          <div className={cx(styles.heroBlob, styles.heroBlobOne)} />
-          <div className={cx(styles.heroBlob, styles.heroBlobTwo)} />
-          <div className={cx(styles.wrap, styles.heroInner)}>
-            <span className={styles.eyebrow}>{t("welcome.hero.eyebrow")}</span>
-            <h1>{t("welcome.hero.titleLine1")}<br />{t("welcome.hero.titleLine2")}</h1>
-            <p className={styles.heroSub}>{t("welcome.hero.sub")}</p>
-            <div className={styles.heroCta}>
-              <a className={cx(styles.btn, styles.btnPrimary)} href={`${appUrl}/login`}>
-                {t("welcome.nav.getStarted")} <ArrowRight size={17} />
-              </a>
-              <a className={cx(styles.btn, styles.btnSecondary)} href="https://openvoiss.com/docs/getting-started">{t("welcome.hero.readDocs")}</a>
+        <section className="relative overflow-hidden py-16 sm:py-20 lg:py-28">
+          <div className="absolute -top-40 -right-32 size-[28rem] rounded-full bg-primary/35 blur-3xl" aria-hidden="true" />
+          <div className="absolute -bottom-36 -left-24 size-80 rounded-full bg-primary/20 blur-3xl" aria-hidden="true" />
+          <div className={cn(containerClass, "relative flex flex-col items-center text-center")}>
+            <Eyebrow>{t("welcome.hero.eyebrow")}</Eyebrow>
+            <h1 className="mt-5 max-w-4xl font-heading text-5xl leading-[0.92] font-semibold tracking-[-0.04em] text-balance sm:text-6xl lg:text-7xl">
+              {t("welcome.hero.titleLine1")}<br />{t("welcome.hero.titleLine2")}
+            </h1>
+            <p className="mt-8 max-w-2xl text-base leading-7 text-muted-foreground sm:text-lg">{t("welcome.hero.sub")}</p>
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+              <Button className={ctaClass} render={<a href={`${appUrl}/login`} />}>
+                {t("welcome.nav.getStarted")} <ArrowRight className="size-4" />
+              </Button>
+              <Button className={ctaClass} variant="secondary" render={<a href="https://openvoiss.com/docs/getting-started" />}>
+                {t("welcome.hero.readDocs")}
+              </Button>
             </div>
-            <p className={styles.heroNote}>{t("welcome.hero.note")}</p>
+            <p className="mt-4 text-xs text-muted-foreground">{t("welcome.hero.note")}</p>
 
-            <div className={styles.heroMockWrap}>
-              <div className={styles.heroMock} aria-hidden="true">
-                <div className={styles.heroMockChrome}>
-                  <span className={styles.heroMockDot} /><span className={styles.heroMockDot} /><span className={styles.heroMockDot} />
-                  <span className={styles.heroMockUrl}>app.openvoiss.com</span>
+            <div className="mt-12 w-full lg:mt-16">
+              <Card className="mx-auto w-full max-w-[960px] gap-0 overflow-hidden py-0 text-left shadow-2xl shadow-foreground/10">
+                <div className="flex items-center gap-2 border-b bg-muted/60 px-4 py-3" aria-hidden="true">
+                  <span className="size-2.5 rounded-full bg-foreground/15" /><span className="size-2.5 rounded-full bg-foreground/15" /><span className="size-2.5 rounded-full bg-foreground/15" />
+                  <span className="mx-auto rounded-2xl bg-background/80 px-4 py-1 font-mono text-[11px] text-muted-foreground">app.openvoiss.com</span>
                 </div>
-                <div className={styles.heroMockBody}>
-                  <div className={styles.heroMockSidebar}>
-                    <div className={styles.heroMockBrand}><span className={styles.heroMockBrandDot} /> Openvoiss</div>
-                    <span className={cx(styles.heroMockNavItem, styles.heroMockNavItemActive)}><LayoutDashboard size={14} /> {t("nav.home")}</span>
-                    <span className={styles.heroMockNavItem}><Building2 size={14} /> {t("nav.clients")}</span>
-                    <span className={styles.heroMockNavItem}><Bot size={14} /> {t("nav.agents")}</span>
-                    <span className={styles.heroMockNavItem}><Inbox size={14} /> {t("nav.inbox")}</span>
-                    <span className={styles.heroMockNavItem}><MessageSquareText size={14} /> {t("nav.playground")}</span>
-                    <span className={styles.heroMockNavItem}><Radio size={14} /> {t("nav.channels")}</span>
-                    <span className={styles.heroMockNavItem}><Settings size={14} /> {t("nav.settings")}</span>
+                <div className="grid min-h-[340px] md:grid-cols-[200px_1fr]">
+                  <div className="flex flex-row flex-wrap gap-1 bg-foreground p-3 text-background md:flex-col md:p-4">
+                    <div className="flex min-h-9 items-center px-1 pb-2 md:pb-3"><OpenvoissBrand decorative size={20} /></div>
+                    <span className="flex items-center gap-2 rounded-xl bg-primary/20 px-2.5 py-2 text-xs text-background"><LayoutDashboard className="size-3.5" /> {t("nav.home")}</span>
+                    <span className="flex items-center gap-2 rounded-xl px-2.5 py-2 text-xs text-background/65"><Building2 className="size-3.5" /> {t("nav.clients")}</span>
+                    <span className="flex items-center gap-2 rounded-xl px-2.5 py-2 text-xs text-background/65"><Bot className="size-3.5" /> {t("nav.agents")}</span>
+                    <span className="flex items-center gap-2 rounded-xl px-2.5 py-2 text-xs text-background/65"><Inbox className="size-3.5" /> {t("nav.inbox")}</span>
+                    <span className="flex items-center gap-2 rounded-xl px-2.5 py-2 text-xs text-background/65"><MessageSquareText className="size-3.5" /> {t("nav.playground")}</span>
+                    <span className="flex items-center gap-2 rounded-xl px-2.5 py-2 text-xs text-background/65"><Radio className="size-3.5" /> {t("nav.channels")}</span>
+                    <span className="flex items-center gap-2 rounded-xl px-2.5 py-2 text-xs text-background/65"><Settings className="size-3.5" /> {t("nav.settings")}</span>
                   </div>
-                  <div className={styles.heroMockMain}>
-                    <h3>{t("welcome.hero.dashboard.title")}</h3>
-                    <p>{t("welcome.hero.dashboard.subtitle")}</p>
-                    <div className={styles.heroMockStats}>
-                      <div className={styles.heroMockStat}><span>{t("welcome.hero.dashboard.statAgentsLabel")}</span><strong>{t("welcome.hero.dashboard.statAgentsValue")}</strong></div>
-                      <div className={styles.heroMockStat}><span>{t("welcome.hero.dashboard.statConvLabel")}</span><strong>{t("welcome.hero.dashboard.statConvValue")}</strong></div>
-                      <div className={styles.heroMockStat}><span>{t("welcome.hero.dashboard.statResponseLabel")}</span><strong>{t("welcome.hero.dashboard.statResponseValue")}</strong></div>
+                  <div className="p-5 sm:p-6">
+                    <h3 className="font-heading text-lg font-medium">{t("welcome.hero.dashboard.title")}</h3>
+                    <p className="mt-1 text-xs text-muted-foreground">{t("welcome.hero.dashboard.subtitle")}</p>
+                    <div className="mt-5 grid gap-3 sm:grid-cols-3">
+                      <Card size="sm" className="gap-1 rounded-2xl bg-muted/40 py-3 shadow-none"><CardContent><span className="block text-[10px] tracking-wide text-muted-foreground uppercase">{t("welcome.hero.dashboard.statAgentsLabel")}</span><strong className="mt-1 block text-lg">{t("welcome.hero.dashboard.statAgentsValue")}</strong></CardContent></Card>
+                      <Card size="sm" className="gap-1 rounded-2xl bg-muted/40 py-3 shadow-none"><CardContent><span className="block text-[10px] tracking-wide text-muted-foreground uppercase">{t("welcome.hero.dashboard.statConvLabel")}</span><strong className="mt-1 block text-lg">{t("welcome.hero.dashboard.statConvValue")}</strong></CardContent></Card>
+                      <Card size="sm" className="gap-1 rounded-2xl bg-muted/40 py-3 shadow-none"><CardContent><span className="block text-[10px] tracking-wide text-muted-foreground uppercase">{t("welcome.hero.dashboard.statResponseLabel")}</span><strong className="mt-1 block text-lg">{t("welcome.hero.dashboard.statResponseValue")}</strong></CardContent></Card>
                     </div>
-                    <div className={styles.heroMockTable}>
-                      <div className={styles.heroMockRow}>
-                        <span>{t("welcome.hero.dashboard.colClient")}</span><span>{t("welcome.hero.dashboard.colAgent")}</span><span />
-                      </div>
-                      {([1, 2, 3] as const).map((row) => (
-                        <div className={styles.heroMockRow} key={row}>
-                          <span className={styles.heroMockClient}>
-                            <span className={styles.heroMockAvatar}>{t(`welcome.hero.dashboard.row${row}Client`).slice(0, 1)}</span>
-                            {t(`welcome.hero.dashboard.row${row}Client`)}
-                          </span>
-                          <span>{t(`welcome.hero.dashboard.row${row}Agent`)}</span>
-                          <span className={cx(styles.heroMockStatus, row === 2 ? styles.heroMockStatusHuman : styles.heroMockStatusAi)}>
-                            {t(`welcome.hero.dashboard.row${row}Status`)}
-                          </span>
-                        </div>
-                      ))}
+                    <div className="mt-5 overflow-hidden rounded-2xl border">
+                      <Table>
+                        <TableHeader><TableRow className="bg-muted/50 hover:bg-muted/50"><TableHead>{t("welcome.hero.dashboard.colClient")}</TableHead><TableHead>{t("welcome.hero.dashboard.colAgent")}</TableHead><TableHead /></TableRow></TableHeader>
+                        <TableBody>
+                          {([1, 2, 3] as const).map((row) => (
+                            <TableRow key={row}>
+                              <TableCell><span className="flex items-center gap-2 font-medium"><span className="grid size-6 place-items-center rounded-full bg-primary/30 text-[10px] text-primary-foreground">{t(`welcome.hero.dashboard.row${row}Client`).slice(0, 1)}</span>{t(`welcome.hero.dashboard.row${row}Client`)}</span></TableCell>
+                              <TableCell>{t(`welcome.hero.dashboard.row${row}Agent`)}</TableCell>
+                              <TableCell className="text-right"><Badge variant={row === 2 ? "secondary" : "default"}>{t(`welcome.hero.dashboard.row${row}Status`)}</Badge></TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
                     </div>
                   </div>
                 </div>
-              </div>
+              </Card>
             </div>
           </div>
         </section>
 
-        <section className={styles.trust}>
-          <div className={styles.marquee} aria-hidden="true">
-            <div className={styles.marqueeTrack}>
+        <section className="overflow-hidden border-y py-8">
+          <div className="relative w-full overflow-hidden" aria-hidden="true">
+            <div className="marketing-marquee-track flex w-max items-center gap-7 [animation:marketing-marquee_24s_linear_infinite]">
               {[0, 1].map((rep) => (
-                <span key={rep} style={{ display: "contents" }}>
-                  <span className={styles.marqueeItem}>{t("welcome.trust.mit")}</span><span className={styles.marqueeDot}>&bull;</span>
-                  <span className={styles.marqueeItem}>{t("welcome.trust.selfhost")}</span><span className={styles.marqueeDot}>&bull;</span>
-                  <span className={styles.marqueeItem}>{t("welcome.trust.compatible")}</span><span className={styles.marqueeDot}>&bull;</span>
-                  <span className={styles.marqueeItem}>{t("welcome.trust.isolated")}</span><span className={styles.marqueeDot}>&bull;</span>
+                <span key={rep} className="contents">
+                  <span className="font-heading text-xl font-medium whitespace-nowrap sm:text-2xl">{t("welcome.trust.mit")}</span><span className="text-primary">&bull;</span>
+                  <span className="font-heading text-xl font-medium whitespace-nowrap sm:text-2xl">{t("welcome.trust.selfhost")}</span><span className="text-primary">&bull;</span>
+                  <span className="font-heading text-xl font-medium whitespace-nowrap sm:text-2xl">{t("welcome.trust.compatible")}</span><span className="text-primary">&bull;</span>
+                  <span className="font-heading text-xl font-medium whitespace-nowrap sm:text-2xl">{t("welcome.trust.isolated")}</span><span className="text-primary">&bull;</span>
                 </span>
               ))}
             </div>
           </div>
         </section>
 
-        <section className={styles.section} id="features">
-          <div className={styles.wrap}>
-            <div className={styles.sectionHead}>
-              <span className={styles.eyebrow}>{t("welcome.features.eyebrow")}</span>
-              <h2>{t("welcome.features.title")}</h2>
-              <p>{t("welcome.features.sub")}</p>
+        <section className={sectionClass} id="features">
+          <div className={containerClass}>
+            <div className="mb-10 max-w-2xl space-y-3">
+              <Eyebrow>{t("welcome.features.eyebrow")}</Eyebrow>
+              <h2 className="font-heading text-3xl font-semibold tracking-tight sm:text-4xl">{t("welcome.features.title")}</h2>
+              <p className="text-base leading-7 text-muted-foreground">{t("welcome.features.sub")}</p>
             </div>
-
-            <div className={styles.tabsShell}>
-              <div className={styles.tabsNav}>
+            <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as TabId)} className="grid gap-4 lg:grid-cols-[.8fr_1.2fr]">
+              <TabsList className="grid h-auto w-full grid-cols-2 justify-start gap-2 rounded-none bg-transparent p-1 lg:flex lg:flex-col lg:items-stretch">
                 {TAB_IDS.map((id) => {
                   const Icon = TAB_ICONS[id];
                   return (
-                    <button key={id} className={cx(styles.tabBtn, activeTab === id && styles.tabBtnActive)} onClick={() => setActiveTab(id)}>
-                      <span className={styles.tabIconWrap}><Icon size={18} /></span>
-                      <span>
-                        <strong>{t(`welcome.tabs.${id}.label`)}</strong>
-                        <span className={styles.tabBtnSub}>{t(`welcome.tabs.${id}.sub`)}</span>
-                      </span>
-                    </button>
+                    <TabsTrigger key={id} value={id} className="h-auto w-full min-w-0 flex-none justify-start gap-3 rounded-2xl p-3 text-left data-active:bg-foreground data-active:text-background sm:p-4 lg:w-full">
+                      <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary/20 text-primary-foreground"><Icon className="size-4" /></span>
+                      <span><strong className="block font-medium">{t(`welcome.tabs.${id}.label`)}</strong><span className="mt-0.5 block text-xs opacity-70">{t(`welcome.tabs.${id}.sub`)}</span></span>
+                    </TabsTrigger>
                   );
                 })}
-              </div>
+              </TabsList>
+              <TabsContent value={activeTab} className="min-h-full">
+                <Card className="relative isolate h-full min-h-[360px] justify-center border-0 bg-primary text-primary-foreground ring-primary/20">
+                  <GrainLayer />
+                  <CardHeader className="relative z-10"><CardTitle className="text-2xl sm:text-3xl">{t(`welcome.panels.${activeTab}.title`)}</CardTitle></CardHeader>
+                  <CardContent className="relative z-10 space-y-6">
+                    <p className="max-w-xl text-base leading-7 text-primary-foreground/80">{t(`welcome.panels.${activeTab}.body`)}</p>
+                    <ul className="space-y-3">
+                      <li className="flex gap-3"><Check className="mt-0.5 size-4 shrink-0" /> {t(`welcome.panels.${activeTab}.p1`)}</li>
+                      <li className="flex gap-3"><Check className="mt-0.5 size-4 shrink-0" /> {t(`welcome.panels.${activeTab}.p2`)}</li>
+                      <li className="flex gap-3"><Check className="mt-0.5 size-4 shrink-0" /> {t(`welcome.panels.${activeTab}.p3`)}</li>
+                    </ul>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
+          </div>
+        </section>
 
-              <div className={cx(styles.card, styles.tabPanel, styles.cardGrain)}>
-                <div className={styles.grainLayer}>
-                  <Grainient grainAnimated />
-                </div>
-                <h3>{t(`welcome.panels.${activeTab}.title`)}</h3>
-                <p>{t(`welcome.panels.${activeTab}.body`)}</p>
-                <ul className={styles.pointList}>
-                  <li><Check size={18} /> {t(`welcome.panels.${activeTab}.p1`)}</li>
-                  <li><Check size={18} /> {t(`welcome.panels.${activeTab}.p2`)}</li>
-                  <li><Check size={18} /> {t(`welcome.panels.${activeTab}.p3`)}</li>
-                </ul>
-              </div>
+        <section className="pb-14 md:pb-20 lg:pb-24" id="channels">
+          <div className={containerClass}>
+            <div className="mb-10 max-w-2xl space-y-3">
+              <Eyebrow>{t("welcome.ops.eyebrow")}</Eyebrow>
+              <h2 className="font-heading text-3xl font-semibold tracking-tight sm:text-4xl">{t("welcome.ops.title")}</h2>
+              <p className="text-base leading-7 text-muted-foreground">{t("welcome.ops.sub")}</p>
+            </div>
+            <div className="grid gap-5 md:grid-cols-3">
+              <Card className="transition-transform duration-200 hover:-translate-y-1">
+                <CardHeader><span className="mb-3 grid size-11 place-items-center rounded-2xl bg-primary/20 text-primary-foreground"><Inbox className="size-5" /></span><CardTitle className="text-lg">{t("welcome.ops.inbox.title")}</CardTitle></CardHeader>
+                <CardContent><p className="leading-6 text-muted-foreground">{t("welcome.ops.inbox.body")}</p></CardContent>
+              </Card>
+              <Card className="transition-transform duration-200 hover:-translate-y-1">
+                <CardHeader><span className="mb-3 grid size-11 place-items-center rounded-2xl bg-primary/20 text-primary-foreground"><Globe className="size-5" /></span><CardTitle className="text-lg">{t("welcome.ops.portals.title")}</CardTitle></CardHeader>
+                <CardContent><p className="leading-6 text-muted-foreground">{t("welcome.ops.portals.body")}</p></CardContent>
+              </Card>
+              <Card className="transition-transform duration-200 hover:-translate-y-1">
+                <CardHeader><span className="mb-3 grid size-11 place-items-center rounded-2xl bg-primary/20 text-primary-foreground"><Building2 className="size-5" /></span><CardTitle className="text-lg">{t("welcome.ops.whitelabel.title")}</CardTitle></CardHeader>
+                <CardContent><p className="leading-6 text-muted-foreground">{t("welcome.ops.whitelabel.body")}</p></CardContent>
+              </Card>
             </div>
           </div>
         </section>
 
-        <section className={cx(styles.section, styles.sectionTight)} id="channels">
-          <div className={styles.wrap}>
-            <div className={styles.sectionHead}>
-              <span className={styles.eyebrow}>{t("welcome.ops.eyebrow")}</span>
-              <h2>{t("welcome.ops.title")}</h2>
-              <p>{t("welcome.ops.sub")}</p>
-            </div>
-            <div className={styles.grid3}>
-              <div className={cx(styles.card, styles.featCard)}>
-                <span className={styles.featIconWrap}><Inbox size={20} /></span>
-                <h3>{t("welcome.ops.inbox.title")}</h3>
-                <p>{t("welcome.ops.inbox.body")}</p>
-              </div>
-              <div className={cx(styles.card, styles.featCard)}>
-                <span className={styles.featIconWrap}><Globe size={20} /></span>
-                <h3>{t("welcome.ops.portals.title")}</h3>
-                <p>{t("welcome.ops.portals.body")}</p>
-              </div>
-              <div className={cx(styles.card, styles.featCard)}>
-                <span className={styles.featIconWrap}><Building2 size={20} /></span>
-                <h3>{t("welcome.ops.whitelabel.title")}</h3>
-                <p>{t("welcome.ops.whitelabel.body")}</p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className={cx(styles.section, styles.sectionTight)} id="open-source">
-          <div className={styles.wrap}>
-            <div className={cx(styles.darkPanel, styles.darkGrid, styles.cardGrain)}>
-              <div className={styles.grainLayer}>
-                <Grainient grainAnimated />
-              </div>
-              <div>
-                <span className={styles.eyebrow}>{t("welcome.stack.eyebrow")}</span>
-                <h2>{t("welcome.stack.title")}</h2>
-                <p className={styles.darkPanelBody}>{t("welcome.stack.body")}</p>
-                <div style={{ marginTop: 28, display: "flex", gap: 12, flexWrap: "wrap" }}>
-                  <a className={cx(styles.btn, styles.btnPrimary)} href="https://openvoiss.com/docs/self-hosting">{t("welcome.stack.guideBtn")}</a>
-                  <a className={cx(styles.btn, styles.btnDark)} href="https://openvoiss.com/docs/architecture">{t("welcome.stack.archBtn")}</a>
+        <section className="pb-14 md:pb-20 lg:pb-24" id="open-source">
+          <div className={containerClass}>
+            <Card className="relative isolate grid gap-10 border-0 bg-primary px-2 py-8 text-primary-foreground ring-primary/20 sm:px-6 lg:grid-cols-[1.1fr_.9fr] lg:items-center lg:px-10 lg:py-12">
+              <GrainLayer />
+              <div className="relative z-10 px-5">
+                <Eyebrow inverse>{t("welcome.stack.eyebrow")}</Eyebrow>
+                <h2 className="mt-4 font-heading text-3xl font-semibold tracking-tight sm:text-4xl">{t("welcome.stack.title")}</h2>
+                <p className="mt-6 max-w-xl text-base leading-7 text-primary-foreground/80">{t("welcome.stack.body")}</p>
+                <div className="mt-7 flex flex-wrap gap-3">
+                  <Button className={ctaClass} render={<a href="https://openvoiss.com/docs/self-hosting" />}>{t("welcome.stack.guideBtn")}</Button>
+                  <Button className={ctaClass} variant="secondary" render={<a href="https://openvoiss.com/docs/architecture" />}>{t("welcome.stack.archBtn")}</Button>
                 </div>
               </div>
-              <div className={styles.steps}>
+              <div className="relative z-10 space-y-5 px-5">
                 {(["step1", "step2", "step3"] as const).map((step, index) => (
-                  <div className={styles.stepRow} key={step}>
-                    <span className={styles.stepNum}>{String(index + 1).padStart(2, "0")}</span>
-                    <div><strong>{t(`welcome.stack.${step}.title`)}</strong><span>{t(`welcome.stack.${step}.body`)}</span></div>
+                  <div className="flex gap-4" key={step}>
+                    <span className="w-11 shrink-0 font-mono text-2xl font-medium">{String(index + 1).padStart(2, "0")}</span>
+                    <div><strong className="block font-heading font-medium">{t(`welcome.stack.${step}.title`)}</strong><span className="mt-1 block text-sm text-primary-foreground/75">{t(`welcome.stack.${step}.body`)}</span></div>
                   </div>
                 ))}
               </div>
-            </div>
+            </Card>
           </div>
         </section>
 
-        <section className={cx(styles.section, styles.sectionTight)} id="pricing">
-          <div className={styles.wrap}>
-            <div className={styles.sectionHead}>
-              <span className={styles.eyebrow}>{t("welcome.plans.eyebrow")}</span>
-              <h2>{t("welcome.plans.title")}</h2>
-              <p>{t("welcome.plans.sub")}</p>
+        <section className="pb-14 md:pb-20 lg:pb-24" id="pricing">
+          <div className={containerClass}>
+            <div className="mb-10 max-w-2xl space-y-3">
+              <Eyebrow>{t("welcome.plans.eyebrow")}</Eyebrow>
+              <h2 className="font-heading text-3xl font-semibold tracking-tight sm:text-4xl">{t("welcome.plans.title")}</h2>
+              <p className="text-base leading-7 text-muted-foreground">{t("welcome.plans.sub")}</p>
             </div>
-            <div className={styles.grid3}>
-              <div className={cx(styles.card, styles.planCard)}>
-                <span className={cx(styles.planTag, styles.planTagLive)}>{t("welcome.plans.selfhost.tag")}</span>
-                <div>
-                  <h3>{t("welcome.plans.selfhost.title")}</h3>
-                  <div className={styles.planPrice}>{t("welcome.plans.selfhost.price")}</div>
-                </div>
-                <p className={styles.planDesc}>{t("welcome.plans.selfhost.desc")}</p>
-                <ul className={styles.planList}>
-                  <li><Check size={16} /> {t("welcome.plans.selfhost.p1")}</li>
-                  <li><Check size={16} /> {t("welcome.plans.selfhost.p2")}</li>
-                  <li><Check size={16} /> {t("welcome.plans.selfhost.p3")}</li>
-                  <li><Check size={16} /> {t("welcome.plans.selfhost.p4")}</li>
-                </ul>
-                <a className={cx(styles.btn, styles.btnPrimary, styles.planCta)} href={`${appUrl}/login`}>{t("welcome.plans.selfhost.cta")}</a>
-              </div>
-              <div className={cx(styles.card, styles.planCard, styles.planCardCloud, styles.cardGrain)}>
-                <div className={styles.grainLayer}>
-                  <Grainient grainAnimated />
-                </div>
-                <span className={cx(styles.planTag, styles.planTagSoon)}>{t("welcome.plans.cloud.tag")}</span>
-                <div>
-                  <h3>{t("welcome.plans.cloud.title")}</h3>
-                  <div className={styles.planPrice}>{t("welcome.plans.cloud.price")}</div>
-                  <div className={styles.planPriceDay}>{t("welcome.plans.cloud.included")}</div>
-                </div>
-                <p className={styles.planDesc}>{t("welcome.plans.cloud.desc")}</p>
-                <ul className={styles.planList}>
-                  <li><Check size={16} /> {t("welcome.plans.cloud.p1")}</li>
-                  <li><Check size={16} /> {t("welcome.plans.cloud.p2")}</li>
-                  <li><Check size={16} /> {t("welcome.plans.cloud.p3")}</li>
-                  <li><Check size={16} /> {t("welcome.plans.cloud.p4")}</li>
-                </ul>
-                <a className={cx(styles.btn, styles.btnDark, styles.planCta)} href="https://github.com/kanazawa-dev/openvoiss/discussions">{t("welcome.plans.cloud.cta")}</a>
-              </div>
-              <div className={cx(styles.card, styles.planCard)}>
-                <span className={cx(styles.planTag, styles.planTagSoon)}>{t("welcome.plans.enterprise.tag")}</span>
-                <div>
-                  <h3>{t("welcome.plans.enterprise.title")}</h3>
-                  <div className={styles.planPrice}>{t("welcome.plans.enterprise.price")}</div>
-                  <div className={styles.planPriceDay}>{t("welcome.plans.enterprise.included")}</div>
-                </div>
-                <p className={styles.planDesc}>{t("welcome.plans.enterprise.desc")}</p>
-                <ul className={styles.planList}>
-                  <li><Check size={16} /> {t("welcome.plans.enterprise.p1")}</li>
-                  <li><Check size={16} /> {t("welcome.plans.enterprise.p2")}</li>
-                  <li><Check size={16} /> {t("welcome.plans.enterprise.p3")}</li>
-                  <li><Check size={16} /> {t("welcome.plans.enterprise.p4")}</li>
-                </ul>
-                <a className={cx(styles.btn, styles.btnSecondary, styles.planCta)} href="mailto:enterprise@openvoiss.com">{t("welcome.plans.enterprise.cta")}</a>
-              </div>
+            <div className="grid gap-5 lg:grid-cols-3">
+              <Card>
+                <CardHeader><Badge className="mb-2" variant="default">{t("welcome.plans.selfhost.tag")}</Badge><CardTitle className="text-2xl">{t("welcome.plans.selfhost.title")}</CardTitle><div className="font-heading text-3xl font-semibold text-primary-foreground">{t("welcome.plans.selfhost.price")}</div></CardHeader>
+                <CardContent className="flex flex-1 flex-col gap-5"><p className="leading-6 text-muted-foreground">{t("welcome.plans.selfhost.desc")}</p><ul className="space-y-2.5"><li className="flex gap-2.5"><Check className="mt-0.5 size-4 shrink-0 text-primary-foreground" />{t("welcome.plans.selfhost.p1")}</li><li className="flex gap-2.5"><Check className="mt-0.5 size-4 shrink-0 text-primary-foreground" />{t("welcome.plans.selfhost.p2")}</li><li className="flex gap-2.5"><Check className="mt-0.5 size-4 shrink-0 text-primary-foreground" />{t("welcome.plans.selfhost.p3")}</li><li className="flex gap-2.5"><Check className="mt-0.5 size-4 shrink-0 text-primary-foreground" />{t("welcome.plans.selfhost.p4")}</li></ul></CardContent>
+                <CardFooter><Button className={ctaClass} render={<a href={`${appUrl}/login`} />}>{t("welcome.plans.selfhost.cta")}</Button></CardFooter>
+              </Card>
+
+              <Card className="relative isolate border-0 bg-primary text-primary-foreground ring-primary/20">
+                <GrainLayer />
+                <CardHeader className="relative z-10"><Badge className="mb-2 bg-primary-foreground/10 text-primary-foreground" variant="secondary">{t("welcome.plans.cloud.tag")}</Badge><CardTitle className="text-2xl">{t("welcome.plans.cloud.title")}</CardTitle><div><div className="font-heading text-3xl font-semibold">{t("welcome.plans.cloud.price")}</div><div className="mt-1 text-sm text-primary-foreground/75">{t("welcome.plans.cloud.included")}</div></div></CardHeader>
+                <CardContent className="relative z-10 flex flex-1 flex-col gap-5"><p className="leading-6 text-primary-foreground/80">{t("welcome.plans.cloud.desc")}</p><ul className="space-y-2.5"><li className="flex gap-2.5"><Check className="mt-0.5 size-4 shrink-0" />{t("welcome.plans.cloud.p1")}</li><li className="flex gap-2.5"><Check className="mt-0.5 size-4 shrink-0" />{t("welcome.plans.cloud.p2")}</li><li className="flex gap-2.5"><Check className="mt-0.5 size-4 shrink-0" />{t("welcome.plans.cloud.p3")}</li><li className="flex gap-2.5"><Check className="mt-0.5 size-4 shrink-0" />{t("welcome.plans.cloud.p4")}</li></ul></CardContent>
+                <CardFooter className="relative z-10"><Button className={ctaClass} variant="secondary" render={<a href="https://github.com/kanazawa-dev/openvoiss/discussions" />}>{t("welcome.plans.cloud.cta")}</Button></CardFooter>
+              </Card>
+
+              <Card>
+                <CardHeader><Badge className="mb-2" variant="secondary">{t("welcome.plans.enterprise.tag")}</Badge><CardTitle className="text-2xl">{t("welcome.plans.enterprise.title")}</CardTitle><div><div className="font-heading text-3xl font-semibold text-primary-foreground">{t("welcome.plans.enterprise.price")}</div><div className="mt-1 text-sm text-muted-foreground">{t("welcome.plans.enterprise.included")}</div></div></CardHeader>
+                <CardContent className="flex flex-1 flex-col gap-5"><p className="leading-6 text-muted-foreground">{t("welcome.plans.enterprise.desc")}</p><ul className="space-y-2.5"><li className="flex gap-2.5"><Check className="mt-0.5 size-4 shrink-0 text-primary-foreground" />{t("welcome.plans.enterprise.p1")}</li><li className="flex gap-2.5"><Check className="mt-0.5 size-4 shrink-0 text-primary-foreground" />{t("welcome.plans.enterprise.p2")}</li><li className="flex gap-2.5"><Check className="mt-0.5 size-4 shrink-0 text-primary-foreground" />{t("welcome.plans.enterprise.p3")}</li><li className="flex gap-2.5"><Check className="mt-0.5 size-4 shrink-0 text-primary-foreground" />{t("welcome.plans.enterprise.p4")}</li></ul></CardContent>
+                <CardFooter><Button className={ctaClass} variant="secondary" render={<a href="mailto:enterprise@openvoiss.com" />}>{t("welcome.plans.enterprise.cta")}</Button></CardFooter>
+              </Card>
             </div>
 
-            <div className={styles.sectionHead} style={{ margin: 0 }}>
-              <div className={styles.compareIntro}>
-                <span className={styles.eyebrow}>{t("welcome.compare.eyebrow")}</span>
-                <h2>{t("welcome.compare.title")}</h2>
-                <p>{t("welcome.compare.sub")}</p>
-              </div>
+            <div className="mt-14 mb-5 max-w-2xl space-y-3">
+              <Eyebrow>{t("welcome.compare.eyebrow")}</Eyebrow>
+              <h2 className="font-heading text-3xl font-semibold tracking-tight sm:text-4xl">{t("welcome.compare.title")}</h2>
+              <p className="text-base leading-7 text-muted-foreground">{t("welcome.compare.sub")}</p>
             </div>
-            <div className={styles.compareWrap}>
-              <table className={styles.compareTable}>
-                <thead>
-                  <tr>
-                    <th>{t("welcome.compare.colFeature")}</th>
-                    <th>{t("welcome.plans.selfhost.title")}</th>
-                    <th className={styles.compareHeadCloud}>{t("welcome.plans.cloud.title")}</th>
-                    <th>{t("welcome.plans.enterprise.title")}</th>
-                  </tr>
-                </thead>
-                <tbody>
+            <Card className="gap-0 overflow-hidden py-0">
+              <Table className="min-w-[720px]">
+                <TableHeader><TableRow className="bg-muted/50 hover:bg-muted/50"><TableHead>{t("welcome.compare.colFeature")}</TableHead><TableHead>{t("welcome.plans.selfhost.title")}</TableHead><TableHead className="bg-primary text-primary-foreground">{t("welcome.plans.cloud.title")}</TableHead><TableHead>{t("welcome.plans.enterprise.title")}</TableHead></TableRow></TableHeader>
+                <TableBody>
                   {COMPARE_ROW_IDS.map((id) => (
-                    <tr key={id}>
-                      <th className={styles.compareLabel} scope="row">{t(`welcome.compare.rows.${id}.label`)}</th>
+                    <TableRow key={id}>
+                      <TableCell className="min-w-52 font-medium whitespace-normal">{t(`welcome.compare.rows.${id}.label`)}</TableCell>
                       {(["community", "cloud", "enterprise"] as const).map((tier) => {
                         const value = t(`welcome.compare.rows.${id}.${tier}`);
-                        return (
-                          <td
-                            key={tier}
-                            className={cx(
-                              styles.compareCell,
-                              tier === "cloud" && styles.compareCellCloud,
-                              value === "—" && styles.compareCellMuted
-                            )}
-                          >
-                            {value}
-                          </td>
-                        );
+                        return <TableCell key={tier} className={cn("whitespace-normal", tier === "cloud" && "bg-primary/10 font-medium", value === "—" && "text-muted-foreground")}>{value}</TableCell>;
                       })}
-                    </tr>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
-            </div>
+                </TableBody>
+              </Table>
+            </Card>
           </div>
         </section>
 
-        <section className={styles.section} id="faq">
-          <div className={styles.wrap} style={{ maxWidth: 820 }}>
-            <div className={styles.sectionHead} style={{ margin: "0 auto 36px" }}>
-              <span className={styles.eyebrow}>{t("welcome.faq.eyebrow")}</span>
-              <h2>{t("welcome.faq.title")}</h2>
+        <section className={sectionClass} id="faq">
+          <div className="mx-auto w-full max-w-3xl px-5 sm:px-8">
+            <div className="mb-9 space-y-3 text-center">
+              <Eyebrow>{t("welcome.faq.eyebrow")}</Eyebrow>
+              <h2 className="font-heading text-3xl font-semibold tracking-tight sm:text-4xl">{t("welcome.faq.title")}</h2>
             </div>
-            {FAQ_IDS.map((id) => {
-              const isOpen = openFaq.has(id);
-              return (
-                <div className={styles.faqItem} key={id}>
-                  <button className={styles.faqQ} onClick={() => toggleFaq(id)}>
-                    <strong>{t(`welcome.faq.q${id}` as "welcome.faq.q1")}</strong>
-                    <ChevronDown size={20} className={cx(isOpen && styles.faqChevronOpen)} />
-                  </button>
-                  {isOpen && <div className={styles.faqA}>{t(`welcome.faq.a${id}` as "welcome.faq.a1")}</div>}
-                </div>
-              );
-            })}
+            <Accordion
+              multiple
+              value={[...openFaq].map(String)}
+              onValueChange={(values) => setOpenFaq(new Set(values.map(Number)))}
+            >
+              {FAQ_IDS.map((id) => (
+                <AccordionItem value={String(id)} key={id}>
+                  <AccordionTrigger className="py-5 text-base">{t(`welcome.faq.q${id}` as "welcome.faq.q1")}</AccordionTrigger>
+                  <AccordionContent className="max-w-2xl leading-7 text-muted-foreground">{t(`welcome.faq.a${id}` as "welcome.faq.a1")}</AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
           </div>
         </section>
 
-        <section className={cx(styles.section, styles.sectionTight)}>
-          <div className={styles.wrap}>
-            <div className={cx(styles.card, styles.ctaPanel, styles.cardGrain)}>
-              <div className={styles.grainLayer}>
-                <Grainient grainAnimated />
-              </div>
-              <h2>{t("welcome.cta.title")}</h2>
-              <p>{t("welcome.cta.body")}</p>
-              <div className={styles.ctaActions}>
-                <a className={cx(styles.btn, styles.btnPrimary)} href={`${appUrl}/login`}>{t("welcome.nav.getStarted")}</a>
-                <a className={cx(styles.btn, styles.btnSecondary)} href="https://github.com/kanazawa-dev/openvoiss">{t("welcome.cta.star")}</a>
-              </div>
-            </div>
+        <section className="pb-14 md:pb-20 lg:pb-24">
+          <div className={containerClass}>
+            <Card className="relative isolate items-center border-0 bg-primary px-4 py-14 text-center text-primary-foreground ring-primary/20 sm:px-10 sm:py-20">
+              <GrainLayer />
+              <CardHeader className="relative z-10 w-full justify-items-center"><CardTitle className="w-full max-w-3xl text-3xl sm:text-5xl">{t("welcome.cta.title")}</CardTitle></CardHeader>
+              <CardContent className="relative z-10"><p className="max-w-lg text-base leading-7 text-primary-foreground/80">{t("welcome.cta.body")}</p></CardContent>
+              <CardFooter className="relative z-10 flex-wrap justify-center gap-3">
+                <Button className={ctaClass} render={<a href={`${appUrl}/login`} />}>{t("welcome.nav.getStarted")}</Button>
+                <Button className={ctaClass} variant="secondary" render={<a href="https://github.com/kanazawa-dev/openvoiss" />}>{t("welcome.cta.star")}</Button>
+              </CardFooter>
+            </Card>
           </div>
         </section>
       </main>
 
-      <footer className={styles.footer}>
-        <div className={styles.wrap}>
-          <div className={styles.footTop}>
-            <div className={styles.footBrand}>
-              <img src="/brand/word-logo.png" alt="Openvoiss" />
-              <p>{t("welcome.footer.blurb")}</p>
+      <footer className="border-t py-10 sm:py-12">
+        <div className={containerClass}>
+          <div className="flex flex-wrap justify-between gap-10 pb-10">
+            <div>
+              <OpenvoissBrand effect="benday" showName size={36} state="thinking" />
+              <p className="mt-4 max-w-xs text-sm leading-6 text-muted-foreground">{t("welcome.footer.blurb")}</p>
             </div>
-            <div className={styles.footCols}>
-              <div className={styles.footCol}>
-                <strong>{t("welcome.footer.colProduct")}</strong>
-                <a href="#features">{t("welcome.nav.features")}</a>
-                <a href="#channels">{t("welcome.ops.eyebrow")}</a>
-                <a href="#open-source">{t("welcome.nav.selfhost")}</a>
-                <a href="#pricing">{t("welcome.nav.pricing")}</a>
-              </div>
-              <div className={styles.footCol}>
-                <strong>{t("welcome.footer.colResources")}</strong>
-                <a href="https://openvoiss.com/docs">{t("welcome.footer.docs")}</a>
-                <a href="https://openvoiss.com/docs/getting-started">{t("welcome.footer.quickstart")}</a>
-                <a href="https://github.com/kanazawa-dev/openvoiss/discussions">{t("welcome.footer.discussions")}</a>
-              </div>
-              <div className={styles.footCol}>
-                <strong>{t("welcome.footer.colProject")}</strong>
-                <a href="https://github.com/kanazawa-dev/openvoiss">GitHub</a>
-                <a href="https://openvoiss.com/docs/contributing">{t("welcome.footer.contributing")}</a>
-              </div>
+            <div className="flex flex-wrap gap-10 sm:gap-14">
+              <div><strong className="mb-3 block text-xs tracking-wider text-muted-foreground uppercase">{t("welcome.footer.colProduct")}</strong><div className="space-y-2 text-sm"><a className="block hover:text-primary-foreground" href="#features">{t("welcome.nav.features")}</a><a className="block hover:text-primary-foreground" href="#channels">{t("welcome.ops.eyebrow")}</a><a className="block hover:text-primary-foreground" href="#open-source">{t("welcome.nav.selfhost")}</a><a className="block hover:text-primary-foreground" href="#pricing">{t("welcome.nav.pricing")}</a></div></div>
+              <div><strong className="mb-3 block text-xs tracking-wider text-muted-foreground uppercase">{t("welcome.footer.colResources")}</strong><div className="space-y-2 text-sm"><a className="block hover:text-primary-foreground" href="https://openvoiss.com/docs">{t("welcome.footer.docs")}</a><a className="block hover:text-primary-foreground" href="https://openvoiss.com/docs/getting-started">{t("welcome.footer.quickstart")}</a><a className="block hover:text-primary-foreground" href="https://github.com/kanazawa-dev/openvoiss/discussions">{t("welcome.footer.discussions")}</a></div></div>
+              <div><strong className="mb-3 block text-xs tracking-wider text-muted-foreground uppercase">{t("welcome.footer.colProject")}</strong><div className="space-y-2 text-sm"><a className="block hover:text-primary-foreground" href="https://github.com/kanazawa-dev/openvoiss">GitHub</a><a className="block hover:text-primary-foreground" href="https://openvoiss.com/docs/contributing">{t("welcome.footer.contributing")}</a></div></div>
             </div>
           </div>
-          <div className={styles.footBottom}>
-            <span>{t("welcome.footer.license")}</span>
-            <span>{t("welcome.footer.tagline")}</span>
-          </div>
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-6 text-xs text-muted-foreground"><span>{t("welcome.footer.license")}</span><span>{t("welcome.footer.tagline")}</span></div>
         </div>
       </footer>
     </div>

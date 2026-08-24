@@ -164,12 +164,18 @@ export default function Grainient({
     const container = containerRef.current;
     if (!container) return;
 
-    const renderer = new Renderer({
-      webgl: 2,
-      alpha: true,
-      antialias: false,
-      dpr: Math.min(window.devicePixelRatio || 1, 2),
-    });
+    let renderer: InstanceType<typeof Renderer>;
+    try {
+      renderer = new Renderer({
+        webgl: 2,
+        alpha: true,
+        antialias: false,
+        dpr: Math.min(window.devicePixelRatio || 1, 2),
+      });
+    } catch {
+      container.dataset.grainient = "unavailable";
+      return;
+    }
 
     const gl = renderer.gl;
     const canvas = gl.canvas as HTMLCanvasElement;
@@ -177,6 +183,7 @@ export default function Grainient({
     canvas.style.height = "100%";
     canvas.style.display = "block";
     container.appendChild(canvas);
+    container.dataset.grainient = "ready";
 
     const geometry = new Triangle(gl);
     const program = new Program(gl, {
@@ -230,6 +237,8 @@ export default function Grainient({
     let raf = 0;
     let isVisible = true;
     let isPageVisible = !document.hidden;
+    const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    let reduceMotion = motionQuery.matches;
     const t0 = performance.now();
 
     const loop = (t: number) => {
@@ -239,7 +248,7 @@ export default function Grainient({
     };
 
     const tryStart = () => {
-      if (isVisible && isPageVisible && raf === 0) raf = requestAnimationFrame(loop);
+      if (isVisible && isPageVisible && !reduceMotion && raf === 0) raf = requestAnimationFrame(loop);
     };
     const tryStop = () => {
       if (raf !== 0) {
@@ -263,13 +272,36 @@ export default function Grainient({
     };
     document.addEventListener("visibilitychange", onVisibility);
 
-    tryStart();
+    const onMotionPreference = () => {
+      reduceMotion = motionQuery.matches;
+      if (reduceMotion) {
+        tryStop();
+        (program.uniforms.iTime as { value: number }).value = 0;
+        renderer.render({ scene: mesh });
+      } else {
+        tryStart();
+      }
+    };
+    motionQuery.addEventListener("change", onMotionPreference);
+
+    const onContextLost = (event: Event) => {
+      event.preventDefault();
+      tryStop();
+      container.dataset.grainient = "unavailable";
+      canvas.style.display = "none";
+    };
+    canvas.addEventListener("webglcontextlost", onContextLost);
+
+    if (reduceMotion) renderer.render({ scene: mesh });
+    else tryStart();
 
     return () => {
       tryStop();
       ro.disconnect();
       io.disconnect();
       document.removeEventListener("visibilitychange", onVisibility);
+      motionQuery.removeEventListener("change", onMotionPreference);
+      canvas.removeEventListener("webglcontextlost", onContextLost);
       ctxMap.delete(container);
       try {
         container.removeChild(canvas);
@@ -315,5 +347,5 @@ export default function Grainient({
     centerX, centerY, zoom, color1, color2, color3,
   ]);
 
-  return <div ref={containerRef} className={`grainient-container ${className}`.trim()} />;
+  return <div ref={containerRef} className={`grainient-container bg-primary ${className}`.trim()} />;
 }

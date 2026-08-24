@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
-import { Geist, Inter } from "next/font/google";
+import { Geist_Mono, IBM_Plex_Sans, Manrope } from "next/font/google";
 import "./globals.css";
 import { LanguageProvider } from "@/lib/i18n";
 
-const geist = Geist({ subsets: ["latin"], variable: "--font-geist" });
-const inter = Inter({ subsets: ["latin"], weight: ["400", "600", "900"], variable: "--font-inter" });
+const manrope = Manrope({ subsets: ["latin"], variable: "--font-sans" });
+const ibmPlexSansHeading = IBM_Plex_Sans({ subsets: ["latin"], variable: "--font-heading" });
+const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-mono" });
 
 export const metadata: Metadata = {
   title: "Openvoiss — Open source AI agents for your agency",
@@ -14,8 +15,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en">
-      <body className={`${geist.variable} ${inter.variable}`}>
+    <html lang="en" className={`${manrope.variable} ${ibmPlexSansHeading.variable} ${geistMono.variable} font-sans antialiased`}>
+      <body>
         <LanguageProvider>{children}</LanguageProvider>
       </body>
     </html>
