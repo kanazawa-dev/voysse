@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+# Pre-commit guard: keep internal/forbidden content out of the repo.
+#
+# Forbidden terms live in work/forbidden-words.txt (gitignored) so the terms
+# themselves never get committed. This hook also blocks local-only files and a
+# DO-NOT-COMMIT / INTERNAL-ONLY marker.
+#
+# Enable once per clone:  git config core.hooksPath .githooks
+set -euo pipefail
+
+root="$(git rev-parse --show-toplevel)"
+staged="$(git diff --cached --name-only --diff-filter=ACM || true)"
+[ -z "$staged" ] && exit 0
+
+fail=0
+
+# 1) block local-only paths that were force-added
+while IFS= read -r f; do
+  [ -z "$f" ] && continue
+  case "$f" in
+    work/*|internal/*|*.local.md)
+      echo "✋ '$f' is local-only and must not be committed."
+      fail=1 ;;
+  esac
+done <<< "$staged"
+
+# 2) pattern list: built-in markers + words from the gitignored list
+patterns=$'DO-NOT-COMMIT\nINTERNAL-ONLY'
+wordfile="$root/work/forbidden-words.txt"
+if [ -f "$wordfile" ]; then
+  while IFS= read -r w; do
+    w="$(printf '%s' "$w" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+    case "$w" in ""|\#*) continue ;; esac
+    patterns="$patterns"$'\n'"$w"
+  done < "$wordfile"
+fi
+
+# 3) scan staged additions + filenames (case-insensitive, fixed-string)
+added="$(git diff --cached --diff-filter=ACM -U0 | grep '^+' || true)"
+haystack="$added"$'\n'"$staged"
+while IFS= read -r p; do
+  [ -z "$p" ] && continue
+  if printf '%s' "$haystack" | grep -iqF -- "$p"; then
+    echo "✋ Blocked: staged content contains a forbidden term (\"$p\")."
+    fail=1
+  fi
+done <<< "$patterns"
+
+if [ "$fail" -ne 0 ]; then
+  echo ""
+  echo "Commit aborted by the pre-commit guard. Move internal notes to work/ or"
+  echo "remove the flagged content. (Override only if you are 100% sure: --no-verify)"
+  exit 1
+fi
+exit 0

@@ -1,0 +1,121 @@
+# Changelog
+
+All notable changes to this project are documented here.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+The three services (`apps/api`, `apps/web`, `apps/whatsapp`) share a single version
+and are released together.
+
+## [Unreleased]
+
+## [0.3.0] - 2026-08-20
+
+Upgrading: this release adds a database migration (applied automatically by the
+Docker stack; run `alembic upgrade head` on local setups).
+
+### Added
+
+- WhatsApp Cloud API channel (official Meta API), independent from the QR
+  channel: a client can have both connected on different numbers.
+  - Bring your own Meta app: phone number ID, optional WABA id, permanent
+    access token and app secret. Secrets are encrypted at rest and write-only
+    (never returned by the API).
+  - Per-channel webhook with the Meta verify handshake and HMAC-SHA256
+    signature validation over the raw request body. The UI shows the callback
+    URL and verify token with copy buttons and the Meta setup steps.
+  - Inbound text, image and audio. Media is downloaded from the Graph API and
+    goes through the same transcription/description pipeline as the QR
+    channel; Meta webhook retries are deduplicated by message id.
+  - AI replies and human operator replies (Inbox and client portal) are
+    delivered through the Graph API.
+  - "Connect and verify" validates the credentials against the Graph API and
+    captures the number and verified name.
+  - New "WhatsApp API" card on the Channels page and on the client channels
+    tab, plus an inbox filter and badge for the new channel.
+- `META_GRAPH_BASE_URL` setting (optional) to pin a Graph API version or point
+  the channel at a mock server.
+
+### Changed
+
+- The Baileys channel is now labeled "WhatsApp QR" across the UI to
+  distinguish it from the official API channel.
+- The inbound WhatsApp pipeline (dedupe, conversation lookup, media handling,
+  human takeover, AI reply) is shared between both channels.
+
+## [0.2.0] - 2026-08-20
+
+Upgrading: this release adds a database migration (applied automatically by the
+Docker stack; run `alembic upgrade head` on local setups) and a new backend
+dependency (`pip install -r requirements.txt`).
+
+### Added
+
+- Custom tools for agents, configured from a new Tools tab on the agent page:
+  - HTTP tools: user-defined endpoint with `{param}` path placeholders, method,
+    body and query parameters, prompt instructions, optional auth headers
+    (encrypted at rest) and timeout.
+  - MCP servers: external servers over SSE or Streamable HTTP with optional
+    auth headers. The connection must be tested (tools listed) before saving,
+    and the discovered tool list is cached so chat requests never block on
+    discovery.
+- Tool-calling loop for both providers (OpenAI Responses API and Anthropic
+  Messages API), capped per reply, with token usage summed across iterations.
+  Agents without tools are unaffected.
+- Tool usage recorded on each assistant reply and shown in the playground,
+  including the error detail when a call fails. When a tool fails, the agent
+  reports the information as unavailable instead of answering from memory.
+- SSRF guard for HTTP tools: URLs resolving to private, loopback or reserved
+  addresses are rejected and redirects are never followed. Self-hosted
+  deployments can opt out with `TOOLS_ALLOW_PRIVATE_URLS`.
+- Unread count and last-message preview on inbox conversations.
+- Channel badge on inbox conversations.
+
+### Fixed
+
+- Spacing of stacked provider cards in settings.
+
+### Documentation
+
+- Full documentation site at [openvoiss.com/docs](https://openvoiss.com/docs) with per-feature guides in English and Spanish.
+- README restructured around the documentation site, with each feature linking to its guide.
+- Corrected the WhatsApp inbound route in `CLAUDE.md`.
+
+## [0.1.0] - 2026-08-16
+
+First tagged release.
+
+### Added
+
+- Multi-tenant, agency-scoped data model: agencies, users, clients, agents,
+  conversations and messages, with every query isolated by `agency_id`.
+- FastAPI backend with JWT auth in httpOnly cookies, SQLAlchemy models and
+  Alembic migrations.
+- Next.js web app: auth, dashboard, clients, agents, inbox, chat playground,
+  settings, client portal and an embeddable chat widget.
+- Typed i18n system (English default, Spanish) for all user-facing copy.
+- WhatsApp integration through a Baileys bridge, with stateful sessions and a
+  human/AI conversation mode toggle.
+- AI chat over any OpenAI-compatible endpoint, with per-connection base URL and
+  model configuration and connection testing.
+- Knowledge documents: PDF text extraction, chunking, embedding and semantic
+  retrieval assembled into the agent system prompt.
+- Structured business brief for agents.
+- Encryption at rest for AI API keys and WhatsApp session state.
+- OpenAI and Anthropic model presets, including the GPT-5.6 family
+  (`gpt-5.6-sol`, `gpt-5.6-terra`, `gpt-5.6-luna`) and the `gpt-transcribe`
+  transcription model.
+
+### Infrastructure
+
+- Docker Compose stack with a Makefile wrapper for build, run, migrate and test.
+- Single-origin Caddy gateway (`/api/*` to the backend, everything else to the
+  frontend).
+- Prebuilt images published to GHCR.
+- Per-IP rate limiting on public and unauthenticated endpoints.
+- Custom per-client portal domains with on-demand TLS.
+- README and self-hosting guide.
+
+[Unreleased]: https://github.com/kanazawa-dev/openvoiss/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/kanazawa-dev/openvoiss/compare/v0.1.0...v0.2.0
+[0.1.0]: https://github.com/kanazawa-dev/openvoiss/releases/tag/v0.1.0

@@ -1,0 +1,107 @@
+"""AI model catalog with metadata (backend source of truth).
+
+Each model declares its context window, capabilities (tools/vision) and price
+per 1k tokens. This metadata powers:
+- the model picker and token counter in the agent creation wizard,
+- cost estimation and per-model markup (billing).
+
+IDs are kept in sync with `frontend/lib/model-catalog.ts` (same identifiers per
+provider). Keep both in sync when adding models.
+"""
+
+from dataclasses import dataclass
+
+
+@dataclass(frozen=True)
+class ModelInfo:
+    id: str
+    provider: str
+    label: str
+    family: str
+    context_window: int
+    max_output_tokens: int
+    supports_tools: bool
+    supports_vision: bool
+    # Provider price per 1,000 tokens, in USD.
+    input_price_per_1k: float
+    output_price_per_1k: float
+    badge: str = ""
+    note: str = ""
+
+
+# Standard approximation to estimate tokens without a tokenizer: ~4 chars/token.
+CHARS_PER_TOKEN = 4
+
+
+_MODELS: tuple[ModelInfo, ...] = (
+    # OpenAI
+    ModelInfo("gpt-5.6-luna", "openai", "GPT-5.6 Luna", "gpt-5.6", 400_000, 16_384, True, True,
+              0.0004, 0.0016, "Most affordable", "High volume, chat and cost-sensitive automations."),
+    ModelInfo("gpt-5.6-terra", "openai", "GPT-5.6 Terra", "gpt-5.6", 400_000, 32_768, True, True,
+              0.0015, 0.006, "Balanced", "A good balance of capability, speed and price."),
+    ModelInfo("gpt-5.6-sol", "openai", "GPT-5.6 Sol", "gpt-5.6", 400_000, 65_536, True, True,
+              0.005, 0.02, "Top capability", "Complex work and more demanding responses."),
+    ModelInfo("gpt-5.6", "openai", "GPT-5.6", "gpt-5.6", 400_000, 65_536, True, True,
+              0.005, 0.02, "Alias of Sol", "Official alias pointing to the GPT-5.6 Sol model."),
+    ModelInfo("gpt-5.5", "openai", "GPT-5.5", "gpt-5.5", 256_000, 32_768, True, True,
+              0.004, 0.016, "Previous generation", "Available for compatibility and gradual migrations."),
+    # Google Gemini
+    ModelInfo("gemini-3.6-flash", "google", "Gemini 3.6 Flash", "gemini-3", 1_000_000, 65_536, True, True,
+              0.0003, 0.0025, "Current", "Fast, balanced model for agents and applications."),
+    ModelInfo("gemini-3.5-flash", "google", "Gemini 3.5 Flash", "gemini-3", 1_000_000, 65_536, True, True,
+              0.0003, 0.0025, "Stable", "General low-latency option with a wide context."),
+    ModelInfo("gemini-3.5-flash-lite", "google", "Gemini 3.5 Flash-Lite", "gemini-3", 1_000_000, 65_536, True, False,
+              0.0001, 0.0004, "Economical", "The lowest-cost alternative in the Gemini 3.5 family."),
+    ModelInfo("gemini-3.1-pro-preview", "google", "Gemini 3.1 Pro Preview", "gemini-3", 1_000_000, 65_536, True, True,
+              0.00125, 0.01, "Preview", "Advanced reasoning; try it first in controlled tests."),
+    # Anthropic
+    ModelInfo("claude-opus-4-7", "anthropic", "Claude Opus 4.7", "claude", 200_000, 32_768, True, True,
+              0.005, 0.025, "Top capability", "Complex tasks, reasoning and demanding agent flows."),
+    ModelInfo("claude-sonnet-4-6", "anthropic", "Claude Sonnet 4.6", "claude", 200_000, 16_384, True, True,
+              0.003, 0.015, "Balanced", "A mix of speed and intelligence for production."),
+    ModelInfo("claude-haiku-4-5", "anthropic", "Claude Haiku 4.5", "claude", 200_000, 8_192, True, True,
+              0.0008, 0.004, "Fast", "Quick responses and simpler workloads."),
+    # DeepSeek
+    ModelInfo("deepseek-v4-flash", "deepseek", "DeepSeek V4 Flash", "deepseek-v4", 1_000_000, 16_384, True, False,
+              0.0002, 0.0009, "Economical", "High-volume chat and agents with up to 1M context."),
+    ModelInfo("deepseek-v4-pro", "deepseek", "DeepSeek V4 Pro", "deepseek-v4", 256_000, 16_384, True, False,
+              0.0006, 0.0025, "Advanced", "Reasoning, code and complex long-running flows."),
+    # xAI
+    ModelInfo("grok-4.5", "xai", "Grok 4.5", "grok-4", 256_000, 32_768, True, True,
+              0.003, 0.015, "Current", "xAI's main model for code, agents and general work."),
+    ModelInfo("grok-4.3", "xai", "Grok 4.3", "grok-4", 131_072, 16_384, True, False,
+              0.001, 0.005, "Economical", "A lower-priced alternative with a wide context window."),
+    # Groq (open source)
+    ModelInfo("openai/gpt-oss-20b", "groq", "GPT-OSS 20B", "gpt-oss", 131_072, 8_192, True, False,
+              0.0001, 0.0005, "Very fast", "High-volume production at lower cost on Groq."),
+    ModelInfo("openai/gpt-oss-120b", "groq", "GPT-OSS 120B", "gpt-oss", 131_072, 16_384, True, False,
+              0.00075, 0.003, "More capable", "The most capable open model available on Groq."),
+    ModelInfo("qwen/qwen3.6-27b", "groq", "Qwen 3.6 27B", "qwen3", 131_072, 16_384, True, False,
+              0.0002, 0.0008, "Current", "A recent option for reasoning and general generation."),
+    # OpenRouter (routes to models already listed)
+    ModelInfo("openai/gpt-5.6-luna", "openrouter", "GPT-5.6 Luna", "gpt-5.6", 400_000, 16_384, True, True,
+              0.0004, 0.0016, "Economical", "OpenRouter route to OpenAI's efficient model."),
+    ModelInfo("anthropic/claude-sonnet-4.6", "openrouter", "Claude Sonnet 4.6", "claude", 200_000, 16_384, True, True,
+              0.003, 0.015, "Balanced", "OpenRouter route to the current Sonnet model."),
+    ModelInfo("google/gemini-3.6-flash", "openrouter", "Gemini 3.6 Flash", "gemini-3", 1_000_000, 65_536, True, True,
+              0.0003, 0.0025, "Fast", "OpenRouter route to Google's current Flash model."),
+    ModelInfo("deepseek/deepseek-v4-flash", "openrouter", "DeepSeek V4 Flash", "deepseek-v4", 1_000_000, 16_384, True, False,
+              0.0002, 0.0009, "Economical", "OpenRouter route to DeepSeek's efficient model."),
+)
+
+_BY_ID: dict[str, ModelInfo] = {model.id: model for model in _MODELS}
+
+
+def list_models() -> list[ModelInfo]:
+    """All catalog models, in declaration order."""
+    return list(_MODELS)
+
+
+def get_model(model_id: str) -> ModelInfo | None:
+    """Metadata for a model by its ID, or None if not in the catalog."""
+    return _BY_ID.get(model_id)
+
+
+def estimate_tokens(text: str) -> int:
+    """Quick token estimate (~4 characters per token)."""
+    return (len(text) + CHARS_PER_TOKEN - 1) // CHARS_PER_TOKEN

@@ -1,0 +1,115 @@
+name: openvoiss
+
+services:
+  db:
+    image: postgres:17.6-alpine
+    container_name: openvoiss_db
+    env_file:
+      - .env.docker
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/10-create-test-database.sh:/docker-entrypoint-initdb.d/10-create-test-database.sh:ro
+    ports:
+      - "${BIND_HOST:-127.0.0.1}:${DB_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    restart: unless-stopped
+
+  api:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
+    image: ${OPENVOISS_IMAGE_PREFIX:-ghcr.io/kanazawa-dev/openvoiss}-api:${OPENVOISS_VERSION:-latest}
+    container_name: openvoiss_api
+    env_file:
+      - .env.docker
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      TEST_DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_TEST_DB}
+      BACKEND_URL: http://api:8000
+      WHATSAPP_BRIDGE_URL: http://whatsapp:3101
+      STORAGE_DIR: /app/backend/storage
+    volumes:
+      - backend_storage:/app/backend/storage
+    ports:
+      - "${BIND_HOST:-127.0.0.1}:${API_PORT:-8000}:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-}
+    image: ${OPENVOISS_IMAGE_PREFIX:-ghcr.io/kanazawa-dev/openvoiss}-web:${OPENVOISS_VERSION:-latest}
+    container_name: openvoiss_web
+    environment:
+      # Used server-side by proxy.ts to resolve custom portal domains.
+      BACKEND_INTERNAL_URL: http://api:8000
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/login').then(r => { if (!r.ok) process.exit(1) }).catch(() => process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
+    restart: unless-stopped
+
+  whatsapp:
+    build:
+      context: ./apps/whatsapp
+      dockerfile: Dockerfile
+    image: ${OPENVOISS_IMAGE_PREFIX:-ghcr.io/kanazawa-dev/openvoiss}-whatsapp:${OPENVOISS_VERSION:-latest}
+    container_name: openvoiss_whatsapp
+    env_file:
+      - .env.docker
+    environment:
+      BACKEND_URL: http://api:8000
+      WHATSAPP_BRIDGE_HOST: 0.0.0.0
+      WHATSAPP_BRIDGE_PORT: 3101
+    expose:
+      - "3101"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3101/health').then(r => { if (!r.ok) process.exit(1) }).catch(() => process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
+    restart: unless-stopped
+
+  # Single-origin gateway: the app is served here; "/api/*" goes to the backend
+  # and everything else to the frontend. Put your own reverse proxy in front of
+  # this port for TLS in production.
+  proxy:
+    image: caddy:2-alpine
+    container_name: openvoiss_proxy
+    volumes:
+      - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
+    ports:
+      - "${BIND_HOST:-127.0.0.1}:${WEB_PORT:-3000}:80"
+    depends_on:
+      - web
+      - api
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  backend_storage:

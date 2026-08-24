@@ -1,0 +1,4 @@
+# Local-only / private context — keep out of the AI editor index
+internal/
+work/
+CLAUDE.local.md

@@ -1,0 +1,32 @@
+.env*
+!.env.example
+!.env.docker.example
+*.pem
+*.key
+*.dump
+*.sqlite*
+work/
+backups/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.venv/
+venv/
+apps/api/storage/*
+!apps/api/storage/.gitkeep
+apps/web/node_modules/
+apps/web/.next/
+apps/web/out/
+apps/whatsapp/node_modules/
+apps/whatsapp/dist/
+.DS_Store
+*.log
+.playwright-mcp/
+
+# Local-only notes / internal docs — never committed
+*.local.md
+internal/
+
+# Local-only Claude context (never committed)
+CLAUDE.local.md

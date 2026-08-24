@@ -1,0 +1,39 @@
+# Opt-in gateway for custom client-portal domains with automatic HTTPS.
+#
+# Enable it with a docker-compose.override.yml that mounts this file at
+# /etc/caddy/Caddyfile, sets PRIMARY_DOMAIN, and publishes ports 80 and 443.
+# See docs/self-hosting.md ("Custom domains for client portals").
+#
+# Caddy obtains a certificate on demand for any client domain, but only after
+# asking the API whether that domain is a verified portal domain — so it never
+# issues certificates for arbitrary hosts pointed at the server.
+{
+	on_demand_tls {
+		ask http://api:8000/api/public/portal-domain
+	}
+}
+
+# The primary domain (agency dashboard, playground, API) — normal managed cert.
+{$PRIMARY_DOMAIN} {
+	handle /api/* {
+		reverse_proxy api:8000
+	}
+	handle {
+		reverse_proxy web:3000
+	}
+}
+
+# Any other host is treated as a client's custom portal domain: the certificate
+# is issued on demand (gated by the ask endpoint) and the request is routed the
+# same way — proxy.ts in the frontend rewrites it to that client's portal.
+https:// {
+	tls {
+		on_demand
+	}
+	handle /api/* {
+		reverse_proxy api:8000
+	}
+	handle {
+		reverse_proxy web:3000
+	}
+}
