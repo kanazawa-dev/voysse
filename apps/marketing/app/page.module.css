@@ -256,6 +256,20 @@ p.darkPanelBody { color: rgba(14, 15, 12, 0.75); margin-top: 28px; font-size: 16
 .planCardCloud .planList svg { color: #0e0f0c; }
 .planCta { align-self: flex-start; }
 
+/* Feature comparison table */
+.compareIntro { margin: 56px 0 20px; }
+.compareWrap { overflow-x: auto; border-radius: 20px; box-shadow: 0 0 0 1px var(--line); }
+.compareTable { width: 100%; min-width: 640px; border-collapse: collapse; background: var(--surface); font-size: 14px; }
+.compareTable th, .compareTable td { padding: 14px 18px; text-align: left; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.compareTable tbody tr:last-child th, .compareTable tbody tr:last-child td { border-bottom: none; }
+.compareTable thead th { position: sticky; top: 0; background: var(--surface); font-size: 12px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--subtle); white-space: normal; }
+.compareTable thead th:first-child { color: var(--subtle); }
+.compareHeadCloud { background: var(--green) !important; color: var(--green-text) !important; }
+.compareLabel { font-weight: 600; color: var(--ink); white-space: normal; min-width: 200px; }
+.compareCell { color: var(--ink); white-space: normal; }
+.compareCellCloud { background: var(--positive-soft); font-weight: 600; }
+.compareCellMuted { color: var(--subtle); }
+
 /* FAQ */
 .faqItem { border-bottom: 1px solid var(--line); }
 .faqItem:first-child { border-top: 1px solid var(--line); }

@@ -41,6 +41,29 @@ const TAB_ICONS: Record<TabId, typeof MessageSquareText> = {
 
 const FAQ_IDS = [1, 2, 3, 4, 5] as const;
 
+const COMPARE_ROW_IDS = [
+  "agentBuilder",
+  "knowledgeRag",
+  "webchat",
+  "whatsapp",
+  "clientAccounts",
+  "whitelabel",
+  "customDomain",
+  "byoKeys",
+  "selfHosting",
+  "basicRoles",
+  "autoInstall",
+  "autoUpdates",
+  "backups",
+  "observability",
+  "sso",
+  "advancedAudit",
+  "rbac",
+  "supportSla",
+  "highAvailability",
+  "opsOwner",
+] as const;
+
 function cx(...classes: (string | false | undefined)[]) {
   return classes.filter(Boolean).join(" ");
 }
@@ -316,7 +339,7 @@ export default function LandingPage() {
               <h2>{t("welcome.plans.title")}</h2>
               <p>{t("welcome.plans.sub")}</p>
             </div>
-            <div className={styles.grid2}>
+            <div className={styles.grid3}>
               <div className={cx(styles.card, styles.planCard)}>
                 <span className={cx(styles.planTag, styles.planTagLive)}>{t("welcome.plans.selfhost.tag")}</span>
                 <div>
@@ -328,6 +351,7 @@ export default function LandingPage() {
                   <li><Check size={16} /> {t("welcome.plans.selfhost.p1")}</li>
                   <li><Check size={16} /> {t("welcome.plans.selfhost.p2")}</li>
                   <li><Check size={16} /> {t("welcome.plans.selfhost.p3")}</li>
+                  <li><Check size={16} /> {t("welcome.plans.selfhost.p4")}</li>
                 </ul>
                 <a className={cx(styles.btn, styles.btnPrimary, styles.planCta)} href={`${appUrl}/login`}>{t("welcome.plans.selfhost.cta")}</a>
               </div>
@@ -339,7 +363,7 @@ export default function LandingPage() {
                 <div>
                   <h3>{t("welcome.plans.cloud.title")}</h3>
                   <div className={styles.planPrice}>{t("welcome.plans.cloud.price")}</div>
-                  <div className={styles.planPriceDay}>{t("welcome.plans.cloud.perDay")}</div>
+                  <div className={styles.planPriceDay}>{t("welcome.plans.cloud.included")}</div>
                 </div>
                 <p className={styles.planDesc}>{t("welcome.plans.cloud.desc")}</p>
                 <ul className={styles.planList}>
@@ -350,6 +374,64 @@ export default function LandingPage() {
                 </ul>
                 <a className={cx(styles.btn, styles.btnDark, styles.planCta)} href="https://github.com/kanazawa-dev/openvoiss/discussions">{t("welcome.plans.cloud.cta")}</a>
               </div>
+              <div className={cx(styles.card, styles.planCard)}>
+                <span className={cx(styles.planTag, styles.planTagSoon)}>{t("welcome.plans.enterprise.tag")}</span>
+                <div>
+                  <h3>{t("welcome.plans.enterprise.title")}</h3>
+                  <div className={styles.planPrice}>{t("welcome.plans.enterprise.price")}</div>
+                  <div className={styles.planPriceDay}>{t("welcome.plans.enterprise.included")}</div>
+                </div>
+                <p className={styles.planDesc}>{t("welcome.plans.enterprise.desc")}</p>
+                <ul className={styles.planList}>
+                  <li><Check size={16} /> {t("welcome.plans.enterprise.p1")}</li>
+                  <li><Check size={16} /> {t("welcome.plans.enterprise.p2")}</li>
+                  <li><Check size={16} /> {t("welcome.plans.enterprise.p3")}</li>
+                  <li><Check size={16} /> {t("welcome.plans.enterprise.p4")}</li>
+                </ul>
+                <a className={cx(styles.btn, styles.btnSecondary, styles.planCta)} href="mailto:enterprise@openvoiss.com">{t("welcome.plans.enterprise.cta")}</a>
+              </div>
+            </div>
+
+            <div className={styles.sectionHead} style={{ margin: 0 }}>
+              <div className={styles.compareIntro}>
+                <span className={styles.eyebrow}>{t("welcome.compare.eyebrow")}</span>
+                <h2>{t("welcome.compare.title")}</h2>
+                <p>{t("welcome.compare.sub")}</p>
+              </div>
+            </div>
+            <div className={styles.compareWrap}>
+              <table className={styles.compareTable}>
+                <thead>
+                  <tr>
+                    <th>{t("welcome.compare.colFeature")}</th>
+                    <th>{t("welcome.plans.selfhost.title")}</th>
+                    <th className={styles.compareHeadCloud}>{t("welcome.plans.cloud.title")}</th>
+                    <th>{t("welcome.plans.enterprise.title")}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {COMPARE_ROW_IDS.map((id) => (
+                    <tr key={id}>
+                      <th className={styles.compareLabel} scope="row">{t(`welcome.compare.rows.${id}.label`)}</th>
+                      {(["community", "cloud", "enterprise"] as const).map((tier) => {
+                        const value = t(`welcome.compare.rows.${id}.${tier}`);
+                        return (
+                          <td
+                            key={tier}
+                            className={cx(
+                              styles.compareCell,
+                              tier === "cloud" && styles.compareCellCloud,
+                              value === "—" && styles.compareCellMuted
+                            )}
+                          >
+                            {value}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         </section>
