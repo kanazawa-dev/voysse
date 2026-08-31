@@ -31,6 +31,22 @@ def decode_access_token(token: str) -> str | None:
         return None
 
 
+def create_admin_token(admin_id: str) -> str:
+    settings = get_settings()
+    expires = datetime.now(timezone.utc) + timedelta(minutes=settings.access_token_minutes)
+    return jwt.encode({"sub": admin_id, "type": "admin", "exp": expires}, settings.secret_key, algorithm="HS256")
+
+
+def decode_admin_token(token: str) -> str | None:
+    try:
+        payload = jwt.decode(token, get_settings().secret_key, algorithms=["HS256"])
+        if payload.get("type") != "admin":
+            return None
+        return payload.get("sub")
+    except jwt.PyJWTError:
+        return None
+
+
 def create_portal_token(client_id: str, portal_slug: str) -> str:
     settings = get_settings()
     expires = datetime.now(timezone.utc) + timedelta(minutes=settings.access_token_minutes)

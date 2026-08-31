@@ -192,3 +192,18 @@ export type PortalPublic = {
   agency_brand_color: string;
   agency_logo_url: string | null;
 };
+
+export type AdminUser = { id: string; name: string; email: string };
+
+export type CloudLead = { id: string; name: string; email: string; agency_name: string; created_at: string };
+
+export type AgencyAdmin = {
+  id: string;
+  name: string;
+  slug: string;
+  is_active: boolean;
+  created_at: string;
+  owner_email: string | null;
+  user_count: number;
+  client_count: number;
+};

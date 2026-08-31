@@ -70,3 +70,4 @@ widget_rate_limit = RateLimiter(30, 60, name="widget")
 # only guards against floods of unsigned traffic.
 whatsapp_cloud_webhook_rate_limit = RateLimiter(300, 60, name="whatsapp-cloud-webhook")
 cloud_interest_rate_limit = RateLimiter(5, 300, name="cloud-interest")
+admin_login_rate_limit = RateLimiter(10, 60, name="admin-login")

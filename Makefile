@@ -66,6 +66,9 @@ test: ## Run backend tests + rebuild web/whatsapp validation stages
 shell-api: ## Open a shell in the api container
 	$(COMPOSE) exec api sh
 
+create-admin: ## Create a Voysse team account for /admin (interactive)
+	$(COMPOSE) exec api python -m app.scripts.create_admin
+
 shell-db: ## Open psql in the database container
 	$(COMPOSE) exec db sh -c 'psql -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"'
 

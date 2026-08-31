@@ -32,6 +32,9 @@ class Agency(Base):
     brand_color: Mapped[str] = mapped_column(String(20), default="#1748c7")
     logo_data: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True)
     logo_mime: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    # Toggled from the Voysse team's admin panel. A suspended agency's users
+    # are rejected at login and kicked out of any active session.
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
 
     users: Mapped[list["User"]] = relationship(back_populates="agency", cascade="all, delete-orphan")
@@ -366,6 +369,23 @@ class Message(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
 
     conversation: Mapped[Conversation] = relationship(back_populates="messages")
+
+
+class AdminUser(Base):
+    """A Voysse team account for the internal admin panel.
+
+    Unrelated to Agency/User -- this is platform staff, not a customer.
+    There is no self-registration; accounts are created with the
+    `create-admin` management command (see app/scripts/create_admin.py).
+    """
+    __tablename__ = "admin_users"
+    __table_args__ = (UniqueConstraint("email", name="uq_admin_users_email"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=new_uuid)
+    name: Mapped[str] = mapped_column(String(160))
+    email: Mapped[str] = mapped_column(String(320), index=True)
+    password_hash: Mapped[str] = mapped_column(String(255))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
 
 
 class CloudLead(Base):

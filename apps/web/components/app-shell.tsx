@@ -33,10 +33,14 @@ export function AppShell({ children }: { children: ReactNode }) {
   const isLogin = pathname === "/login";
   const isPortal = pathname.startsWith("/portal/");
   const isWidget = pathname.startsWith("/widget/");
+  // The admin panel is a separate Voysse-team-only auth system (its own
+  // cookie, its own /api/admin/auth/me) -- it must never go through the
+  // agency-user session check below.
+  const isAdmin = pathname.startsWith("/admin");
   const isExtraPublic = EXTRA_PUBLIC_PATHS.some(
     (path) => pathname === path || pathname.startsWith(`${path}/`),
   );
-  const isBare = isLogin || isPortal || isWidget || isExtraPublic;
+  const isBare = isLogin || isPortal || isWidget || isAdmin || isExtraPublic;
 
   useEffect(() => {
     if (isBare) {

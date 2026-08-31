@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .config import get_settings
 from .routers import (
+    admin,
     agency,
     agent_tools,
     agents,
@@ -63,3 +64,4 @@ app.include_router(whatsapp_cloud_webhook.public_router, prefix="/api")
 app.include_router(widget.router, prefix="/api")
 app.include_router(domains.public_router, prefix="/api")
 app.include_router(cloud.public_router, prefix="/api")
+app.include_router(admin.router, prefix="/api")

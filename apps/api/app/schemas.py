@@ -14,6 +14,40 @@ class CloudLeadRequest(BaseModel):
     agency_name: str = Field(min_length=2, max_length=180)
 
 
+class CloudLeadOut(ORMModel):
+    id: uuid.UUID
+    name: str
+    email: EmailStr
+    agency_name: str
+    created_at: datetime
+
+
+class AdminLoginRequest(BaseModel):
+    email: EmailStr
+    password: str
+
+
+class AdminOut(ORMModel):
+    id: uuid.UUID
+    name: str
+    email: EmailStr
+
+
+class AgencyAdminOut(ORMModel):
+    id: uuid.UUID
+    name: str
+    slug: str
+    is_active: bool
+    created_at: datetime
+    owner_email: str | None
+    user_count: int
+    client_count: int
+
+
+class AgencyStatusUpdate(BaseModel):
+    is_active: bool
+
+
 class RegisterRequest(BaseModel):
     agency_name: str = Field(min_length=2, max_length=180)
     name: str = Field(min_length=2, max_length=160)

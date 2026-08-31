@@ -1,6 +1,7 @@
 // English dictionary (source of truth), composed from per-area modules under
 // ./dicts. `es.ts` mirrors this exact shape. Access with dotted paths, e.g.
 // t("nav.clients"), t("clients.list.title").
+import { admin } from "./dicts/admin";
 import { core } from "./dicts/core";
 import { home } from "./dicts/home";
 import { clients } from "./dicts/clients";
@@ -14,6 +15,7 @@ import { tools } from "./dicts/tools";
 
 export const en = {
   ...core.en,
+  admin: admin.en,
   home: home.en,
   clients: clients.en,
   agents: agents.en,

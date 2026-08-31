@@ -1,4 +1,5 @@
 import type { Dictionary } from "./en";
+import { admin } from "./dicts/admin";
 import { core } from "./dicts/core";
 import { home } from "./dicts/home";
 import { clients } from "./dicts/clients";
@@ -14,6 +15,7 @@ import { tools } from "./dicts/tools";
 // must mirror the exact shape of `en` (each area's `es` mirrors its own `en`).
 export const es: Dictionary = {
   ...core.es,
+  admin: admin.es,
   home: home.es,
   clients: clients.es,
   agents: agents.es,

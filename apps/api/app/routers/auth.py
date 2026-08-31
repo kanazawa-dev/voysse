@@ -58,6 +58,8 @@ def login(payload: LoginRequest, response: Response, db: Session = Depends(get_d
     user = db.scalar(select(User).where(User.email == payload.email.lower()))
     if not user or not verify_password(payload.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Incorrect email or password")
+    if not user.agency.is_active:
+        raise HTTPException(status_code=403, detail="This agency's access has been suspended")
     _set_session_cookie(response, user)
     return user
 
