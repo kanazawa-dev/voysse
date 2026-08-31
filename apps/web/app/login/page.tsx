@@ -130,12 +130,14 @@ export default function LoginPage() {
 
           {pending ? (
             <>
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary"><Clock size={14} /> {t("auth.pendingTitle")}</span>
-              <p className="mt-3 text-sm leading-6 text-muted-foreground">{t("auth.pendingBody")}</p>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary"><Clock size={14} /> {t("auth.pendingEyebrow")}</span>
+              <h2 className="mt-3 font-pixel text-2xl text-foreground">{t("auth.pendingTitle")}</h2>
+              <p className="mt-1 text-sm leading-6 text-muted-foreground">{t("auth.pendingBody")}</p>
               <div className="mt-4 space-y-2.5">
                 <a href={`mailto:${PENDING_CONTACT_EMAIL}`} className="flex items-center gap-2.5 rounded-xl border p-3 text-sm font-medium hover:border-primary/40 hover:text-primary"><Mail size={16} className="shrink-0 text-primary" /> {PENDING_CONTACT_EMAIL}</a>
                 <a href={`tel:${PENDING_CONTACT_PHONE_HREF}`} className="flex items-center gap-2.5 rounded-xl border p-3 text-sm font-medium hover:border-primary/40 hover:text-primary"><Phone size={16} className="shrink-0 text-primary" /> {PENDING_CONTACT_PHONE}</a>
               </div>
+              <p className="mt-4 text-sm font-medium text-foreground">{t("auth.pendingSignature")}</p>
               <Button type="button" variant="ghost" className="mt-5 w-full" onClick={() => { setPending(false); setMode("login"); }}><ArrowLeft size={16} /> {t("auth.pendingBackToLogin")}</Button>
             </>
           ) : (
