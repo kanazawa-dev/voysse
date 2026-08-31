@@ -13,7 +13,7 @@ interface BentoCardProps extends ComponentPropsWithoutRef<"div"> {
   name: string
   className: string
   background?: ReactNode
-  Icon: React.ElementType
+  Icon: React.ComponentType<{ className?: string }>
   description: string
   href?: string
   cta?: string
@@ -63,7 +63,7 @@ const BentoCard = ({
         <h3 className="mt-2 text-lg font-semibold text-foreground">
           {name}
         </h3>
-        <p className="max-w-lg text-sm leading-6 text-muted-foreground">{description}</p>
+        <p className="max-w-lg text-base leading-6 font-semibold text-foreground">{description}</p>
         {children}
       </div>
 

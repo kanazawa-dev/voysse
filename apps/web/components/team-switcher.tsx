@@ -17,7 +17,7 @@ export function TeamSwitcher({ agency }: { agency: Agency }) {
     <SidebarMenu>
       <SidebarMenuItem>
         <SidebarMenuButton
-          className="h-12"
+          className="h-12 px-2 font-semibold hover:bg-white hover:text-sidebar-foreground hover:shadow-sm"
           render={<Link href="/" />}
           size="lg"
           tooltip={agency.name}

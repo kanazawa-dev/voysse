@@ -24,7 +24,6 @@ import {
 import { ChevronsUpDownIcon, LogOutIcon } from "lucide-react"
 import { api } from "@/lib/api"
 import { useT } from "@/lib/i18n"
-import { LanguageSwitcher } from "@/components/language-switcher"
 import type { User } from "@/types"
 
 export function NavUser({ user }: { user: User }) {
@@ -40,7 +39,6 @@ export function NavUser({ user }: { user: User }) {
   }
 
   return (
-    <>
       <SidebarMenu>
         <SidebarMenuItem>
           <DropdownMenu>
@@ -49,7 +47,7 @@ export function NavUser({ user }: { user: User }) {
                 <SidebarMenuButton
                   size="lg"
                   tooltip={user.name}
-                  className="data-open:bg-sidebar-accent data-open:text-sidebar-accent-foreground"
+                  className="h-14 border border-sidebar-border/70 bg-white/45 px-2.5 font-semibold shadow-sm hover:bg-white hover:text-sidebar-foreground data-open:bg-white data-open:text-sidebar-foreground"
                 />
               }
             >
@@ -92,9 +90,5 @@ export function NavUser({ user }: { user: User }) {
           </DropdownMenu>
         </SidebarMenuItem>
       </SidebarMenu>
-      <div className="px-2 group-data-[collapsible=icon]:hidden">
-        <LanguageSwitcher />
-      </div>
-    </>
   )
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowRight, Bot, Building2, Cpu, MessagesSquare, MessageSquareText, Radio, UserRound } from "lucide-react";
 import { api } from "@/lib/api";
 import { useT } from "@/lib/i18n";
@@ -12,6 +12,44 @@ import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { CountingNumber } from "@/components/animate-ui/primitives/texts/counting-number";
 import { useReducedMotion } from "motion/react";
+import DitherBackground from "@/components/ui/dither-background";
+import { cn } from "@/lib/utils";
+
+// Subtle animated brand backdrop for non-data, welcome-style cards. Only
+// mounts its WebGL canvas while the card is (near) the viewport, and the
+// pattern is frozen (disableAnimation) so it doesn't compete with the
+// surrounding metrics for attention.
+function GrainLayer({ className }: { className?: string }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const node = containerRef.current;
+    if (!node) return;
+    const observer = new IntersectionObserver(([entry]) => setIsVisible(entry.isIntersecting), { rootMargin: "200px" });
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div ref={containerRef} className={cn("pointer-events-none absolute inset-0 -z-10 overflow-hidden", className)} aria-hidden="true">
+      {isVisible ? (
+        <DitherBackground
+          className="absolute inset-0"
+          colorNum={2.5}
+          waveAmplitude={0.31}
+          waveSpeed={0.01}
+          waveFrequency={1.8}
+          waveColor={[0.09, 0.282, 0.78]}
+          backgroundColor={[0.98, 0.969, 0.937]}
+          enableMouseInteraction={false}
+          disableAnimation
+        />
+      ) : null}
+      <div className="absolute inset-0 bg-background/80" />
+    </div>
+  );
+}
 
 type Dashboard = { clients: number; active_clients: number; agents: number; active_agents: number; conversations: number; channels: number; connected_channels: number; recent_agents: AgentSummary[] };
 type DailyPoint = { date: string; count: number };
@@ -43,9 +81,10 @@ export default function HomePage() {
   return (
     <div className="flex w-full flex-col gap-6">
       <PageHead eyebrow={t("home.head.eyebrow")} title={t("home.head.title")} description={t("home.head.description")} action={<Select value={String(range)} onValueChange={(value) => value && setRange(Number(value))}><SelectTrigger><SelectValue>{t("home.range.days", { count: range })}</SelectValue></SelectTrigger><SelectContent>{[7, 14, 30, 90].map((days) => <SelectItem key={days} value={String(days)}>{t("home.range.days", { count: days })}</SelectItem>)}</SelectContent></Select>} />
-      <Card className="p-5 [&_ol]:grid [&_ol]:gap-3 md:[&_ol]:grid-cols-3 [&_li]:flex [&_li]:gap-3 [&_li]:rounded-lg [&_li]:bg-muted/50 [&_li]:p-3 [&_li>span]:flex [&_li>span]:size-7 [&_li>span]:shrink-0 [&_li>span]:items-center [&_li>span]:justify-center [&_li>span]:rounded-full [&_li>span]:bg-primary [&_li>span]:text-xs [&_li>span]:font-semibold [&_li>span]:text-primary-foreground [&_small]:block [&_small]:text-muted-foreground">
-        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between [&_h3]:font-semibold [&_p]:mt-1 [&_p]:text-sm [&_p]:text-muted-foreground"><div><h3 className="font-heading">{t("home.nextSteps.title")}</h3><p>{t("home.nextSteps.subtitle")}</p></div></div>
-        <ol><li className={data?.clients ? "opacity-70" : ""}><span>{data?.clients ? "✓" : "1"}</span><div><strong>{t("home.nextSteps.step1Title")}</strong><small>{t("home.nextSteps.step1Desc")}</small></div></li><li className={data?.agents ? "opacity-70" : ""}><span>{data?.agents ? "✓" : "2"}</span><div><strong>{t("home.nextSteps.step2Title")}</strong><small>{t("home.nextSteps.step2Desc")}</small></div></li><li><span>3</span><div><strong>{t("home.nextSteps.step3Title")}</strong><small>{t("home.nextSteps.step3Desc")}</small></div></li></ol>
+      <Card className="relative isolate overflow-hidden p-5 [&_ol]:grid [&_ol]:gap-3 md:[&_ol]:grid-cols-3 [&_li]:flex [&_li]:gap-3 [&_li]:rounded-lg [&_li]:bg-muted/50 [&_li]:p-3 [&_li>span]:flex [&_li>span]:size-7 [&_li>span]:shrink-0 [&_li>span]:items-center [&_li>span]:justify-center [&_li>span]:rounded-full [&_li>span]:bg-primary [&_li>span]:text-xs [&_li>span]:font-semibold [&_li>span]:text-primary-foreground [&_small]:block [&_small]:text-muted-foreground">
+        <GrainLayer />
+        <div className="relative z-10 mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between [&_h3]:font-semibold [&_p]:mt-1 [&_p]:text-sm [&_p]:text-muted-foreground"><div><h3 className="font-pixel">{t("home.nextSteps.title")}</h3><p>{t("home.nextSteps.subtitle")}</p></div></div>
+        <ol className="relative z-10"><li className={data?.clients ? "opacity-70" : ""}><span>{data?.clients ? "✓" : "1"}</span><div><strong>{t("home.nextSteps.step1Title")}</strong><small>{t("home.nextSteps.step1Desc")}</small></div></li><li className={data?.agents ? "opacity-70" : ""}><span>{data?.agents ? "✓" : "2"}</span><div><strong>{t("home.nextSteps.step2Title")}</strong><small>{t("home.nextSteps.step2Desc")}</small></div></li><li><span>3</span><div><strong>{t("home.nextSteps.step3Title")}</strong><small>{t("home.nextSteps.step3Desc")}</small></div></li></ol>
       </Card>
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Card className="flex gap-4 p-5 [&_small]:text-sm [&_small]:text-muted-foreground [&_strong]:mt-1 [&_strong]:block [&_strong]:text-2xl [&_strong]:font-semibold [&_p]:mt-1 [&_p]:text-xs [&_p]:text-muted-foreground"><span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary bg-sky-500/10 text-sky-600"><Building2 size={20} /></span><div><small>{t("home.metrics.clients")}</small><strong><AnimatedMetric value={data?.clients} /></strong><p>{t("home.metrics.clientsActive", { count: data?.active_clients ?? 0 })}</p></div></Card>

@@ -59,7 +59,7 @@ export default function WidgetPage() {
   if (error === "unavailable") return <div className="widget-shell"><div className="widget-empty">Chat unavailable</div></div>;
   if (!config) return <div className="widget-shell"><div className="widget-empty"><LoaderCircle className="spin" /></div></div>;
 
-  const color = config.color || "#635bff";
+  const color = config.color || "#1748c7";
   const showGreeting = config.greeting && messages.length === 0;
   return (
     <div className="widget-shell" style={{ ["--widget-color" as string]: color }}>

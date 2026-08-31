@@ -15,7 +15,7 @@ export function Modal({ open, title, description, onClose, children }: { open: b
 }
 
 export function PageHead({ eyebrow, title, description, action }: { eyebrow?: string; title: string; description: string; action?: ReactNode }) {
-  return <header className="flex flex-col gap-4 border-b pb-5 sm:flex-row sm:items-end sm:justify-between"><div>{eyebrow && <span className="mb-1 block text-xs font-medium uppercase tracking-widest text-primary">{eyebrow}</span>}<h1 className="font-heading text-2xl font-semibold tracking-tight">{title}</h1><p className="mt-1 max-w-2xl text-sm text-muted-foreground">{description}</p></div>{action}</header>;
+  return <header className="flex flex-col gap-4 border-b pb-5 sm:flex-row sm:items-end sm:justify-between"><div>{eyebrow && <span className="mb-1 block text-xs font-medium uppercase tracking-widest text-primary">{eyebrow}</span>}<h1 className="font-pixel text-2xl font-semibold tracking-tight">{title}</h1><p className="mt-1 max-w-2xl text-sm text-muted-foreground">{description}</p></div>{action}</header>;
 }
 
 export function EmptyState({ icon, title, description, action }: { icon: ReactNode; title: string; description: string; action?: ReactNode }) {

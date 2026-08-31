@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { PageHead } from "@/components/ui";
 import { Button } from "@/components/ui/button";
+import { LanguageSwitcher } from "@/components/language-switcher";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/toast";
@@ -160,7 +161,7 @@ export default function SettingsPage() {
               <div>
                 <strong>{t("settings.index.logoLabel")}</strong>
                 <small>{t("settings.index.logoHint")}</small>
-                <div>
+                <div className="mt-1 flex flex-wrap items-center gap-1">
                   <Button
                     type="button"
                     variant="link"
@@ -224,17 +225,30 @@ export default function SettingsPage() {
                 <Input defaultValue={agency.brand_color} readOnly />
               </div>
             </label>
-            <Button type="submit" disabled={busy}>
-              {busy ? (
-                <LoaderCircle size={17} className="animate-spin" />
-              ) : (
-                <Save size={17} />
-              )}{" "}
-              {t("settings.index.saveIdentity")}
-            </Button>
           </div>
         </Card>
+        <div className="flex flex-wrap justify-end gap-2 border-t pt-5">
+          <Button type="submit" disabled={busy}>
+            {busy ? (
+              <LoaderCircle size={17} className="animate-spin" />
+            ) : (
+              <Save size={17} />
+            )}{" "}
+            {t("settings.index.saveIdentity")}
+          </Button>
+        </div>
       </form>
+
+      <Card className="grid gap-6 overflow-hidden border-primary/15 bg-gradient-to-br from-card via-card to-secondary/35 p-5 shadow-sm md:grid-cols-[minmax(12rem,1fr)_2fr] md:items-center">
+        <div className="[&_h2]:font-semibold [&_p]:mt-1 [&_p]:text-sm [&_p]:text-muted-foreground">
+          <span className="mb-2 block font-pixel text-[10px] uppercase tracking-[0.16em] text-primary/70">Voysse</span>
+          <h2 className="font-heading">{t("settings.index.languageHeading")}</h2>
+          <p>{t("settings.index.languageCopy")}</p>
+        </div>
+        <div className="flex justify-start md:justify-end">
+          <LanguageSwitcher className="h-11 w-full max-w-56 justify-between border border-primary/20 bg-white/80 px-4 font-semibold shadow-sm hover:bg-white sm:w-56" />
+        </div>
+      </Card>
 
       <Card className="p-5">
         <div className="mb-4 flex items-center justify-between gap-3 [&_h2]:text-lg [&_h2]:font-semibold">

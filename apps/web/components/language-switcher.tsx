@@ -1,17 +1,42 @@
 "use client";
 
-import { Languages } from "lucide-react";
+import { Globe } from "lucide-react";
 import { useLanguage } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
 
-// Compact EN/ES toggle used in the sidebar footer.
-export function LanguageSwitcher() {
+const LANGS = [
+  { code: "en", label: "English" },
+  { code: "es", label: "Español" },
+] as const;
+
+// Dropdown language switcher. Used in the sidebar footer (sidebar-tinted,
+// docked to the right) and standalone in Settings (default look, drops down).
+export function LanguageSwitcher({
+  className,
+  side = "bottom",
+}: {
+  className?: string;
+  side?: "top" | "bottom" | "left" | "right";
+}) {
   const { lang, setLang, t } = useLanguage();
+
   return (
-    <div className="flex items-center gap-1 rounded-lg bg-sidebar-accent/60 p-1 text-xs text-sidebar-foreground" role="group" aria-label={t("shell.language")}>
-      <Languages size={14} />
-      <Button type="button" size="xs" variant={lang === "en" ? "secondary" : "ghost"} onClick={() => setLang("en")} aria-pressed={lang === "en"}>EN</Button>
-      <Button type="button" size="xs" variant={lang === "es" ? "secondary" : "ghost"} onClick={() => setLang("es")} aria-pressed={lang === "es"}>ES</Button>
-    </div>
+    <DropdownMenu>
+      <DropdownMenuTrigger render={<Button type="button" variant="ghost" size="sm" aria-label={t("shell.language")} className={cn("w-full justify-start gap-2", className)} />}>
+        <Globe size={14} />
+        <span className="text-xs font-semibold uppercase">{lang}</span>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent side={side} align="end" sideOffset={12} className="w-36">
+        <DropdownMenuRadioGroup value={lang} onValueChange={(value) => setLang(value as (typeof LANGS)[number]["code"])}>
+          {LANGS.map(({ code, label }) => (
+            <DropdownMenuRadioItem key={code} value={code}>
+              {label}
+            </DropdownMenuRadioItem>
+          ))}
+        </DropdownMenuRadioGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

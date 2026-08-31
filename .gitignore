@@ -24,7 +24,12 @@ apps/marketing/out/
 apps/whatsapp/node_modules/
 apps/whatsapp/dist/
 .DS_Store
+Thumbs.db
 *.log
+*.tmp
+*.swp
+.vscode/
+.idea/
 .playwright-mcp/
 
 # Local-only notes / internal docs — never committed

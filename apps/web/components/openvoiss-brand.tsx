@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 
 import { Benday, type BendayState, useDotMap } from "./ui/benday"
 
-const OPENVOISS_LIME = "#9fe870"
+const VOYSSE_BLUE = "#1748c7"
 const STATIC_MARK_MAX_SIZE = 24
 
 export interface OpenvoissBrandProps {
@@ -23,8 +23,8 @@ export function OpenvoissBrand({
   className,
   decorative = false,
   effect = "static",
-  label = "Openvoiss",
-  name = "Openvoiss",
+  label = "Voysse",
+  name = "Voysse",
   showName = false,
   size = 32,
   state = "idle",
@@ -55,7 +55,7 @@ export function OpenvoissBrand({
           aria-hidden="true"
           className="openvoiss-brand-static"
           style={{
-            backgroundColor: OPENVOISS_LIME,
+            backgroundColor: VOYSSE_BLUE,
             maskImage: "url(/brand/only-logo.png)",
             maskPosition: "center",
             maskRepeat: "no-repeat",
@@ -71,7 +71,7 @@ export function OpenvoissBrand({
           <Benday
             aria-hidden="true"
             className="openvoiss-brand-canvas"
-            color={OPENVOISS_LIME}
+            color={VOYSSE_BLUE}
             dotMap={dotMap ?? undefined}
             padding={0.06}
             preset="breathe"

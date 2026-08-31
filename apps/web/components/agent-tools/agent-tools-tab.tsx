@@ -75,7 +75,7 @@ export function AgentToolsTab({ agentId, tools, onToolsChange }: {
         {!tools.length && (
           <div className="flex min-h-24 items-center justify-center gap-3 rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
             <Wrench size={22} />
-            <div><strong>{t("tools.emptyTitle")}</strong><span>{t("tools.emptyHint")}</span></div>
+            <div><strong className="block">{t("tools.emptyTitle")}</strong><span className="block">{t("tools.emptyHint")}</span></div>
           </div>
         )}
       </div>

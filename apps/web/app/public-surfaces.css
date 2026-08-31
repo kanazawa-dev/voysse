@@ -35,7 +35,7 @@
   --line: #e3e8ee;
   --surface: #fff;
   --canvas: #f7f9fc;
-  --purple: #635bff;
+  --purple: #1748c7;
   --purple-dark: #4f46e5;
   --purple-soft: #f0efff;
   --green: #0e9272;
@@ -48,7 +48,7 @@
 :is(.access-page, .portal-app, .portal-loader, .widget-shell) { background: var(--canvas); font-family: var(--font-geist), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 15px; line-height: 1.5; }
 :is(.access-page, .portal-app, .portal-loader, .widget-shell) h1, :is(.access-page, .portal-app, .portal-loader, .widget-shell) h2, :is(.access-page, .portal-app, .portal-loader, .widget-shell) h3 { font-family: inherit; }
 :is(.access-page, .portal-app, .portal-loader, .widget-shell) .button { min-height: 40px; padding: 0 15px; border-radius: 7px; font-size: 14px; font-weight: 600; box-shadow: 0 1px 2px rgba(16, 24, 40, .05); }
-:is(.access-page, .portal-app, .portal-loader, .widget-shell) .button.primary { border: 1px solid #5149e8; background: #635bff; box-shadow: 0 2px 5px rgba(99, 91, 255, .25); }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .button.primary { border: 1px solid #1039a8; background: #1748c7; box-shadow: 0 2px 5px rgba(23, 72, 199, .25); }
 :is(.access-page, .portal-app, .portal-loader, .widget-shell) .button.primary:hover { background: #544cf0; }
 :is(.access-page, .portal-app, .portal-loader, .widget-shell) .button.secondary, :is(.access-page, .portal-app, .portal-loader, .widget-shell) .button.ghost { color: #3b4252; border: 1px solid #d8dde5; background: white; }
 :is(.access-page, .portal-app, .portal-loader, .widget-shell) .button.danger { color: #b02e3c; border: 1px solid #efc6ca; background: white; }
@@ -65,7 +65,7 @@
 :is(.access-page, .portal-app, .portal-loader, .widget-shell) .button.danger:hover { filter: brightness(.95); }
 .widget-shell { position: fixed; inset: 0; display: flex; flex-direction: column; background: white; font-size: 14px; overflow: hidden; }
 :is(.access-page, .portal-app, .portal-loader, .widget-shell) .widget-empty { flex: 1; display: grid; place-items: center; color: var(--text-muted); }
-:is(.access-page, .portal-app, .portal-loader, .widget-shell) .widget-head { flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 14px; color: white; background: var(--widget-color, #635bff); }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .widget-head { flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 14px; color: white; background: var(--widget-color, #1748c7); }
 :is(.access-page, .portal-app, .portal-loader, .widget-shell) .widget-head-id { display: flex; align-items: center; gap: 10px; min-width: 0; }
 :is(.access-page, .portal-app, .portal-loader, .widget-shell) .widget-head-id img { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; background: white; }
 :is(.access-page, .portal-app, .portal-loader, .widget-shell) .widget-avatar { width: 34px; height: 34px; flex: 0 0 auto; display: grid; place-items: center; border-radius: 50%; background: rgba(255,255,255,.22); font-weight: 700; }
@@ -79,7 +79,7 @@
 :is(.access-page, .portal-app, .portal-loader, .widget-shell) .widget-msg.user { justify-content: flex-end; }
 :is(.access-page, .portal-app, .portal-loader, .widget-shell) .widget-bubble { max-width: 82%; padding: 9px 12px; border-radius: 14px; line-height: 1.4; white-space: pre-wrap; word-break: break-word; }
 :is(.access-page, .portal-app, .portal-loader, .widget-shell) .widget-msg.assistant .widget-bubble { background: white; color: var(--ink); border: 1px solid var(--line); border-bottom-left-radius: 4px; }
-:is(.access-page, .portal-app, .portal-loader, .widget-shell) .widget-msg.user .widget-bubble { background: var(--widget-color, #635bff); color: white; border-bottom-right-radius: 4px; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .widget-msg.user .widget-bubble { background: var(--widget-color, #1748c7); color: white; border-bottom-right-radius: 4px; }
 :is(.access-page, .portal-app, .portal-loader, .widget-shell) .widget-typing { display: inline-flex; gap: 4px; }
 :is(.access-page, .portal-app, .portal-loader, .widget-shell) .widget-typing i { width: 6px; height: 6px; border-radius: 50%; background: #b7bcc7; animation: widget-blink 1.2s infinite; }
 :is(.access-page, .portal-app, .portal-loader, .widget-shell) .widget-typing i:nth-child(2) { animation-delay: .2s; }
@@ -87,15 +87,15 @@
 :is(.access-page, .portal-app, .portal-loader, .widget-shell) .widget-error { padding: 6px 14px; color: var(--red); font-size: 12px; background: var(--red-soft); }
 :is(.access-page, .portal-app, .portal-loader, .widget-shell) .widget-composer { flex: 0 0 auto; display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-top: 1px solid var(--line); background: white; }
 :is(.access-page, .portal-app, .portal-loader, .widget-shell) .widget-composer input { flex: 1 1 auto; height: 40px; padding: 0 12px; border: 1px solid var(--line); border-radius: 20px; font-size: 14px; }
-:is(.access-page, .portal-app, .portal-loader, .widget-shell) .widget-composer input:focus { outline: none; border-color: var(--widget-color, #635bff); }
-:is(.access-page, .portal-app, .portal-loader, .widget-shell) .widget-composer button { flex: 0 0 auto; width: 40px; height: 40px; display: grid; place-items: center; border: 0; border-radius: 50%; color: white; background: var(--widget-color, #635bff); cursor: pointer; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .widget-composer input:focus { outline: none; border-color: var(--widget-color, #1748c7); }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .widget-composer button { flex: 0 0 auto; width: 40px; height: 40px; display: grid; place-items: center; border: 0; border-radius: 50%; color: white; background: var(--widget-color, #1748c7); cursor: pointer; }
 :is(.access-page, .portal-app, .portal-loader, .widget-shell) .widget-composer button:disabled { opacity: .55; }
 :is(.access-page, .portal-app, .portal-loader, .widget-shell) .mode-toggle { min-height: 35px; padding: 0 12px; color: #4f46cf; border: 1px solid #cac6ff; border-radius: 7px; background: #f4f3ff; }
 :is(.access-page, .portal-app, .portal-loader, .widget-shell) .mode-toggle.human { color: #087a5e; border-color: #a9ddce; background: #eaf8f3; }
 
 .portal-loader { min-height: 100vh; display: flex; align-items: center; justify-content: center; gap: 10px; color: #687082; background: #f7f9fc; }
 :is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-brand { display: flex; align-items: center; gap: 10px; }
-:is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-brand span, :is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-brand img { width: 34px; height: 34px; display: grid; place-items: center; object-fit: contain; color: white; border-radius: 8px; background: var(--portal-color, #635bff); font-weight: 700; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-brand span, :is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-brand img { width: 34px; height: 34px; display: grid; place-items: center; object-fit: contain; color: white; border-radius: 8px; background: var(--portal-color, #1748c7); font-weight: 700; }
 :is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-client-avatar { width: 48px; height: 48px; display: grid; place-items: center; color: var(--portal-color); border-radius: 9px; background: #eeecff; font-weight: 700; }
 .portal-app { min-height: 100vh; display: grid; grid-template-columns: 230px minmax(0,1fr); background: #f7f9fc; }
 :is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-nav { padding: 20px 14px; display: flex; flex-direction: column; border-right: 1px solid var(--line); background: white; }
@@ -164,10 +164,10 @@
 }
 :is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-topbar > small { color: #7a8290; font-size: 13px; }
 :is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-brand { display: flex; align-items: center; gap: 10px; }
-:is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-brand > span:not(.openvoiss-brand), :is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-brand > img { width: 32px; height: 32px; display: grid; place-items: center; object-fit: contain; color: white; border-radius: 7px; background: #635bff; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-brand > span:not(.openvoiss-brand), :is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-brand > img { width: 32px; height: 32px; display: grid; place-items: center; object-fit: contain; color: white; border-radius: 7px; background: #1748c7; }
 :is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-brand > .openvoiss-brand { color: var(--ink); }
 :is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-brand strong { color: #1d2230; font-size: 17px; font-weight: 650; letter-spacing: -.2px; }
-:is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-access-brand > span { background: var(--portal-color, #635bff); }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-access-brand > span { background: var(--portal-color, #1748c7); }
 :is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-layout {
   width: min(1220px, calc(100% - 56px));
   min-height: calc(100vh - 72px);
@@ -178,8 +178,8 @@
   align-items: center;
 }
 :is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-intro { padding: 56px 0; }
-:is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-eyebrow { color: #635bff; font-size: 12px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; }
-:is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-access .access-eyebrow { color: var(--portal-color, #635bff); }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-eyebrow { color: #1748c7; font-size: 12px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-access .access-eyebrow { color: var(--portal-color, #1748c7); }
 :is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-intro > h1 { max-width: 660px; margin: 12px 0 16px; font-size: clamp(40px, 4.5vw, 58px); font-weight: 650; line-height: 1.04; letter-spacing: -2.5px; }
 :is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-intro > p { max-width: 620px; margin-bottom: 30px; color: #667085; font-size: 17px; line-height: 1.65; }
 :is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-preview { overflow: hidden; border: 1px solid #dfe3e9; border-radius: 12px; background: white; box-shadow: 0 16px 45px rgba(24, 32, 56, .08); }
@@ -202,11 +202,11 @@
 :is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-preview-thread > div.active { background: #f6f5ff; }
 :is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-preview > footer { min-height: 50px; padding: 0 15px; display: flex; align-items: center; justify-content: space-between; color: #687082; border-top: 1px solid #e8ebf0; font-size: 11px; }
 :is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-preview > footer span { display: flex; align-items: center; gap: 6px; }
-:is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-preview > footer strong { padding: 6px 9px; color: var(--portal-color, #635bff); border: 1px solid color-mix(in srgb, var(--portal-color, #635bff) 35%, white); border-radius: 6px; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-preview > footer strong { padding: 6px 9px; color: var(--portal-color, #1748c7); border: 1px solid color-mix(in srgb, var(--portal-color, #1748c7) 35%, white); border-radius: 6px; }
 :is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-form-wrap { padding: 56px 0; display: flex; justify-content: flex-end; }
 :is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-card { width: min(440px, 100%); padding: 34px; border: 1px solid #dfe3e9; border-radius: 12px; background: white; box-shadow: 0 12px 35px rgba(24, 32, 56, .07); }
 :is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-card-label { display: inline-flex; align-items: center; gap: 6px; color: #5b53cf; font-size: 12px; font-weight: 650; }
-:is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-access .access-card-label { color: var(--portal-color, #635bff); }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-access .access-card-label { color: var(--portal-color, #1748c7); }
 :is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-card > h2 { margin: 14px 0 8px; font-size: 27px; font-weight: 650; letter-spacing: -.7px; }
 :is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-card > p { margin-bottom: 0; color: #687082; font-size: 14px; line-height: 1.55; }
 :is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-card .auth-tabs { margin-top: 24px; }
@@ -215,7 +215,7 @@
 :is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-form label { display: flex; flex-direction: column; gap: 7px; font-size: 13px; }
 :is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-form input { font-size: 14px; }
 :is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-card.access-form > .portal-client-avatar { margin-bottom: -4px; }
-:is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-access .button.primary { border-color: var(--portal-color, #635bff); background: var(--portal-color, #635bff); }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-access .button.primary { border-color: var(--portal-color, #1748c7); background: var(--portal-color, #1748c7); }
 :is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-security { margin: 18px 0 0 !important; display: flex; align-items: flex-start; justify-content: center; gap: 6px; color: #8a929f !important; font-size: 11px !important; line-height: 1.45; }
 :is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-security svg { flex: 0 0 auto; margin-top: 1px; }
 
@@ -242,7 +242,7 @@
 
 /* Canal real de WhatsApp */
 
-/* Identidad Openvoiss: azul institucional, verde como acento y superficies neutras. */
+/* Identidad Voysse: azul institucional, verde como acento y superficies neutras. */
 :is(.access-page, .portal-app, .portal-loader, .widget-shell) {
   --ink: #102a43;
   --text-muted: #5f6f7f;
@@ -250,7 +250,7 @@
   --line: #dfe6eb;
   --canvas: #f7f9fa;
   --navy: #06476f;
-  --purple: #075985;
+  --purple: #1748c7;
   --purple-dark: #064466;
   --purple-soft: #eaf3f5;
   --green: #00a67d;
@@ -273,21 +273,21 @@
 :is(.access-page, .portal-app, .portal-loader, .widget-shell) .brand .openvoiss-icon { width: 30px !important; height: 30px !important; min-width: 30px; }
 :is(.access-page, .portal-app, .portal-loader, .widget-shell) .preview-logo.openvoiss-icon { width: 30px !important; height: 30px !important; min-width: 30px; }
 :is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-eyebrow { color: #00866b; }
-:is(.access-page, .portal-app, .portal-loader, .widget-shell) .button.primary { border-color: #075985; background: #075985; box-shadow: 0 2px 5px rgba(7, 89, 133, .2); }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .button.primary { border-color: #1748c7; background: #1748c7; box-shadow: 0 2px 5px rgba(23, 72, 199, .2); }
 :is(.access-page, .portal-app, .portal-loader, .widget-shell) .button.primary:hover, :is(.access-page, .portal-app, .portal-loader, .widget-shell) .button.primary:hover:not(:disabled) { background: #064466; }
-:is(.access-page, .portal-app, .portal-loader, .widget-shell) .button.secondary { color: #075985; border-color: #c9dce4; background: #f5f9fa; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .button.secondary { color: #1748c7; border-color: #c9dce4; background: #f5f9fa; }
 :is(.access-page, .portal-app, .portal-loader, .widget-shell) input:focus, :is(.access-page, .portal-app, .portal-loader, .widget-shell) textarea:focus, :is(.access-page, .portal-app, .portal-loader, .widget-shell) select:focus { border-color: #3b8ca0; box-shadow: 0 0 0 3px rgba(0, 166, 125, .12); }
 
-:is(.access-page, .portal-app, .portal-loader, .widget-shell) .entity-avatar { color: #075985; border-color: #cee0e5; background: #edf5f6; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .entity-avatar { color: #1748c7; border-color: #cee0e5; background: #edf5f6; }
 
 :is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-brand > .openvoiss-icon { background: #f1f7f7 !important; }
 :is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-brand strong { color: #063f67; font-size: 18px; }
-:is(.access-page, .portal-app, .portal-loader, .widget-shell) .preview-logo, :is(.access-page, .portal-app, .portal-loader, .widget-shell) .preview-icon { color: #075985; background: #eaf3f5; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .preview-logo, :is(.access-page, .portal-app, .portal-loader, .widget-shell) .preview-icon { color: #1748c7; background: #eaf3f5; }
 :is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-card-label { color: #007d67; }
-:is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-access .access-card-label { color: var(--portal-color, #075985); }
-:is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-access .button.primary { border-color: var(--portal-color, #075985); background: var(--portal-color, #075985); }
-:is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-brand span, :is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-brand img { background: var(--portal-color, #075985); }
-:is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-preview > footer strong { color: var(--portal-color, #075985); }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-access .access-card-label { color: var(--portal-color, #1748c7); }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-access .button.primary { border-color: var(--portal-color, #1748c7); background: var(--portal-color, #1748c7); }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-brand span, :is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-brand img { background: var(--portal-color, #1748c7); }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .portal-preview > footer strong { color: var(--portal-color, #1748c7); }
 
 /* i18n: language switcher in the sidebar footer. */
 
@@ -296,31 +296,29 @@
 /* Agent tools tab */
 
 /* ============================================================
-   Wise-inspired redesign: bold near-black + lime-green identity,
-   adapted for a dense SaaS dashboard rather than a marketing site.
-   Wise Sans is proprietary; Inter (weight 900) stands in for display
-   type per the brief's own documented fallback.
+   Voysse blue-duotone redesign: cobalt ink, pale-blue layers, and
+   warm paper surfaces, adapted for a dense SaaS dashboard.
    ============================================================ */
 :is(.access-page, .portal-app, .portal-loader, .widget-shell) {
-  --ink: #0e0f0c;
-  --text-muted: #454745;
-  --subtle: #868685;
-  --line: rgba(14, 15, 12, .12);
-  --surface: #ffffff;
-  --canvas: #f8f7f2;
-  --navy: #0e0f0c;
-  --purple: #163300;
-  --purple-dark: #0b2400;
-  --purple-soft: #e2f6d5;
+  --ink: #0a2868;
+  --text-muted: #526b9b;
+  --subtle: #7890bd;
+  --line: rgba(10, 40, 104, .14);
+  --surface: #fffdf9;
+  --canvas: #faf7ef;
+  --navy: #0a2868;
+  --purple: #1748c7;
+  --purple-dark: #1039a8;
+  --purple-soft: #d9e7ff;
   --green: #054d28;
-  --green-soft: #e2f6d5;
+  --green-soft: #d9e7ff;
   --red: #d03238;
   --red-soft: #fdecec;
   --amber: #cb8a27;
-  --shadow: 0 0 0 1px rgba(14, 15, 12, .12);
-  --wise-green: #9fe870;
-  --wise-green-hover: #cdffad;
-  --wise-green-text: #163300;
+  --shadow: 0 0 0 1px rgba(10, 40, 104, .14);
+  --brand-blue: #1748c7;
+  --brand-blue-hover: #1039a8;
+  --brand-blue-text: #fffdf7;
 }
 
 :is(.access-page, .portal-app, .portal-loader, .widget-shell), :is(.access-page, .portal-app, .portal-loader, .widget-shell) button, :is(.access-page, .portal-app, .portal-loader, .widget-shell) input, :is(.access-page, .portal-app, .portal-loader, .widget-shell) textarea, :is(.access-page, .portal-app, .portal-loader, .widget-shell) select {
@@ -353,20 +351,20 @@
 :is(.access-page, .portal-app, .portal-loader, .widget-shell) .button:active:not(:disabled) { transform: scale(.95); }
 :is(.access-page, .portal-app, .portal-loader, .widget-shell) .button.disabled, :is(.access-page, .portal-app, .portal-loader, .widget-shell) .button:disabled { transform: none; }
 :is(.access-page, .portal-app, .portal-loader, .widget-shell) .button.primary {
-  color: var(--wise-green-text);
+  color: var(--brand-blue-text);
   border-color: transparent;
-  background: var(--wise-green);
+  background: var(--brand-blue);
   box-shadow: none;
 }
-:is(.access-page, .portal-app, .portal-loader, .widget-shell) .button.primary:hover:not(:disabled) { background: var(--wise-green-hover); }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .button.primary:hover:not(:disabled) { background: var(--brand-blue-hover); }
 :is(.access-page, .portal-app, .portal-loader, .widget-shell) .button.secondary {
   color: var(--ink);
   border-color: transparent;
-  background: rgba(22, 51, 0, .08);
+  background: rgba(23, 72, 199, .08);
 }
-:is(.access-page, .portal-app, .portal-loader, .widget-shell) .button.secondary:hover:not(:disabled) { background: rgba(22, 51, 0, .14); }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .button.secondary:hover:not(:disabled) { background: rgba(23, 72, 199, .14); }
 :is(.access-page, .portal-app, .portal-loader, .widget-shell) .button.ghost { color: var(--ink); border-color: var(--line); background: white; }
-:is(.access-page, .portal-app, .portal-loader, .widget-shell) .button.light { color: var(--wise-green-text); background: white; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .button.light { color: var(--brand-blue-text); background: white; }
 :is(.access-page, .portal-app, .portal-loader, .widget-shell) .button.danger { color: white; border-color: transparent; background: var(--red); }
 :is(.access-page, .portal-app, .portal-loader, .widget-shell) .button.danger:hover:not(:disabled) { background: #b32329; filter: none; }
 
@@ -390,12 +388,12 @@
   border-radius: 10px;
 }
 :is(.access-page, .portal-app, .portal-loader, .widget-shell) input:focus, :is(.access-page, .portal-app, .portal-loader, .widget-shell) textarea:focus, :is(.access-page, .portal-app, .portal-loader, .widget-shell) select:focus {
-  border-color: rgba(14, 15, 12, .35);
-  box-shadow: 0 0 0 3px rgba(14, 15, 12, .08);
+  border-color: rgba(23, 72, 199, .45);
+  box-shadow: 0 0 0 3px rgba(23, 72, 199, .12);
   color: var(--ink);
 }
 
-/* Brand accent retint: purple/blue → near-black ink + lime-green, across the app. */
+/* Brand accent retint: cobalt ink and pale-blue layers across the app. */
 :is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-eyebrow, :is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-card-label {
   color: var(--purple);
 }

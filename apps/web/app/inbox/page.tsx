@@ -198,7 +198,7 @@ export default function InboxPage() {
       </aside>
 
       <section className="flex min-h-0 flex-col">
-        {!selected ? <div className="flex min-h-64 flex-col items-center justify-center rounded-xl border border-dashed bg-muted/20 p-8 text-center [&_h3]:mt-4 [&_h3]:font-semibold [&_p]:mt-1 [&_p]:max-w-md [&_p]:text-sm [&_p]:text-muted-foreground"><div className="flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary"><InboxIcon /></div><h3 className="font-heading">{t("inbox.empty")}</h3><p>{t("inbox.selectPrompt")}</p></div>
+        {!selected ? <div className="flex min-h-64 flex-1 flex-col items-center justify-center rounded-xl border border-dashed bg-muted/20 p-8 text-center [&_h3]:mt-4 [&_h3]:font-semibold [&_p]:mt-1 [&_p]:max-w-md [&_p]:text-sm [&_p]:text-muted-foreground"><div className="flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary"><InboxIcon /></div><h3 className="font-heading">{t("inbox.empty")}</h3><p>{t("inbox.selectPrompt")}</p></div>
           : <>
             <header>
               <div><strong>{selected.contact_name || selected.title}</strong><small>{channelLabel(selected.channel)}</small></div>

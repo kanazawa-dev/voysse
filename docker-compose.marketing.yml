@@ -1,6 +1,6 @@
 # Standalone compose file for the public marketing site (openvoiss.com), kept
 # out of docker-compose.yml on purpose: self-hosted deployments run the
-# dashboard (apps/web) only and never need this. This file is for Openvoiss's
+# dashboard (apps/web) only and never need this. This file is for Voysse's
 # own hosting of the landing page and has no dependency on the rest of the
 # stack — no db/api/whatsapp, and no shared network with docker-compose.yml.
 # Run with: docker compose -f docker-compose.marketing.yml up --build -d

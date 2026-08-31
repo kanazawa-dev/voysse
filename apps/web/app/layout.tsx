@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, IBM_Plex_Sans, Inter, Manrope } from "next/font/google";
+import { Geist, Geist_Mono, Geist_Pixel, IBM_Plex_Sans, Inter, Manrope } from "next/font/google";
 import "./globals.css";
 import { AppShell } from "@/components/app-shell";
 import { ToastProvider } from "@/components/toast";
@@ -13,9 +13,10 @@ const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-mono" });
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-geist" });
 const inter = Inter({ subsets: ["latin"], weight: ["400", "600", "900"], variable: "--font-inter" });
+const pixelSquare = Geist_Pixel({ subsets: ["latin"], weight: "400", variable: "--font-pixel" });
 
 export const metadata: Metadata = {
-  title: "Openvoiss — AI agents for your agency",
+  title: "Voysse — AI agents for your agency",
   description: "Open source platform to build and manage AI agents.",
   icons: { icon: "/brand/only-logo.png", apple: "/brand/only-logo.png" },
 };
@@ -24,7 +25,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html
       lang="en"
-      className={`${manrope.variable} ${ibmPlexSansHeading.variable} ${geistMono.variable} ${geist.variable} ${inter.variable} font-sans antialiased`}
+      className={`${manrope.variable} ${ibmPlexSansHeading.variable} ${geistMono.variable} ${geist.variable} ${inter.variable} ${pixelSquare.variable} font-sans antialiased`}
     >
       <body>
         <MotionProvider>
