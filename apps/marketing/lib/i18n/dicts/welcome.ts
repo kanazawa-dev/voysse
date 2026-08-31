@@ -254,6 +254,8 @@ const en = {
     contributing: "Contributing",
     license: "Voysse · FSL-1.1-MIT",
     tagline: "Source available · Self-hosted · Bring your own AI keys",
+    privacy: "Privacy",
+    terms: "Terms",
   },
 };
 
@@ -512,6 +514,8 @@ const es: typeof en = {
     contributing: "Cómo contribuir",
     license: "Voysse · Licencia FSL-1.1-MIT",
     tagline: "Código disponible · Auto-hospedado · Trae tus propias claves de IA",
+    privacy: "Privacidad",
+    terms: "Términos",
   },
 };
 

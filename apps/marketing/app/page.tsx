@@ -627,7 +627,7 @@ export default function LandingPage() {
               <div><strong className="mb-3 block text-xs tracking-wider text-muted-foreground uppercase">{t("welcome.footer.colProject")}</strong><div className="space-y-2 text-sm"><a className="block hover:text-primary" href="https://github.com/kanazawa-dev/voysse">GitHub</a><a className="block hover:text-primary" href="https://openvoiss.com/docs/contributing">{t("welcome.footer.contributing")}</a></div></div>
             </div>
           </div>
-          <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-6 text-xs text-muted-foreground"><span>{t("welcome.footer.license")}</span><span>{t("welcome.footer.tagline")}</span></div>
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-6 text-xs text-muted-foreground"><span>{t("welcome.footer.license")}</span><div className="flex flex-wrap items-center gap-x-4 gap-y-1"><a className="hover:text-primary" href="/privacy">{t("welcome.footer.privacy")}</a><a className="hover:text-primary" href="/terms">{t("welcome.footer.terms")}</a><span>{t("welcome.footer.tagline")}</span></div></div>
         </div>
       </footer>
     </div>
