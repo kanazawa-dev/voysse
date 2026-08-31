@@ -14,6 +14,10 @@ class Settings(BaseSettings):
     secret_key: str = "dev-local-change-this-key-please"
     encryption_key: str = "dev-local-change-this-key-too"
     frontend_url: str = "http://localhost:3000"
+    # Optional: the marketing site's own origin, if it calls this API directly
+    # (e.g. the Cloud interest form). Self-hosted deployments don't run the
+    # marketing site and can leave this unset.
+    marketing_url: str = ""
     access_token_minutes: int = 60 * 24 * 7
     # Session cookie flags. Defaults suit local HTTP; set cookie_secure=true (and
     # cookie_samesite=none when the frontend and API are on different sites)

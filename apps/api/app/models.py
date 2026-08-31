@@ -366,3 +366,18 @@ class Message(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
 
     conversation: Mapped[Conversation] = relationship(back_populates="messages")
+
+
+class CloudLead(Base):
+    """An interest submission from the marketing site's Cloud plan CTA.
+
+    No account or agency exists yet at this point -- Cloud has no self-serve
+    checkout, so this is just a lead for the team to follow up with.
+    """
+    __tablename__ = "cloud_leads"
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=new_uuid)
+    name: Mapped[str] = mapped_column(String(160))
+    email: Mapped[str] = mapped_column(String(255))
+    agency_name: Mapped[str] = mapped_column(String(180))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)

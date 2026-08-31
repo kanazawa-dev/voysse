@@ -12,12 +12,15 @@ import {
   Globe,
   HelpCircle,
   Inbox,
+  Layers,
   Menu,
   MessageCircle,
   MessageSquareText,
+  Mic,
   Radio,
   Server,
   Sparkles,
+  Users,
   Wallet,
   Wrench,
 } from "lucide-react";
@@ -26,6 +29,7 @@ import { LanguageSwitcher } from "@/components/language-switcher";
 import { Benday, useDotMap } from "@/components/ui/benday";
 import DitherBackground from "@/components/ui/dither-background";
 import { OpenvoissBrand } from "@/components/openvoiss-brand";
+import { CloudInterestDialog } from "@/components/cloud-interest-dialog";
 import { RandomizedTextEffect } from "@/components/ui/randomized-text-effect";
 import { TerminalIntroSequence, type TerminalPhase } from "@/components/ui/terminal-ui";
 import { BorderBeam } from "@/components/ui/border-beam";
@@ -207,6 +211,7 @@ export default function LandingPage() {
     { href: "#channels", icon: MessageCircle, title: t("welcome.nav.channels"), desc: t("welcome.nav.resourcesMenu.channelsDesc") },
     { href: "#open-source", icon: Server, title: t("welcome.nav.selfhost"), desc: t("welcome.nav.resourcesMenu.selfhostDesc") },
     { href: "#faq", icon: HelpCircle, title: t("welcome.nav.faq"), desc: t("welcome.nav.resourcesMenu.faqDesc") },
+    { href: "#roadmap", icon: Layers, title: t("welcome.nav.roadmap"), desc: t("welcome.nav.resourcesMenu.roadmapDesc") },
     { href: "https://openvoiss.com/docs", icon: FileText, title: t("welcome.nav.docs"), desc: t("welcome.nav.resourcesMenu.docsDesc") },
   ];
   const allLinks: NavRow[] = [
@@ -516,7 +521,7 @@ export default function LandingPage() {
                 <BorderBeam duration={8} size={160} colorFrom="#78a7ff" colorTo="#fffdf7" />
                 <CardHeader className="relative z-10"><Badge className="mb-2 bg-primary/10 text-primary" variant="secondary">{t("welcome.plans.cloud.tag")}</Badge><CardTitle className="text-2xl">{t("welcome.plans.cloud.title")}</CardTitle><div><div className="font-heading text-3xl font-semibold">{t("welcome.plans.cloud.price")}</div><div className="mt-1 text-base font-semibold text-primary">{t("welcome.plans.cloud.included")}</div></div></CardHeader>
                 <CardContent className="relative z-10 flex flex-1 flex-col gap-5"><p className="text-base leading-6 font-semibold text-primary">{t("welcome.plans.cloud.desc")}</p><ul className="space-y-2.5 font-semibold"><li className="flex gap-2.5"><Check className="mt-0.5 size-4 shrink-0 text-primary" />{t("welcome.plans.cloud.p1")}</li><li className="flex gap-2.5"><Check className="mt-0.5 size-4 shrink-0 text-primary" />{t("welcome.plans.cloud.p2")}</li><li className="flex gap-2.5"><Check className="mt-0.5 size-4 shrink-0 text-primary" />{t("welcome.plans.cloud.p3")}</li><li className="flex gap-2.5"><Check className="mt-0.5 size-4 shrink-0 text-primary" />{t("welcome.plans.cloud.p4")}</li></ul></CardContent>
-                <CardFooter className="relative z-10"><Button className={ctaClass} variant="secondary" render={<a href="https://github.com/kanazawa-dev/voysse/discussions" />} nativeButton={false}>{t("welcome.plans.cloud.cta")}</Button></CardFooter>
+                <CardFooter className="relative z-10"><CloudInterestDialog triggerClassName={ctaClass} /></CardFooter>
               </Card>
 
               <Card>
@@ -548,6 +553,28 @@ export default function LandingPage() {
                 </TableBody>
               </Table>
             </Card>
+          </div>
+        </section>
+
+        <section className="pb-14 md:pb-20 lg:pb-24" id="roadmap">
+          <div className={containerClass}>
+            <div className="mb-10 max-w-2xl space-y-3">
+              <Eyebrow>{t("welcome.roadmap.eyebrow")}</Eyebrow>
+              <h2 className="font-pixel text-3xl font-semibold tracking-tight sm:text-4xl">{t("welcome.roadmap.title")}</h2>
+              <p className="text-base leading-7 text-muted-foreground">{t("welcome.roadmap.sub")}</p>
+            </div>
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+              {([["channels", MessageCircle], ["voice", Mic], ["ops", Users], ["platform", Layers]] as const).map(([key, Icon]) => (
+                <Card key={key} className="p-5">
+                  <span className="mb-3 flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary"><Icon className="size-5" /></span>
+                  <h3 className="font-heading text-lg font-semibold">{t(`welcome.roadmap.${key}.title`)}</h3>
+                  <p className="mt-1.5 text-sm leading-6 text-muted-foreground">{t(`welcome.roadmap.${key}.desc`)}</p>
+                </Card>
+              ))}
+            </div>
+            <div className="mt-8">
+              <Button variant="outline" render={<a href="https://openvoiss.com/docs/roadmap" />} nativeButton={false}>{t("welcome.roadmap.cta")} <ArrowRight className="size-4" /></Button>
+            </div>
           </div>
         </section>
 
@@ -595,7 +622,7 @@ export default function LandingPage() {
               <p className="mt-4 max-w-xs text-sm leading-6 text-muted-foreground">{t("welcome.footer.blurb")}</p>
             </div>
             <div className="flex flex-wrap gap-10 sm:gap-14">
-              <div><strong className="mb-3 block text-xs tracking-wider text-muted-foreground uppercase">{t("welcome.footer.colProduct")}</strong><div className="space-y-2 text-sm"><a className="block hover:text-primary" href="#features">{t("welcome.nav.features")}</a><a className="block hover:text-primary" href="#channels">{t("welcome.ops.eyebrow")}</a><a className="block hover:text-primary" href="#open-source">{t("welcome.nav.selfhost")}</a><a className="block hover:text-primary" href="#pricing">{t("welcome.nav.pricing")}</a></div></div>
+              <div><strong className="mb-3 block text-xs tracking-wider text-muted-foreground uppercase">{t("welcome.footer.colProduct")}</strong><div className="space-y-2 text-sm"><a className="block hover:text-primary" href="#features">{t("welcome.nav.features")}</a><a className="block hover:text-primary" href="#channels">{t("welcome.ops.eyebrow")}</a><a className="block hover:text-primary" href="#open-source">{t("welcome.nav.selfhost")}</a><a className="block hover:text-primary" href="#pricing">{t("welcome.nav.pricing")}</a><a className="block hover:text-primary" href="#roadmap">{t("welcome.nav.roadmap")}</a></div></div>
               <div><strong className="mb-3 block text-xs tracking-wider text-muted-foreground uppercase">{t("welcome.footer.colResources")}</strong><div className="space-y-2 text-sm"><a className="block hover:text-primary" href="https://openvoiss.com/docs">{t("welcome.footer.docs")}</a><a className="block hover:text-primary" href="https://openvoiss.com/docs/getting-started">{t("welcome.footer.quickstart")}</a><a className="block hover:text-primary" href="https://github.com/kanazawa-dev/voysse/discussions">{t("welcome.footer.discussions")}</a></div></div>
               <div><strong className="mb-3 block text-xs tracking-wider text-muted-foreground uppercase">{t("welcome.footer.colProject")}</strong><div className="space-y-2 text-sm"><a className="block hover:text-primary" href="https://github.com/kanazawa-dev/voysse">GitHub</a><a className="block hover:text-primary" href="https://openvoiss.com/docs/contributing">{t("welcome.footer.contributing")}</a></div></div>
             </div>

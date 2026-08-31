@@ -8,6 +8,12 @@ class ORMModel(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class CloudLeadRequest(BaseModel):
+    name: str = Field(min_length=2, max_length=160)
+    email: EmailStr
+    agency_name: str = Field(min_length=2, max_length=180)
+
+
 class RegisterRequest(BaseModel):
     agency_name: str = Field(min_length=2, max_length=180)
     name: str = Field(min_length=2, max_length=160)

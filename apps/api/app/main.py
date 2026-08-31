@@ -9,6 +9,7 @@ from .routers import (
     auth,
     catalog,
     clients,
+    cloud,
     conversations,
     dashboard,
     domains,
@@ -29,9 +30,10 @@ app = FastAPI(
 )
 app.add_middleware(
     CORSMiddleware,
-    # The configured frontend origin (a real domain in production) plus any
-    # localhost/127.0.0.1 port, so changing WEB_PORT never breaks local dev.
-    allow_origins=[settings.frontend_url],
+    # The configured frontend origin (a real domain in production), the
+    # marketing site's origin when set, plus any localhost/127.0.0.1 port so
+    # changing WEB_PORT never breaks local dev.
+    allow_origins=[origin for origin in (settings.frontend_url, settings.marketing_url) if origin],
     allow_origin_regex=r"https?://(localhost|127\.0\.0\.1)(:\d+)?",
     allow_credentials=True,
     allow_methods=["*"],
@@ -60,3 +62,4 @@ app.include_router(whatsapp_cloud.router, prefix="/api")
 app.include_router(whatsapp_cloud_webhook.public_router, prefix="/api")
 app.include_router(widget.router, prefix="/api")
 app.include_router(domains.public_router, prefix="/api")
+app.include_router(cloud.public_router, prefix="/api")

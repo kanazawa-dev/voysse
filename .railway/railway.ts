@@ -4,8 +4,8 @@ import { defineRailway, project, service, postgres, github, preserve } from "rai
 //
 // Secrets (SECRET_KEY, ENCRYPTION_KEY, WHATSAPP_BRIDGE_TOKEN, DATABASE_URL)
 // and the cross-origin URLs that depend on generated public domains
-// (FRONTEND_URL, NEXT_PUBLIC_API_URL, NEXT_PUBLIC_APP_URL, WHATSAPP_BRIDGE_URL,
-// BACKEND_URL) were set imperatively via `railway variable set` after the
+// (FRONTEND_URL, MARKETING_URL, NEXT_PUBLIC_API_URL, NEXT_PUBLIC_APP_URL,
+// WHATSAPP_BRIDGE_URL, BACKEND_URL) were set imperatively via `railway variable set` after the
 // services existed and their public/private domains were known, so their
 // values never landed in git. They're declared here as preserve() so a
 // future `railway config apply` leaves them alone instead of deleting them
@@ -42,6 +42,7 @@ export default defineRailway(() => {
       ENCRYPTION_KEY: preserve(),
       WHATSAPP_BRIDGE_TOKEN: preserve(),
       FRONTEND_URL: preserve(),
+      MARKETING_URL: preserve(),
     },
   });
 
@@ -64,6 +65,7 @@ export default defineRailway(() => {
     env: {
       NODE_ENV: "production",
       NEXT_PUBLIC_APP_URL: preserve(),
+      NEXT_PUBLIC_API_URL: preserve(),
     },
   });
 

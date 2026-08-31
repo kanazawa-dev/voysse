@@ -13,6 +13,11 @@ ENV NEXT_TELEMETRY_DISABLED=1
 # origin than this marketing site, e.g. https://app.openvoiss.com.
 ARG NEXT_PUBLIC_APP_URL=
 ENV NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}
+# Empty by default: the Cloud interest form has nowhere to submit to until
+# this is set to the api's own origin (it calls the API directly from the
+# browser, so this must be a public URL, not a private/internal one).
+ARG NEXT_PUBLIC_API_URL=
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 
 COPY --from=dependencies /app/node_modules ./node_modules
 COPY . .
