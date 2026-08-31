@@ -1,6 +1,6 @@
 # Architecture
 
-How Openvoiss is put together: the services, the data model and tenant
+How Voysse is put together: the services, the data model and tenant
 isolation. For deployment see [Self-hosting](./self-hosting.md), for the full
 environment variable list see [Configuration](./configuration.md), and for
 running the project locally see [Contributing](./contributing.md).
@@ -45,7 +45,7 @@ the browser or the gateway); see
 
 ## Data model
 
-Everything is scoped under an `Agency` — one Openvoiss install serves exactly
+Everything is scoped under an `Agency` — one Voysse install serves exactly
 one agency, created by the first user who registers. All models live in
 `apps/api/app/models.py`.
 
@@ -269,8 +269,9 @@ with the app secret), so it doesn't go through the Node.js bridge at all.
 
 ## Frontend structure
 
-`apps/web` is a Next.js 16 App Router project. Top-level route groups under
-`apps/web/app/`: `dashboard`, `clients`, `agents`, `channels`, `inbox`,
+`apps/web` is a Next.js 16 App Router project. The agency dashboard itself is
+the root route (`apps/web/app/page.tsx`, `/`); the other top-level route
+groups under `apps/web/app/` are `clients`, `agents`, `channels`, `inbox`,
 `playground`, `portal` (the client-facing portal, `/portal/[slug]`),
 `settings`, `login` and `widget` (the embeddable chat widget's own route).
 

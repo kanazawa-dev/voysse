@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="apps/web/public/brand/only-logo.png" width="96" alt="Openvoiss" />
+  <img src="apps/web/public/brand/only-logo.png" width="96" alt="Voysse" />
 </p>
 
-<h1 align="center">Openvoiss</h1>
+<h1 align="center">Voysse</h1>
 
 <p align="center">
   <strong>Open-source, white-label platform for agencies to build, run and manage AI agents for their clients.</strong>
@@ -25,11 +25,15 @@
 
 ---
 
-## What is Openvoiss?
+## What is Voysse?
 
-Openvoiss is a multi-tenant workspace where an agency creates AI agents for its clients, gives each client a branded portal, and talks to end users over WhatsApp or an embeddable web chat widget.
+Voysse is a multi-tenant workspace where an agency creates AI agents for its clients, gives each client a branded portal, and talks to end users over WhatsApp or an embeddable web chat widget.
 
 Bring your own OpenAI / Anthropic keys and self-host the whole stack with one command.
+
+The product is now named **Voysse**. Repository URLs and technical identifiers
+still use `openvoiss` during the staged, compatibility-safe rename; see
+[Brand migration](./docs/brand-migration.md).
 
 ## Quick start
 
@@ -121,12 +125,13 @@ Full documentation is available at [**openvoiss.com/docs**](https://openvoiss.co
 | [Architecture](https://openvoiss.com/docs/architecture) | The services, the data model and tenant isolation |
 | [Self-hosting](https://openvoiss.com/docs/self-hosting) | Deploy to a server, back up, upgrade and troubleshoot |
 | [Contributing](https://openvoiss.com/docs/contributing) | Run the project locally, tests and conventions |
+| [Brand migration](./docs/brand-migration.md) | Voysse display name and intentionally retained legacy identifiers |
 
 ## License
 
-Copyright © 2026 Openvoiss.
+Copyright © 2026 Voysse.
 
-Openvoiss is licensed under the [Functional Source License, Version 1.1, MIT Future License](./LICENSE) (FSL-1.1-MIT). See the license file for the full terms.
+Voysse is licensed under the [Functional Source License, Version 1.1, MIT Future License](./LICENSE) (FSL-1.1-MIT). See the license file for the full terms.
 
 ## Community
 

@@ -23,7 +23,7 @@ together in the [Inbox](./inbox.md).
 ## WhatsApp Cloud API
 
 The official Meta WhatsApp Business Platform (Graph API), for agencies that
-already have a Meta Business app. You bring your own app credentials; Openvoiss
+already have a Meta Business app. You bring your own app credentials; Voysse
 never talks to Meta on your behalf beyond the calls described below.
 
 ### Configure a channel

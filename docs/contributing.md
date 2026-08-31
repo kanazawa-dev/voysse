@@ -1,6 +1,6 @@
 # Contributing
 
-Run Openvoiss locally, run its tests and follow its conventions. For the
+Run Voysse locally, run its tests and follow its conventions. For the
 services and data model see [Architecture](./architecture.md); for deploying
 an install see [Self-hosting](./self-hosting.md).
 

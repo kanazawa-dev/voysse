@@ -2,17 +2,17 @@
 @import 'fumadocs-ui/css/neutral.css';
 @import 'fumadocs-ui/css/preset.css';
 
-/* Openvoiss brand lime, matching apps/web and apps/marketing's --primary tokens. */
+/* Voysse blue-duotone brand, matching apps/web and apps/marketing's --primary tokens. */
 :root {
-  --color-fd-primary: oklch(0.841 0.238 128.85);
-  --color-fd-primary-foreground: oklch(0.405 0.101 131.063);
-  --color-fd-ring: oklch(0.841 0.238 128.85);
+  --color-fd-primary: #1748c7;
+  --color-fd-primary-foreground: #fffdf7;
+  --color-fd-ring: #1748c7;
 }
 
 .dark {
-  --color-fd-primary: oklch(0.768 0.233 130.85);
-  --color-fd-primary-foreground: oklch(0.405 0.101 131.063);
-  --color-fd-ring: oklch(0.768 0.233 130.85);
+  --color-fd-primary: #78a7ff;
+  --color-fd-primary-foreground: #fffdf7;
+  --color-fd-ring: #78a7ff;
 }
 
 html {

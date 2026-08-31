@@ -76,7 +76,7 @@ root `.env` — `env_file` checks the repo root first, then `apps/api/.env`).
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
-| `APP_NAME` | `Openvoiss API` | Defined in `Settings` but not currently read anywhere else in the codebase (the FastAPI app title is hardcoded in `app/main.py`). |
+| `APP_NAME` | `Voysse API` | Defined in `Settings` but not currently read anywhere else in the codebase (the FastAPI app title is hardcoded in `app/main.py`). |
 | `DATABASE_URL` | `postgresql+psycopg://openvoiss:openvoiss@localhost:5432/openvoiss` | SQLAlchemy connection string for the main database. |
 | `TEST_DATABASE_URL` | see `apps/api/tests/conftest.py` | Not a `Settings` field — read directly by `conftest.py` to point `pytest` at `openvoiss_test` instead of the dev database. |
 | `SECRET_KEY` | `dev-local-change-this-key-please` | Signs agency/portal session JWTs. Change for any real deployment. |

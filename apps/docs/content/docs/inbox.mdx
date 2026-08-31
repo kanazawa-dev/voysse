@@ -125,7 +125,7 @@ Agency identity lives on the `Agency` model and is edited from **Settings**:
 | --- | --- | --- |
 | `name` | `PATCH /api/agency` | Agency display name. |
 | `slug` | `PATCH /api/agency` | Unique identifier for the agency. |
-| `brand_color` | `PATCH /api/agency` | Hex color, default `#075985`. |
+| `brand_color` | `PATCH /api/agency` | Hex color, default `#1748c7`. |
 | Logo | `POST /api/agency/logo` (multipart, PNG/JPEG/WEBP/SVG) · `DELETE /api/agency/logo` | Stored as bytes in Postgres; served from `/api/agency/logo?v=<timestamp>`. |
 
 This identity is what shows up on every client-facing surface that isn't the

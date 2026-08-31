@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-Openvoiss is a multi-tenant platform where agencies create and manage AI agents for their clients, with a chat playground, a client portal, and WhatsApp integration. Three services + PostgreSQL:
+Voysse is a multi-tenant platform where agencies create and manage AI agents for their clients, with a chat playground, a client portal, and WhatsApp integration. Three services + PostgreSQL:
 
 - `apps/api/` — FastAPI (Python 3.12) + SQLAlchemy + Alembic
 - `apps/web/` — Next.js 16 (App Router) + React 19 + TypeScript + Tailwind
@@ -69,7 +69,7 @@ Everything is agency-scoped: `Agency → Users, Clients, AIConnections`; `Client
 
 - `app/main.py` — app creation, CORS, router registration
 - `app/routers/` — one file per domain (auth, agency, clients, agents, connections, conversations, dashboard, portal, whatsapp); `domains.py` holds the public, unauthenticated `/api/public/portal-domain` used by the frontend `proxy.ts` and the gateway's on-demand-TLS `ask` hook to map a client's custom domain to its portal
-- `app/services/ai.py` — `chat_completion()` calls any OpenAI-compatible endpoint (base_url + model are per-connection config); connection testing lists `{base_url}/models`
+- `app/services/ai.py` — `chat_completion()` talks to OpenAI or Anthropic's native API (`app/services/providers.py` hardcodes each provider's `base_url`; only the model and the agency's own API key are per-connection); connection testing lists `{base_url}/models`
 - `app/services/knowledge.py` — PDF text (pypdf on upload) is chunked and embedded; retrieval is semantic (cosine over embeddings stored as JSON) with keyword ranking as a fallback, then assembled into the system prompt
 - `app/security.py` — JWT in httpOnly cookies; AI API keys and WhatsApp session state are encrypted with a key derived from `ENCRYPTION_KEY` before hitting the DB
 - `app/ratelimit.py` — per-IP in-memory limiter used as a route dependency on public/unauthenticated endpoints (auth + portal login, widget messages); reads the client from `X-Forwarded-For` (set by the gateway); toggle with `RATE_LIMIT_ENABLED` (disabled in tests)

@@ -1,6 +1,6 @@
 # AI providers
 
-Openvoiss is bring-your-own-key: each agency stores its own OpenAI and/or Anthropic API key, and every agent is billed directly by the provider on that key. For a feature overview see the [README](../README.md).
+Voysse is bring-your-own-key: each agency stores its own OpenAI and/or Anthropic API key, and every agent is billed directly by the provider on that key. For a feature overview see the [README](../README.md).
 
 ## Contents
 
@@ -79,7 +79,7 @@ Choosing the provider and model for a given agent happens on the agent's Model s
 
 ## Costs
 
-Every request an agent makes goes out on the agency's own stored key, straight to OpenAI or Anthropic's API — Openvoiss itself never proxies through a shared key or adds a per-token markup. Usage is billed by the provider directly to whatever account the key belongs to; per-agent and per-model token totals are visible on the [dashboard](../README.md#operations) for tracking, not for billing.
+Every request an agent makes goes out on the agency's own stored key, straight to OpenAI or Anthropic's API — Voysse itself never proxies through a shared key or adds a per-token markup. Usage is billed by the provider directly to whatever account the key belongs to; per-agent and per-model token totals are visible on the [dashboard](../README.md#operations) for tracking, not for billing.
 
 ---
 

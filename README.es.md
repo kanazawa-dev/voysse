@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="apps/web/public/brand/only-logo.png" width="96" alt="Openvoiss" />
+  <img src="apps/web/public/brand/only-logo.png" width="96" alt="Voysse" />
 </p>
 
-<h1 align="center">Openvoiss</h1>
+<h1 align="center">Voysse</h1>
 
 <p align="center">
   <strong>Plataforma open-source y white-label para que agencias creen, ejecuten y gestionen agentes de IA para sus clientes.</strong>
@@ -25,11 +25,16 @@
 
 ---
 
-## ¿Qué es Openvoiss?
+## ¿Qué es Voysse?
 
-Openvoiss es un espacio de trabajo multi-tenant donde una agencia crea agentes de IA para sus clientes, les entrega un portal con su marca y se comunica con usuarios finales por WhatsApp o a través de un widget de chat embebible.
+Voysse es un espacio de trabajo multi-tenant donde una agencia crea agentes de IA para sus clientes, les entrega un portal con su marca y se comunica con usuarios finales por WhatsApp o a través de un widget de chat embebible.
 
 Usa tus propias claves de OpenAI / Anthropic y despliega todo el stack con un solo comando.
+
+El producto ahora se llama **Voysse**. Las URLs del repositorio y los
+identificadores técnicos conservan temporalmente `openvoiss` durante el
+renombre gradual y compatible; consulta la
+[migración de marca](./docs/brand-migration.md).
 
 ## Inicio rápido
 
@@ -121,12 +126,13 @@ La documentación completa está en [**openvoiss.com/docs**](https://openvoiss.c
 | [Arquitectura](https://openvoiss.com/docs/architecture) | Los servicios, el modelo de datos y el aislamiento de tenants |
 | [Self-hosting](https://openvoiss.com/docs/self-hosting) | Desplegar en un servidor, backups, actualizaciones y troubleshooting |
 | [Contribuir](https://openvoiss.com/docs/contributing) | Ejecutar el proyecto localmente, tests y convenciones |
+| [Migración de marca](./docs/brand-migration.md) | Nombre visible Voysse e identificadores heredados conservados intencionalmente |
 
 ## Licencia
 
-Copyright © 2026 Openvoiss.
+Copyright © 2026 Voysse.
 
-Openvoiss está licenciado bajo la [Functional Source License, Version 1.1, MIT Future License](./LICENSE) (FSL-1.1-MIT). Consulta el archivo de licencia para los términos completos.
+Voysse está licenciado bajo la [Functional Source License, Version 1.1, MIT Future License](./LICENSE) (FSL-1.1-MIT). Consulta el archivo de licencia para los términos completos.
 
 ## Comunidad
 

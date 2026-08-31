@@ -36,7 +36,7 @@ The selected knowledge text, together with manual context, Q&A pairs and the str
 - `knowledge_documents` — one row per uploaded PDF: `filename`, the raw file bytes (`file_data`), the extracted text (`extracted_text`), and a `status`/`error_message` pair.
 - `knowledge_chunks` — one row per chunk of a document's text: `content` (the chunk text) and `embedding`, stored as a plain **JSON array of floats** in a standard Postgres column — not a vector-typed column.
 
-This is a deliberate simplicity tradeoff, called out directly in the model's source comment: similarity is computed in Python (`cosine_similarity()` in `apps/api/app/services/embeddings.py`) instead of in the database, so no `pgvector` (or any other Postgres extension) is required to self-host Openvoiss. The tradeoff is that similarity search is O(n) over an agent's chunks rather than index-accelerated — reasonable at the scale of one agent's knowledge base, with a documented escape hatch ("swap to pgvector at scale") if that ever stops being true.
+This is a deliberate simplicity tradeoff, called out directly in the model's source comment: similarity is computed in Python (`cosine_similarity()` in `apps/api/app/services/embeddings.py`) instead of in the database, so no `pgvector` (or any other Postgres extension) is required to self-host Voysse. The tradeoff is that similarity search is O(n) over an agent's chunks rather than index-accelerated — reasonable at the scale of one agent's knowledge base, with a documented escape hatch ("swap to pgvector at scale") if that ever stops being true.
 
 ## See also
 

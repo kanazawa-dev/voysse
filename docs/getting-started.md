@@ -1,6 +1,6 @@
 # Getting started
 
-A first-run walkthrough: install Openvoiss, create your agency, and send your
+A first-run walkthrough: install Voysse, create your agency, and send your
 first AI-agent reply. For deployment, backups, upgrades and running without
 Docker see [Self-hosting](./self-hosting.md); for the full environment
 variable reference see [Configuration](./configuration.md).
@@ -55,7 +55,7 @@ Switch to the **Register** tab and fill in:
 | Password | Minimum 8 characters. |
 
 Submitting creates a brand-new agency and makes this user its admin — there's
-no invitation step for the first account. Openvoiss is built for **one agency
+no invitation step for the first account. Voysse is built for **one agency
 per instance** (see [Self-hosting](./self-hosting.md)), so this is normally
 the only time you'll see the register form.
 
