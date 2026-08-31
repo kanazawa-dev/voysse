@@ -9,6 +9,7 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://openvoiss.com'),
+  icons: { icon: '/brand/only-logo.png', apple: '/brand/only-logo.png' },
 };
 
 export default function Layout({ children }: LayoutProps<'/'>) {
