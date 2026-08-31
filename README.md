@@ -39,7 +39,7 @@ still use `openvoiss` during the staged, compatibility-safe rename; see
 
 ```bash
 git clone https://github.com/kanazawa-dev/voysse.git
-cd openvoiss
+cd voysse
 make setup
 make up
 ```
@@ -64,7 +64,7 @@ See the [getting started guide](https://openvoiss.com/docs/getting-started) for 
 
 ### AI providers
 - Bring-your-own OpenAI (Responses API) and Anthropic (Messages API) keys — agency-level, encrypted and validated when saved
-- Any OpenAI-compatible endpoint via per-connection base URL + model
+- Any model id your key can serve, including custom or fine-tuned ones (the API host itself is fixed per provider)
 - [Learn more](https://openvoiss.com/docs/ai-providers)
 
 ### Custom tools
@@ -125,6 +125,7 @@ Full documentation is available at [**openvoiss.com/docs**](https://openvoiss.co
 | [Architecture](https://openvoiss.com/docs/architecture) | The services, the data model and tenant isolation |
 | [Self-hosting](https://openvoiss.com/docs/self-hosting) | Deploy to a server, back up, upgrade and troubleshoot |
 | [Contributing](https://openvoiss.com/docs/contributing) | Run the project locally, tests and conventions |
+| [Roadmap](https://openvoiss.com/docs/roadmap) | What the team wants to build next |
 | [Brand migration](./docs/brand-migration.md) | Voysse display name and intentionally retained legacy identifiers |
 
 ## License
