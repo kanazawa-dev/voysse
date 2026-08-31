@@ -9,7 +9,7 @@ validation artifacts without breaking existing installations.
 | Surface | Current rule |
 |---|---|
 | Product name shown to people | Use `Voysse` |
-| Repository and GitHub coordinates | Keep `openvoiss` until the repository is moved |
+| Repository and GitHub coordinates | Moved: `kanazawa-dev/voysse`. GitHub redirects the old `kanazawa-dev/openvoiss` coordinates. |
 | Package, image, container, database, and environment names | Keep existing `openvoiss` / `OPENVOISS_*` identifiers |
 | Existing domain and email addresses | Keep `openvoiss.com` until replacement Voysse endpoints are verified |
 | Source component filenames and exported symbols | Keep existing names to avoid unrelated import churn |

@@ -5,6 +5,6 @@ export const docsContentRoute = '/llms.mdx/docs';
 
 export const gitConfig = {
   user: 'kanazawa-dev',
-  repo: 'openvoiss',
+  repo: 'voysse',
   branch: 'main',
 };

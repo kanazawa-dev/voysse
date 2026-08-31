@@ -22,7 +22,7 @@ You need Docker (see [Self-hosting → Before you begin](./self-hosting.md#befor
 for exact requirements).
 
 ```bash
-git clone https://github.com/kanazawa-dev/openvoiss.git
+git clone https://github.com/kanazawa-dev/voysse.git
 cd openvoiss
 ./scripts/generate-docker-env.sh   # writes .env.docker with random secrets (gitignored)
 make up                            # builds the images, starts the containers, runs migrations

@@ -12,7 +12,7 @@
   <a href="https://openvoiss.com/docs">Documentation</a> ·
   <a href="https://openvoiss.com/docs/getting-started">Quick start</a> ·
   <a href="https://openvoiss.com/docs/self-hosting">Self-hosting</a> ·
-  <a href="https://github.com/kanazawa-dev/openvoiss/discussions">Discussions</a>
+  <a href="https://github.com/kanazawa-dev/voysse/discussions">Discussions</a>
 </p>
 
 <p align="center">
@@ -38,7 +38,7 @@ still use `openvoiss` during the staged, compatibility-safe rename; see
 ## Quick start
 
 ```bash
-git clone https://github.com/kanazawa-dev/openvoiss.git
+git clone https://github.com/kanazawa-dev/voysse.git
 cd openvoiss
 make setup
 make up
@@ -135,5 +135,5 @@ Voysse is licensed under the [Functional Source License, Version 1.1, MIT Future
 
 ## Community
 
-- [Discussions](https://github.com/kanazawa-dev/openvoiss/discussions) for questions and ideas
-- [Issues](https://github.com/kanazawa-dev/openvoiss/issues) for bug reports and feature requests
+- [Discussions](https://github.com/kanazawa-dev/voysse/discussions) for questions and ideas
+- [Issues](https://github.com/kanazawa-dev/voysse/issues) for bug reports and feature requests

@@ -3,7 +3,7 @@ title: "Custom tools"
 description: "Give an agent the ability to call your own APIs and MCP servers during a chat."
 ---
 
-Give an agent the ability to call your own APIs and MCP servers during a chat. For a feature overview see the [README](https://github.com/kanazawa-dev/openvoiss/blob/main/README.md).
+Give an agent the ability to call your own APIs and MCP servers during a chat. For a feature overview see the [README](https://github.com/kanazawa-dev/voysse/blob/main/README.md).
 
 An agent's tools are configured per-agent, on the agent's **Tools** tab. Every request an agent makes goes through the router at `POST /api/agents/{agent_id}/tools`, and every tool call the LLM makes at chat time is logged on the reply's message, failures included.
 
