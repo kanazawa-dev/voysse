@@ -66,6 +66,7 @@ class AgencyOut(ORMModel):
     slug: str
     brand_color: str
     logo_url: str | None = None
+    is_active: bool
 
 
 class AgencyUpdate(BaseModel):

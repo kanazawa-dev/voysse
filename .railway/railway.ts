@@ -36,6 +36,10 @@ export default defineRailway(() => {
       // web and api live on different Railway domains, so cookies need
       // SameSite=None to survive the cross-site request.
       COOKIE_SAMESITE: "none",
+      // Voysse's own hosted instance gates new agencies behind admin
+      // approval (/admin). Self-hosted deployments never set this, so their
+      // registration stays instant-access by default.
+      REQUIRE_AGENCY_APPROVAL: "true",
       WHATSAPP_BRIDGE_URL: preserve(),
       DATABASE_URL: preserve(),
       SECRET_KEY: preserve(),

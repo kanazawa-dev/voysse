@@ -37,10 +37,10 @@ const en = {
     thCreated: "Created",
     thAction: "",
     active: "Active",
-    suspended: "Suspended",
-    suspend: "Suspend",
-    reactivate: "Reactivate",
-    confirmSuspend: "Suspend {name}? Its users will be signed out and won't be able to log back in until reactivated.",
+    inactive: "Inactive",
+    deactivate: "Deactivate",
+    activate: "Activate",
+    confirmDeactivate: "Deactivate {name}? Its users will be signed out and won't be able to log back in until you activate it again.",
   },
 };
 
@@ -82,10 +82,10 @@ const es: typeof en = {
     thCreated: "Creada",
     thAction: "",
     active: "Activa",
-    suspended: "Suspendida",
-    suspend: "Suspender",
-    reactivate: "Reactivar",
-    confirmSuspend: "¿Suspender {name}? Sus usuarios quedarán desconectados y no podrán volver a entrar hasta que la reactives.",
+    inactive: "Inactiva",
+    deactivate: "Desactivar",
+    activate: "Activar",
+    confirmDeactivate: "¿Desactivar {name}? Sus usuarios quedarán desconectados y no podrán volver a entrar hasta que la actives de nuevo.",
   },
 };
 

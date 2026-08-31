@@ -6,7 +6,7 @@ export type User = {
   agency: Agency;
 };
 
-export type Agency = { id: string; name: string; slug: string; brand_color: string; logo_url: string | null };
+export type Agency = { id: string; name: string; slug: string; brand_color: string; logo_url: string | null; is_active: boolean };
 
 export type AgentSummary = { id: string; name: string; description: string; is_active: boolean };
 

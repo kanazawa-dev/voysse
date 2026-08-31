@@ -39,7 +39,11 @@ def register(payload: RegisterRequest, response: Response, db: Session = Depends
     if db.scalar(select(User).where(User.email == email)):
         raise HTTPException(status_code=409, detail="A user with that email already exists")
     agency_name = payload.agency_name.strip()
-    agency = Agency(name=agency_name, slug=unique_slug(db, Agency, "slug", agency_name))
+    agency = Agency(
+        name=agency_name,
+        slug=unique_slug(db, Agency, "slug", agency_name),
+        is_active=not get_settings().require_agency_approval,
+    )
     user = User(
         agency=agency,
         name=payload.name.strip(),
@@ -49,7 +53,11 @@ def register(payload: RegisterRequest, response: Response, db: Session = Depends
     db.add(user)
     db.commit()
     db.refresh(user)
-    _set_session_cookie(response, user)
+    # A pending agency (require_agency_approval) gets no working session --
+    # the frontend reads agency.is_active on this same response to show a
+    # "pending" message instead of navigating into the dashboard.
+    if agency.is_active:
+        _set_session_cookie(response, user)
     return user
 
 
@@ -59,7 +67,7 @@ def login(payload: LoginRequest, response: Response, db: Session = Depends(get_d
     if not user or not verify_password(payload.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Incorrect email or password")
     if not user.agency.is_active:
-        raise HTTPException(status_code=403, detail="This agency's access has been suspended")
+        raise HTTPException(status_code=403, detail="agency_pending_approval")
     _set_session_cookie(response, user)
     return user
 

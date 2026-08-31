@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { ReactNode, useEffect, useState } from "react";
-import { api } from "@/lib/api";
+import { ApiError, api } from "@/lib/api";
 import { useT } from "@/lib/i18n";
 import { AppSidebar } from "@/components/app-sidebar";
 import { OpenvoissBrand } from "@/components/openvoiss-brand";
@@ -60,7 +60,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     setLoading(true);
     api<User>("/auth/me")
       .then(setUser)
-      .catch(() => router.replace("/login"))
+      .catch((err) => router.replace(err instanceof ApiError && err.message === "agency_pending_approval" ? "/login?pending=1" : "/login"))
       .finally(() => setLoading(false));
   }, [isBare, pathname, router]);
 

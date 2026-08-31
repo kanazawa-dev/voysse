@@ -2,8 +2,8 @@
 
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Bot, Building2, LoaderCircle, MessageSquareText, ShieldCheck } from "lucide-react";
-import { api, messageFrom } from "@/lib/api";
+import { ArrowLeft, Bot, Building2, Clock, LoaderCircle, Mail, MessageSquareText, Phone, ShieldCheck } from "lucide-react";
+import { ApiError, api, messageFrom } from "@/lib/api";
 import { useT } from "@/lib/i18n";
 import { Alert } from "@/components/ui";
 import { Button } from "@/components/ui/button";
@@ -50,12 +50,23 @@ function GrainLayer({ className }: { className?: string }) {
   );
 }
 
+// Temporary contact channel shown on a pending-approval account; swap for the
+// company inbox once the new domain is live.
+const PENDING_CONTACT_EMAIL = "enterprise@openvoiss.com";
+const PENDING_CONTACT_PHONE = "+56 9 4095 6827";
+const PENDING_CONTACT_PHONE_HREF = "+56940956827";
+
 export default function LoginPage() {
   const t = useT();
   const router = useRouter();
   const [mode, setMode] = useState<"login" | "register">("login");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [pending, setPending] = useState(false);
+
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("pending")) setPending(true);
+  }, []);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -63,11 +74,19 @@ export default function LoginPage() {
     setError("");
     const data = Object.fromEntries(new FormData(event.currentTarget));
     try {
-      await api(mode === "login" ? "/auth/login" : "/auth/register", { method: "POST", body: JSON.stringify(data) });
+      const result = await api<{ agency: { is_active: boolean } }>(mode === "login" ? "/auth/login" : "/auth/register", { method: "POST", body: JSON.stringify(data) });
+      if (!result.agency.is_active) {
+        setPending(true);
+        return;
+      }
       router.push("/");
       router.refresh();
     } catch (err) {
-      setError(messageFrom(err));
+      if (err instanceof ApiError && err.message === "agency_pending_approval") {
+        setPending(true);
+      } else {
+        setError(messageFrom(err));
+      }
     } finally {
       setBusy(false);
     }
@@ -108,6 +127,19 @@ export default function LoginPage() {
 
         <Card className="mx-auto w-full max-w-md p-6 sm:p-8 lg:mx-0">
           <div className="mb-5 flex items-center gap-2 lg:hidden"><OpenvoissBrand effect="benday" showName size={30} state="thinking" /></div>
+
+          {pending ? (
+            <>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary"><Clock size={14} /> {t("auth.pendingTitle")}</span>
+              <p className="mt-3 text-sm leading-6 text-muted-foreground">{t("auth.pendingBody")}</p>
+              <div className="mt-4 space-y-2.5">
+                <a href={`mailto:${PENDING_CONTACT_EMAIL}`} className="flex items-center gap-2.5 rounded-xl border p-3 text-sm font-medium hover:border-primary/40 hover:text-primary"><Mail size={16} className="shrink-0 text-primary" /> {PENDING_CONTACT_EMAIL}</a>
+                <a href={`tel:${PENDING_CONTACT_PHONE_HREF}`} className="flex items-center gap-2.5 rounded-xl border p-3 text-sm font-medium hover:border-primary/40 hover:text-primary"><Phone size={16} className="shrink-0 text-primary" /> {PENDING_CONTACT_PHONE}</a>
+              </div>
+              <Button type="button" variant="ghost" className="mt-5 w-full" onClick={() => { setPending(false); setMode("login"); }}><ArrowLeft size={16} /> {t("auth.pendingBackToLogin")}</Button>
+            </>
+          ) : (
+          <>
           <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary"><ShieldCheck size={14} /> {t("auth.cardLabel")}</span>
           <h2 className="mt-3 font-pixel text-2xl text-foreground">{mode === "register" ? t("auth.cardTitleRegister") : t("auth.cardTitleLogin")}</h2>
           <p className="mt-1 text-sm text-muted-foreground">{mode === "register" ? t("auth.cardSubtitleRegister") : t("auth.cardSubtitleLogin")}</p>
@@ -145,6 +177,8 @@ export default function LoginPage() {
             </Button>
           </form>
           <p className="mt-5 flex items-center gap-1.5 text-xs text-muted-foreground"><ShieldCheck size={14} className="shrink-0" /> {t("auth.securityNote")}</p>
+          </>
+          )}
         </Card>
       </div>
     </div>

@@ -18,6 +18,11 @@ class Settings(BaseSettings):
     # (e.g. the Cloud interest form). Self-hosted deployments don't run the
     # marketing site and can leave this unset.
     marketing_url: str = ""
+    # When true, a newly registered agency starts suspended (is_active=false)
+    # instead of getting instant access -- the Voysse team approves it from
+    # /admin. Off by default: self-hosted deployments always keep the
+    # existing instant-access registration.
+    require_agency_approval: bool = False
     access_token_minutes: int = 60 * 24 * 7
     # Session cookie flags. Defaults suit local HTTP; set cookie_secure=true (and
     # cookie_samesite=none when the frontend and API are on different sites)

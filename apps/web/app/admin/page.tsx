@@ -45,7 +45,7 @@ export default function AdminPage() {
 
   async function toggleAgency(agency: AgencyAdmin) {
     const next = !agency.is_active;
-    if (next === false && !confirm(t("admin.agencies.confirmSuspend", { name: agency.name }))) return;
+    if (next === false && !confirm(t("admin.agencies.confirmDeactivate", { name: agency.name }))) return;
     setBusyAgencyId(agency.id);
     try {
       const updated = await api<AgencyAdmin>(`/admin/agencies/${agency.id}`, { method: "PATCH", body: JSON.stringify({ is_active: next }) });
@@ -112,12 +112,12 @@ export default function AdminPage() {
                       <TableCell className="text-muted-foreground">{agency.owner_email || "—"}</TableCell>
                       <TableCell>{agency.user_count}</TableCell>
                       <TableCell>{agency.client_count}</TableCell>
-                      <TableCell><span className={agency.is_active ? "inline-flex rounded-full border border-primary/20 bg-primary/10 px-2 py-0.5 text-xs text-primary" : "inline-flex rounded-full border border-destructive/20 bg-destructive/10 px-2 py-0.5 text-xs text-destructive"}>{agency.is_active ? t("admin.agencies.active") : t("admin.agencies.suspended")}</span></TableCell>
+                      <TableCell><span className={agency.is_active ? "inline-flex rounded-full border border-primary/20 bg-primary/10 px-2 py-0.5 text-xs text-primary" : "inline-flex rounded-full border border-destructive/20 bg-destructive/10 px-2 py-0.5 text-xs text-destructive"}>{agency.is_active ? t("admin.agencies.active") : t("admin.agencies.inactive")}</span></TableCell>
                       <TableCell className="text-muted-foreground">{new Date(agency.created_at).toLocaleDateString()}</TableCell>
                       <TableCell>
                         <Button type="button" size="sm" variant={agency.is_active ? "destructive" : "secondary"} disabled={busyAgencyId === agency.id} onClick={() => toggleAgency(agency)}>
                           {busyAgencyId === agency.id ? <LoaderCircle className="animate-spin" size={14} /> : null}
-                          {agency.is_active ? t("admin.agencies.suspend") : t("admin.agencies.reactivate")}
+                          {agency.is_active ? t("admin.agencies.deactivate") : t("admin.agencies.activate")}
                         </Button>
                       </TableCell>
                     </TableRow>

@@ -25,7 +25,7 @@ def get_current_user(
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
     if not user.agency.is_active:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="This agency's access has been suspended")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="agency_pending_approval")
     return user
 
 

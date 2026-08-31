@@ -85,6 +85,11 @@ const en = {
     submitRegister: "Create my agency",
     submitLogin: "Sign in",
     securityNote: "The session uses a secure cookie. Your AI keys never reach the browser.",
+    pendingTitle: "Your account is pending activation",
+    pendingBody: "A member of our team reviews every new agency before it can sign in. Want to speed things up? Reach out to us:",
+    pendingEmail: "Email",
+    pendingPhone: "Phone",
+    pendingBackToLogin: "Back to sign in",
   },
 };
 
@@ -173,6 +178,11 @@ const es: typeof en = {
     submitRegister: "Crear mi agencia",
     submitLogin: "Iniciar sesión",
     securityNote: "La sesión usa una cookie segura. Tus claves de IA nunca llegan al navegador.",
+    pendingTitle: "Tu cuenta está pendiente de activación",
+    pendingBody: "Un miembro de nuestro equipo revisa cada agencia nueva antes de habilitar el acceso. ¿Quieres agilizarlo? Contáctanos:",
+    pendingEmail: "Correo",
+    pendingPhone: "Teléfono",
+    pendingBackToLogin: "Volver a iniciar sesión",
   },
 };
 

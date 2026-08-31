@@ -1,5 +1,6 @@
 from fastapi.testclient import TestClient
 
+from app import config
 from app.models import AdminUser
 from app.security import hash_password
 from tests.conftest import TestingSession
@@ -97,3 +98,33 @@ def test_suspending_kicks_out_an_active_session(client: TestClient):
     client.patch(f"/api/admin/agencies/{agency_id}", json={"is_active": False})
 
     assert client.get("/api/auth/me").status_code == 403
+
+
+def test_require_agency_approval_gates_new_registrations(client: TestClient, monkeypatch):
+    monkeypatch.setenv("REQUIRE_AGENCY_APPROVAL", "true")
+    config.get_settings.cache_clear()
+    try:
+        _create_admin()
+        client.post("/api/admin/auth/login", json={"email": "team@voysse.com", "password": "very-secure-key"})
+
+        register = client.post(
+            "/api/auth/register",
+            json={"agency_name": "Pendiente Co", "name": "Owner", "email": "owner@pendiente.com", "password": "very-secure-key"},
+        )
+        assert register.status_code == 201
+        assert register.json()["agency"]["is_active"] is False
+        # No working session was set for the pending agency.
+        assert "access_token" not in client.cookies
+
+        blocked = client.post("/api/auth/login", json={"email": "owner@pendiente.com", "password": "very-secure-key"})
+        assert blocked.status_code == 403
+        assert blocked.json()["detail"] == "agency_pending_approval"
+
+        agency_id = register.json()["agency"]["id"]
+        activated = client.patch(f"/api/admin/agencies/{agency_id}", json={"is_active": True})
+        assert activated.status_code == 200
+
+        allowed = client.post("/api/auth/login", json={"email": "owner@pendiente.com", "password": "very-secure-key"})
+        assert allowed.status_code == 200
+    finally:
+        config.get_settings.cache_clear()
