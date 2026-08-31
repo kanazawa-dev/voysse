@@ -23,7 +23,7 @@ from .routers import (
 
 settings = get_settings()
 app = FastAPI(
-    title="Openvoiss API",
+    title="Voysse API",
     description="API to manage agencies, clients and AI agents.",
     version="0.3.0",
 )

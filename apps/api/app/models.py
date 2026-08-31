@@ -29,7 +29,7 @@ class Agency(Base):
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=new_uuid)
     name: Mapped[str] = mapped_column(String(180))
     slug: Mapped[str] = mapped_column(String(180), unique=True, index=True)
-    brand_color: Mapped[str] = mapped_column(String(20), default="#075985")
+    brand_color: Mapped[str] = mapped_column(String(20), default="#1748c7")
     logo_data: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True)
     logo_mime: Mapped[str | None] = mapped_column(String(100), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)

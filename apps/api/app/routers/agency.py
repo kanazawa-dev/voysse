@@ -35,7 +35,7 @@ def update_agency(
             raise HTTPException(status_code=409, detail="That identifier is already in use")
         values["slug"] = candidate
     if "brand_color" in values and not re.fullmatch(r"#[0-9a-fA-F]{6}", values["brand_color"] or ""):
-        raise HTTPException(status_code=400, detail="The color must use the #075985 format")
+        raise HTTPException(status_code=400, detail="The color must use the #1748c7 format")
     for key, value in values.items():
         setattr(agency, key, value)
     db.commit()
