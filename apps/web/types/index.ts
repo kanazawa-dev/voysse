@@ -195,7 +195,17 @@ export type PortalPublic = {
 
 export type AdminUser = { id: string; name: string; email: string };
 
-export type CloudLead = { id: string; name: string; email: string; agency_name: string; created_at: string };
+export type CloudLeadStatus = "new" | "contacted" | "dismissed";
+
+export type CloudLead = {
+  id: string;
+  name: string;
+  email: string;
+  agency_name: string;
+  status: CloudLeadStatus;
+  notes: string;
+  created_at: string;
+};
 
 export type AgencyAdmin = {
   id: string;
@@ -206,4 +216,35 @@ export type AgencyAdmin = {
   owner_email: string | null;
   user_count: number;
   client_count: number;
+};
+
+export type AdminStats = {
+  agencies_total: number;
+  agencies_active: number;
+  clients_total: number;
+  agents_total: number;
+  agents_active: number;
+  whatsapp_connected: number;
+  whatsapp_total: number;
+  messages_total: number;
+  messages_7d: number;
+  leads_total: number;
+  leads_new: number;
+};
+
+export type AgencyUserSummary = { id: string; name: string; email: string; role: string; created_at: string };
+
+export type AgencyClientSummary = {
+  id: string;
+  name: string;
+  is_active: boolean;
+  agent_count: number;
+  whatsapp_status: string | null;
+  created_at: string;
+};
+
+export type AgencyDetail = AgencyAdmin & {
+  messages_total: number;
+  users: AgencyUserSummary[];
+  clients: AgencyClientSummary[];
 };

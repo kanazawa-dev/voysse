@@ -400,4 +400,7 @@ class CloudLead(Base):
     name: Mapped[str] = mapped_column(String(160))
     email: Mapped[str] = mapped_column(String(255))
     agency_name: Mapped[str] = mapped_column(String(180))
+    # Worked from the admin panel: "new" until someone follows up.
+    status: Mapped[str] = mapped_column(String(20), default="new")
+    notes: Mapped[str] = mapped_column(Text, default="")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)

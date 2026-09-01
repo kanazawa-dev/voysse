@@ -19,7 +19,14 @@ class CloudLeadOut(ORMModel):
     name: str
     email: EmailStr
     agency_name: str
+    status: str
+    notes: str
     created_at: datetime
+
+
+class CloudLeadUpdate(BaseModel):
+    status: str | None = None
+    notes: str | None = None
 
 
 class AdminLoginRequest(BaseModel):
@@ -46,6 +53,43 @@ class AgencyAdminOut(ORMModel):
 
 class AgencyStatusUpdate(BaseModel):
     is_active: bool
+
+
+class AdminStatsOut(BaseModel):
+    agencies_total: int
+    agencies_active: int
+    clients_total: int
+    agents_total: int
+    agents_active: int
+    whatsapp_connected: int
+    whatsapp_total: int
+    messages_total: int
+    messages_7d: int
+    leads_total: int
+    leads_new: int
+
+
+class AgencyUserSummary(ORMModel):
+    id: uuid.UUID
+    name: str
+    email: EmailStr
+    role: str
+    created_at: datetime
+
+
+class AgencyClientSummary(ORMModel):
+    id: uuid.UUID
+    name: str
+    is_active: bool
+    agent_count: int
+    whatsapp_status: str | None
+    created_at: datetime
+
+
+class AgencyDetailOut(AgencyAdminOut):
+    messages_total: int
+    users: list[AgencyUserSummary]
+    clients: list[AgencyClientSummary]
 
 
 class RegisterRequest(BaseModel):
