@@ -3,7 +3,7 @@
 // it as final.
 import type { LegalDoc } from "./privacy";
 
-const CONTACT_EMAIL = "enterprise@openvoiss.com";
+const CONTACT_EMAIL = "alex@voysse.cl";
 const CONTACT_PHONE = "+56 9 4095 6827";
 
 export const terms: { es: LegalDoc; en: LegalDoc } = {

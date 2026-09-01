@@ -52,7 +52,7 @@ function GrainLayer({ className }: { className?: string }) {
 
 // Temporary contact channel shown on a pending-approval account; swap for the
 // company inbox once the new domain is live.
-const PENDING_CONTACT_EMAIL = "enterprise@openvoiss.com";
+const PENDING_CONTACT_EMAIL = "alex@voysse.cl";
 const PENDING_CONTACT_PHONE = "+56 9 4095 6827";
 const PENDING_CONTACT_PHONE_HREF = "+56940956827";
 

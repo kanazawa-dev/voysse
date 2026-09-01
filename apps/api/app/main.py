@@ -29,12 +29,17 @@ app = FastAPI(
     description="API to manage agencies, clients and AI agents.",
     version="0.3.0",
 )
+def _split_origins(value: str) -> list[str]:
+    return [origin.strip() for origin in value.split(",") if origin.strip()]
+
+
 app.add_middleware(
     CORSMiddleware,
-    # The configured frontend origin (a real domain in production), the
-    # marketing site's origin when set, plus any localhost/127.0.0.1 port so
+    # FRONTEND_URL / MARKETING_URL each accept one origin or several
+    # comma-separated ones (e.g. the old Railway domain and the new custom
+    # domain during a DNS cutover), plus any localhost/127.0.0.1 port so
     # changing WEB_PORT never breaks local dev.
-    allow_origins=[origin for origin in (settings.frontend_url, settings.marketing_url) if origin],
+    allow_origins=_split_origins(settings.frontend_url) + _split_origins(settings.marketing_url),
     allow_origin_regex=r"https?://(localhost|127\.0\.0\.1)(:\d+)?",
     allow_credentials=True,
     allow_methods=["*"],

@@ -182,7 +182,7 @@ export default function LandingPage() {
   // Empty by default: relative "/login" resolves same-origin, matching this
   // repo's NEXT_PUBLIC_API_URL pattern (apps/web/Dockerfile). Set this when
   // the dashboard is deployed on a different origin than the marketing site
-  // (e.g. https://app.openvoiss.com).
+  // (e.g. https://app.voysse.cl).
   const appUrl = (process.env.NEXT_PUBLIC_APP_URL || "").replace(/\/$/, "");
   const [openFaq, setOpenFaq] = useState<Set<number>>(new Set());
 
@@ -212,7 +212,7 @@ export default function LandingPage() {
     { href: "#open-source", icon: Server, title: t("welcome.nav.selfhost"), desc: t("welcome.nav.resourcesMenu.selfhostDesc") },
     { href: "#faq", icon: HelpCircle, title: t("welcome.nav.faq"), desc: t("welcome.nav.resourcesMenu.faqDesc") },
     { href: "#roadmap", icon: Layers, title: t("welcome.nav.roadmap"), desc: t("welcome.nav.resourcesMenu.roadmapDesc") },
-    { href: "https://openvoiss.com/docs", icon: FileText, title: t("welcome.nav.docs"), desc: t("welcome.nav.resourcesMenu.docsDesc") },
+    { href: "https://docs.voysse.cl/docs", icon: FileText, title: t("welcome.nav.docs"), desc: t("welcome.nav.resourcesMenu.docsDesc") },
   ];
   const allLinks: NavRow[] = [
     { href: "#features", icon: Sparkles, title: t("welcome.nav.features"), desc: t("welcome.nav.resourcesMenu.featuresDesc") },
@@ -300,7 +300,7 @@ export default function LandingPage() {
                 <Button className={ctaClass} render={<a href={`${appUrl}/login`} />} nativeButton={false}>
                   {t("welcome.nav.getStarted")} <ArrowRight className="size-4" />
                 </Button>
-                <Button className={ctaClass} variant="secondary" render={<a href="https://openvoiss.com/docs/getting-started" />} nativeButton={false}>
+                <Button className={ctaClass} variant="secondary" render={<a href="https://docs.voysse.cl/docs/getting-started" />} nativeButton={false}>
                   {t("welcome.hero.readDocs")}
                 </Button>
               </div>
@@ -480,8 +480,8 @@ export default function LandingPage() {
                 <h2 className="mt-4 font-heading text-3xl font-semibold tracking-tight sm:text-4xl">{t("welcome.stack.title")}</h2>
                 <p className="mt-6 max-w-xl text-lg leading-7 font-semibold text-primary">{t("welcome.stack.body")}</p>
                 <div className="mt-7 flex flex-wrap gap-3">
-                  <Button className={ctaClass} render={<a href="https://openvoiss.com/docs/self-hosting" />} nativeButton={false}>{t("welcome.stack.guideBtn")}</Button>
-                  <Button className={ctaClass} variant="secondary" render={<a href="https://openvoiss.com/docs/architecture" />} nativeButton={false}>{t("welcome.stack.archBtn")}</Button>
+                  <Button className={ctaClass} render={<a href="https://docs.voysse.cl/docs/self-hosting" />} nativeButton={false}>{t("welcome.stack.guideBtn")}</Button>
+                  <Button className={ctaClass} variant="secondary" render={<a href="https://docs.voysse.cl/docs/architecture" />} nativeButton={false}>{t("welcome.stack.archBtn")}</Button>
                 </div>
               </div>
               <div className="relative z-10 px-5">
@@ -527,7 +527,7 @@ export default function LandingPage() {
               <Card>
                 <CardHeader><Badge className="mb-2" variant="secondary">{t("welcome.plans.enterprise.tag")}</Badge><CardTitle className="text-2xl">{t("welcome.plans.enterprise.title")}</CardTitle><div><div className="font-heading text-3xl font-semibold text-primary">{t("welcome.plans.enterprise.price")}</div><div className="mt-1 text-sm text-muted-foreground">{t("welcome.plans.enterprise.included")}</div></div></CardHeader>
                 <CardContent className="flex flex-1 flex-col gap-5"><p className="leading-6 text-muted-foreground">{t("welcome.plans.enterprise.desc")}</p><ul className="space-y-2.5"><li className="flex gap-2.5"><Check className="mt-0.5 size-4 shrink-0 text-primary" />{t("welcome.plans.enterprise.p1")}</li><li className="flex gap-2.5"><Check className="mt-0.5 size-4 shrink-0 text-primary" />{t("welcome.plans.enterprise.p2")}</li><li className="flex gap-2.5"><Check className="mt-0.5 size-4 shrink-0 text-primary" />{t("welcome.plans.enterprise.p3")}</li><li className="flex gap-2.5"><Check className="mt-0.5 size-4 shrink-0 text-primary" />{t("welcome.plans.enterprise.p4")}</li></ul></CardContent>
-                <CardFooter><Button className={ctaClass} variant="secondary" render={<a href="mailto:enterprise@openvoiss.com" />} nativeButton={false}>{t("welcome.plans.enterprise.cta")}</Button></CardFooter>
+                <CardFooter><Button className={ctaClass} variant="secondary" render={<a href="mailto:ventas@voysse.cl" />} nativeButton={false}>{t("welcome.plans.enterprise.cta")}</Button></CardFooter>
               </Card>
             </div>
 
@@ -573,7 +573,7 @@ export default function LandingPage() {
               ))}
             </div>
             <div className="mt-8">
-              <Button variant="outline" render={<a href="https://openvoiss.com/docs/roadmap" />} nativeButton={false}>{t("welcome.roadmap.cta")} <ArrowRight className="size-4" /></Button>
+              <Button variant="outline" render={<a href="https://docs.voysse.cl/docs/roadmap" />} nativeButton={false}>{t("welcome.roadmap.cta")} <ArrowRight className="size-4" /></Button>
             </div>
           </div>
         </section>
@@ -623,8 +623,8 @@ export default function LandingPage() {
             </div>
             <div className="flex flex-wrap gap-10 sm:gap-14">
               <div><strong className="mb-3 block text-xs tracking-wider text-muted-foreground uppercase">{t("welcome.footer.colProduct")}</strong><div className="space-y-2 text-sm"><a className="block hover:text-primary" href="#features">{t("welcome.nav.features")}</a><a className="block hover:text-primary" href="#channels">{t("welcome.ops.eyebrow")}</a><a className="block hover:text-primary" href="#open-source">{t("welcome.nav.selfhost")}</a><a className="block hover:text-primary" href="#pricing">{t("welcome.nav.pricing")}</a><a className="block hover:text-primary" href="#roadmap">{t("welcome.nav.roadmap")}</a></div></div>
-              <div><strong className="mb-3 block text-xs tracking-wider text-muted-foreground uppercase">{t("welcome.footer.colResources")}</strong><div className="space-y-2 text-sm"><a className="block hover:text-primary" href="https://openvoiss.com/docs">{t("welcome.footer.docs")}</a><a className="block hover:text-primary" href="https://openvoiss.com/docs/getting-started">{t("welcome.footer.quickstart")}</a><a className="block hover:text-primary" href="https://github.com/kanazawa-dev/voysse/discussions">{t("welcome.footer.discussions")}</a></div></div>
-              <div><strong className="mb-3 block text-xs tracking-wider text-muted-foreground uppercase">{t("welcome.footer.colProject")}</strong><div className="space-y-2 text-sm"><a className="block hover:text-primary" href="https://github.com/kanazawa-dev/voysse">GitHub</a><a className="block hover:text-primary" href="https://openvoiss.com/docs/contributing">{t("welcome.footer.contributing")}</a></div></div>
+              <div><strong className="mb-3 block text-xs tracking-wider text-muted-foreground uppercase">{t("welcome.footer.colResources")}</strong><div className="space-y-2 text-sm"><a className="block hover:text-primary" href="https://docs.voysse.cl/docs">{t("welcome.footer.docs")}</a><a className="block hover:text-primary" href="https://docs.voysse.cl/docs/getting-started">{t("welcome.footer.quickstart")}</a><a className="block hover:text-primary" href="https://github.com/kanazawa-dev/voysse/discussions">{t("welcome.footer.discussions")}</a></div></div>
+              <div><strong className="mb-3 block text-xs tracking-wider text-muted-foreground uppercase">{t("welcome.footer.colProject")}</strong><div className="space-y-2 text-sm"><a className="block hover:text-primary" href="https://github.com/kanazawa-dev/voysse">GitHub</a><a className="block hover:text-primary" href="https://docs.voysse.cl/docs/contributing">{t("welcome.footer.contributing")}</a></div></div>
             </div>
           </div>
           <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-6 text-xs text-muted-foreground"><span>{t("welcome.footer.license")}</span><div className="flex flex-wrap items-center gap-x-4 gap-y-1"><a className="hover:text-primary" href="/privacy">{t("welcome.footer.privacy")}</a><a className="hover:text-primary" href="/terms">{t("welcome.footer.terms")}</a><span>{t("welcome.footer.tagline")}</span></div></div>

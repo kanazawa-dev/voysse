@@ -4,7 +4,7 @@
 export type LegalSection = { heading: string; paragraphs: string[] };
 export type LegalDoc = { updated: string; notice: string; sections: LegalSection[] };
 
-const CONTACT_EMAIL = "enterprise@openvoiss.com";
+const CONTACT_EMAIL = "alex@voysse.cl";
 const CONTACT_PHONE = "+56 9 4095 6827";
 
 export const privacy: { es: LegalDoc; en: LegalDoc } = {
@@ -16,7 +16,7 @@ export const privacy: { es: LegalDoc; en: LegalDoc } = {
       {
         heading: "1. Quiénes somos",
         paragraphs: [
-          "Voysse (\"nosotros\", \"la plataforma\") es la marca bajo la que operamos el sitio voysse.com y el servicio hosteado Voysse Cloud, con domicilio en Chile.",
+          "Voysse (\"nosotros\", \"la plataforma\") es la marca bajo la que operamos el sitio voysse.cl y el servicio hosteado Voysse Cloud, con domicilio en Chile.",
           `Puedes contactarnos por correo a ${CONTACT_EMAIL} o por teléfono al ${CONTACT_PHONE}.`,
         ],
       },
@@ -109,7 +109,7 @@ export const privacy: { es: LegalDoc; en: LegalDoc } = {
       {
         heading: "1. Who we are",
         paragraphs: [
-          "Voysse (\"we\", \"the platform\") is the brand under which we operate voysse.com and the hosted Voysse Cloud service, based in Chile.",
+          "Voysse (\"we\", \"the platform\") is the brand under which we operate voysse.cl and the hosted Voysse Cloud service, based in Chile.",
           `You can reach us by email at ${CONTACT_EMAIL} or by phone at ${CONTACT_PHONE}.`,
         ],
       },

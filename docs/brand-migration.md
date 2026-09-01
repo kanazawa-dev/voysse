@@ -11,7 +11,7 @@ validation artifacts without breaking existing installations.
 | Product name shown to people | Use `Voysse` |
 | Repository and GitHub coordinates | Moved: `kanazawa-dev/voysse`. GitHub redirects the old `kanazawa-dev/openvoiss` coordinates. |
 | Package, image, container, database, and environment names | Keep existing `openvoiss` / `OPENVOISS_*` identifiers |
-| Existing domain and email addresses | Keep `openvoiss.com` until replacement Voysse endpoints are verified |
+| Existing domain and email addresses | Moved: `voysse.cl` (marketing), `app.voysse.cl`, `api.voysse.cl`, `docs.voysse.cl`. `openvoiss.com` is no longer used. |
 | Source component filenames and exported symbols | Keep existing names to avoid unrelated import churn |
 | Alembic revision IDs, filenames, and historical text | Never rewrite migration history |
 

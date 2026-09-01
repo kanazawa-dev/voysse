@@ -8,7 +8,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://openvoiss.com'),
+  metadataBase: new URL('https://docs.voysse.cl'),
   icons: { icon: '/brand/only-logo.png', apple: '/brand/only-logo.png' },
 };
 
