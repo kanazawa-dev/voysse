@@ -475,7 +475,7 @@ export default function LandingPage() {
           <div className={containerClass}>
             <Card className="relative isolate grid gap-10 border-0 bg-primary px-2 py-8 text-primary ring-primary/20 sm:px-6 lg:grid-cols-[1fr_1fr] lg:items-center lg:px-10 lg:py-12">
               <GrainLayer {...GRAIN_VARIANTS.a} />
-              <div className="relative z-10 px-5">
+              <div className="relative z-10 min-w-0 px-5">
                 <Eyebrow>{t("welcome.stack.eyebrow")}</Eyebrow>
                 <h2 className="mt-4 font-heading text-3xl font-semibold tracking-tight sm:text-4xl">{t("welcome.stack.title")}</h2>
                 <p className="mt-6 max-w-xl text-lg leading-7 font-semibold text-primary">{t("welcome.stack.body")}</p>
@@ -484,10 +484,10 @@ export default function LandingPage() {
                   <Button className={ctaClass} variant="secondary" render={<a href="https://docs.voysse.cl/docs/architecture" />} nativeButton={false}>{t("welcome.stack.archBtn")}</Button>
                 </div>
               </div>
-              <div className="relative z-10 px-5">
+              <div className="relative z-10 min-w-0 px-5">
                 <TerminalIntroSequence
                   sequence={terminalSequence}
-                  className="w-full max-w-none overflow-hidden rounded-2xl shadow-xl"
+                  className="w-full max-w-none overflow-x-auto rounded-2xl shadow-xl sm:min-w-[420px] lg:min-w-[480px]"
                 />
               </div>
               <div className="relative z-10 col-span-full grid gap-5 border-t border-primary/15 px-5 pt-8 sm:grid-cols-3">

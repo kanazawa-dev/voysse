@@ -122,7 +122,6 @@ export function TerminalIntroSequence({ sequence, onComplete, className, style }
           flexDirection: "column",
           gap: 10,
           fontFamily: "'Cascadia Code', 'Fira Code', 'Consolas', monospace",
-          minWidth: 520,
           ...style,
         }}
       >
