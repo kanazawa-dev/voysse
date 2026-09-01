@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from ..alerts import raise_alert, resolve_alerts
 from ..config import get_settings
 from ..database import get_db
 from ..deps import get_current_user
@@ -119,6 +120,11 @@ async def connect_channel(client_id: uuid.UUID, db: Session = Depends(get_db), u
         channel.status = "error"
         channel.last_error = str(exc.detail)
         channel.updated_at = now_utc()
+        raise_alert(
+            db, channel.agency_id, "whatsapp_cloud_error", "error",
+            f"WhatsApp API disconnected for {channel.client.name}", str(exc.detail),
+            "whatsapp_cloud_channel", channel.id,
+        )
         db.commit()
         db.refresh(channel)
         return _public_channel(channel)
@@ -129,6 +135,7 @@ async def connect_channel(client_id: uuid.UUID, db: Session = Depends(get_db), u
     channel.is_enabled = True
     channel.last_connected_at = now_utc()
     channel.updated_at = now_utc()
+    resolve_alerts(db, channel.agency_id, "whatsapp_cloud_error", channel.id)
     db.commit()
     db.refresh(channel)
     return _public_channel(channel)
@@ -141,6 +148,7 @@ def disconnect_channel(client_id: uuid.UUID, db: Session = Depends(get_db), user
     channel.is_enabled = False
     channel.last_error = None
     channel.updated_at = now_utc()
+    resolve_alerts(db, channel.agency_id, "whatsapp_cloud_error", channel.id)
     db.commit()
     db.refresh(channel)
     return _public_channel(channel)

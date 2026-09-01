@@ -1,5 +1,6 @@
 import type { Dictionary } from "./en";
 import { admin } from "./dicts/admin";
+import { alerts } from "./dicts/alerts";
 import { core } from "./dicts/core";
 import { home } from "./dicts/home";
 import { clients } from "./dicts/clients";
@@ -16,6 +17,7 @@ import { tools } from "./dicts/tools";
 export const es: Dictionary = {
   ...core.es,
   admin: admin.es,
+  alerts: alerts.es,
   home: home.es,
   clients: clients.es,
   agents: agents.es,

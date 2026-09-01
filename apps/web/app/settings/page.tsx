@@ -91,6 +91,30 @@ export default function SettingsPage() {
     await load();
   }
 
+  async function saveCost(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setBusy(true);
+    const data = new FormData(event.currentTarget);
+    const inputRate = data.get("cost_per_million_input_tokens") as string;
+    const outputRate = data.get("cost_per_million_output_tokens") as string;
+    try {
+      setAgency(
+        await api<Agency>("/agency", {
+          method: "PATCH",
+          body: JSON.stringify({
+            cost_per_million_input_tokens: inputRate.trim() ? Number(inputRate) : null,
+            cost_per_million_output_tokens: outputRate.trim() ? Number(outputRate) : null,
+          }),
+        }),
+      );
+      toast.success(t("settings.index.costSaved"));
+    } catch (err) {
+      toast.error(messageFrom(err));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function saveKey(provider: string, apiKey: string): Promise<boolean> {
     if (!apiKey.trim()) return false;
     setBusy(true);
@@ -235,6 +259,30 @@ export default function SettingsPage() {
               <Save size={17} />
             )}{" "}
             {t("settings.index.saveIdentity")}
+          </Button>
+        </div>
+      </form>
+
+      <form className="flex w-full flex-col gap-6" onSubmit={saveCost}>
+        <Card className="grid gap-6 p-5 md:grid-cols-[minmax(12rem,1fr)_2fr]">
+          <div className="[&_h2]:font-semibold [&_p]:mt-1 [&_p]:text-sm [&_p]:text-muted-foreground">
+            <h2 className="font-heading">{t("settings.index.costHeading")}</h2>
+            <p>{t("settings.index.costCopy")}</p>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="cost-input">{t("settings.index.costInput")}</Label>
+              <Input id="cost-input" name="cost_per_million_input_tokens" type="number" step="0.01" min="0" defaultValue={agency.cost_per_million_input_tokens ?? ""} placeholder="0.00" />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="cost-output">{t("settings.index.costOutput")}</Label>
+              <Input id="cost-output" name="cost_per_million_output_tokens" type="number" step="0.01" min="0" defaultValue={agency.cost_per_million_output_tokens ?? ""} placeholder="0.00" />
+            </div>
+          </div>
+        </Card>
+        <div className="flex flex-wrap justify-end gap-2 border-t pt-5">
+          <Button type="submit" disabled={busy}>
+            {busy ? <LoaderCircle size={17} className="animate-spin" /> : <Save size={17} />} {t("settings.index.saveCost")}
           </Button>
         </div>
       </form>

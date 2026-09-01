@@ -35,6 +35,12 @@ class Agency(Base):
     # Toggled from the Voysse team's admin panel. A suspended agency's users
     # are rejected at login and kicked out of any active session.
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    # Optional, agency-set USD rate per 1M tokens, used only to estimate cost
+    # on the per-client usage view. Voysse has no real pricing data for every
+    # model an agency might bring, so this stays blank (tokens-only) unless
+    # the agency fills in what they're actually paying their provider.
+    cost_per_million_input_tokens: Mapped[float | None] = mapped_column(Float, nullable=True)
+    cost_per_million_output_tokens: Mapped[float | None] = mapped_column(Float, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
 
     users: Mapped[list["User"]] = relationship(back_populates="agency", cascade="all, delete-orphan")
@@ -404,3 +410,22 @@ class CloudLead(Base):
     status: Mapped[str] = mapped_column(String(20), default="new")
     notes: Mapped[str] = mapped_column(Text, default="")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
+
+
+class Alert(Base):
+    """An agency-facing heads-up about something that broke on its own, not
+    from a user action they're already looking at -- a WhatsApp session that
+    dropped, a knowledge document that failed to process. Raised and
+    auto-resolved from app/alerts.py; resolved_at is null while open."""
+    __tablename__ = "alerts"
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=new_uuid)
+    agency_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("agencies.id", ondelete="CASCADE"), index=True)
+    type: Mapped[str] = mapped_column(String(60))
+    severity: Mapped[str] = mapped_column(String(20), default="warning")
+    title: Mapped[str] = mapped_column(String(200))
+    message: Mapped[str] = mapped_column(Text, default="")
+    resource_type: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    resource_id: Mapped[uuid.UUID | None] = mapped_column(nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc, index=True)
+    resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

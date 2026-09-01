@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, Bot, Copy, ExternalLink, Facebook, Globe2, Inbox, Instagram, LoaderCircle, MessageCircle, QrCode, Radio, Save, Settings2, ShieldAlert, ShieldCheck, Trash2, UserRound } from "lucide-react";
+import { ArrowLeft, ArrowRight, BarChart3, Bot, Copy, ExternalLink, Facebook, Globe2, Inbox, Instagram, LoaderCircle, MessageCircle, QrCode, Radio, Save, Settings2, ShieldAlert, ShieldCheck, Trash2, UserRound } from "lucide-react";
 import { EmptyState, StatusBadge } from "@/components/ui";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,12 +14,14 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { api, messageFrom } from "@/lib/api";
 import { useT } from "@/lib/i18n";
-import type { Client, ClientDomain, Conversation } from "@/types";
+import type { Client, ClientDomain, ClientUsage, Conversation } from "@/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
-type Tab = "details" | "agents" | "channels" | "inbox" | "portal";
+type Tab = "details" | "agents" | "channels" | "inbox" | "portal" | "usage";
 
 export default function ClientDetailPage() {
   const t = useT();
@@ -58,7 +60,7 @@ export default function ClientDetailPage() {
   return <div className="flex w-full flex-col gap-6">
     <Link href="/clients" className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground"><ArrowLeft size={17} /> {t("clients.detail.back")}</Link>
     <header className="flex flex-col gap-4 sm:flex-row sm:items-center"><div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">{client.name.slice(0, 2).toUpperCase()}</div><div><div className="flex flex-wrap items-center gap-2"><h1 className="font-heading">{client.name}</h1><StatusBadge active={client.is_active} /></div><p>{client.industry || t("clients.detail.industryUndefined")} · {client.agents.length === 1 ? t("clients.detail.agentOne", { count: client.agents.length }) : t("clients.detail.agentMany", { count: client.agents.length })}</p></div><div className="flex flex-wrap items-center gap-2 sm:ml-auto"><Button render={<Link href={`/agents/new?client=${client.id}`} />}><Bot size={17} /> {t("clients.detail.newAgent")}</Button></div></header>
-    <Tabs value={tab} onValueChange={(value) => setTab(value as typeof tab)}><TabsList variant="line" className="max-w-full justify-start gap-0.5 overflow-x-auto"><TabsTrigger value="details"><Settings2 size={15} /> {t("clients.detail.tabDetails")}</TabsTrigger><TabsTrigger value="agents"><Bot size={15} /> {t("clients.detail.tabAgents")} <span>{client.agents.length}</span></TabsTrigger><TabsTrigger value="channels"><Radio size={15} /> {t("clients.detail.tabChannels")}</TabsTrigger><TabsTrigger value="inbox"><Inbox size={15} /> {t("clients.detail.tabInbox")}</TabsTrigger><TabsTrigger value="portal"><Globe2 size={15} /> {t("clients.detail.tabPortal")}</TabsTrigger></TabsList></Tabs>
+    <Tabs value={tab} onValueChange={(value) => setTab(value as typeof tab)}><TabsList variant="line" className="max-w-full justify-start gap-0.5 overflow-x-auto"><TabsTrigger value="details"><Settings2 size={15} /> {t("clients.detail.tabDetails")}</TabsTrigger><TabsTrigger value="agents"><Bot size={15} /> {t("clients.detail.tabAgents")} <span>{client.agents.length}</span></TabsTrigger><TabsTrigger value="channels"><Radio size={15} /> {t("clients.detail.tabChannels")}</TabsTrigger><TabsTrigger value="inbox"><Inbox size={15} /> {t("clients.detail.tabInbox")}</TabsTrigger><TabsTrigger value="portal"><Globe2 size={15} /> {t("clients.detail.tabPortal")}</TabsTrigger><TabsTrigger value="usage"><BarChart3 size={15} /> {t("clients.detail.tabUsage")}</TabsTrigger></TabsList></Tabs>
 
     {tab === "details" && <form className="mx-auto flex w-full max-w-5xl flex-col gap-6" onSubmit={saveDetails}><Card className="grid gap-6 p-5 md:grid-cols-[minmax(12rem,1fr)_2fr]"><div className="[&_h2]:font-semibold [&_p]:mt-1 [&_p]:text-sm [&_p]:text-muted-foreground"><h2 className="font-heading">{t("clients.detail.clientInfo")}</h2><p>{t("clients.detail.clientInfoCopy")}</p></div><div className="space-y-4"><div className="grid gap-4 sm:grid-cols-2"><div className="flex flex-col gap-1.5"><Label htmlFor="client-detail-name">{t("clients.detail.name")}</Label><Input id="client-detail-name" name="name" required defaultValue={client.name} /></div><div className="flex flex-col gap-1.5"><Label htmlFor="client-detail-industry">{t("clients.detail.industry")}</Label><Input id="client-detail-industry" name="industry" defaultValue={client.industry} /></div></div><div className="flex flex-col gap-1.5"><Label htmlFor="client-detail-description">{t("clients.detail.descriptionLabel")}</Label><Textarea id="client-detail-description" name="description" rows={3} defaultValue={client.description} /></div><div className="flex flex-col gap-1.5"><Label htmlFor="client-detail-context">{t("clients.detail.generalContext")}</Label><Textarea id="client-detail-context" name="general_context" rows={9} defaultValue={client.general_context} /><span className="mt-1.5 text-xs text-muted-foreground">{t("clients.detail.generalContextHelp")}</span></div><label className="flex items-center justify-between gap-4 rounded-lg border p-3 [&_p]:text-sm [&_p]:text-muted-foreground"><span><strong className="block">{t("clients.detail.activeClient")}</strong><small className="block text-muted-foreground">{t("clients.detail.activeClientHint")}</small></span><Switch name="is_active" defaultChecked={client.is_active} /></label></div></Card><div className="flex flex-wrap items-center justify-between gap-2 border-t pt-5"><Button type="button" variant="destructive" onClick={remove}><Trash2 size={16} /> {t("clients.detail.deleteClient")}</Button><Button type="submit" disabled={busy}>{busy ? <LoaderCircle className="animate-spin" size={17} /> : <Save size={17} />} {t("clients.detail.saveChanges")}</Button></div></form>}
 
@@ -97,7 +99,48 @@ export default function ClientDetailPage() {
 
     {tab === "inbox" && <ClientInbox clientId={client.id} />}
 
+    {tab === "usage" && <ClientUsageView clientId={client.id} />}
+
     {tab === "portal" && <><form className="mx-auto flex w-full max-w-5xl flex-col gap-6" onSubmit={savePortal}><Card className="grid gap-6 p-5 md:grid-cols-[minmax(12rem,1fr)_2fr]"><div className="[&_h2]:font-semibold [&_p]:mt-1 [&_p]:text-sm [&_p]:text-muted-foreground"><h2 className="font-heading">{t("clients.detail.portalTitle")}</h2><p>{t("clients.detail.portalCopy")}</p></div><div className="space-y-4"><div className="flex flex-col gap-1.5"><Label htmlFor="portal-title">{t("clients.detail.portalTitleLabel")}</Label><Input id="portal-title" name="portal_title" defaultValue={client.portal_title} placeholder={t("clients.detail.portalTitlePlaceholder", { name: client.name })} /></div><div className="flex flex-col gap-1.5"><Label htmlFor="portal-slug">{t("clients.detail.portalUrl")}</Label><div className="flex items-center rounded-lg border bg-background focus-within:ring-2 focus-within:ring-ring/30 [&>span]:pl-3 [&>span]:text-sm [&>span]:text-muted-foreground [&_input]:border-0 [&_input]:shadow-none"><span>localhost:3000/portal/</span><Input id="portal-slug" name="portal_slug" defaultValue={client.portal_slug} /></div></div><div className="overflow-x-auto rounded-lg bg-muted p-3 font-mono text-xs"><code>{portalUrl}</code><Button type="button" size="sm" variant="ghost" onClick={() => navigator.clipboard.writeText(portalUrl)}><Copy size={15} /> {t("clients.detail.copy")}</Button>{client.portal_enabled && <Button size="sm" variant="ghost" render={<a href={portalUrl} target="_blank" rel="noreferrer" />}><ExternalLink size={15} /> {t("clients.detail.open")}</Button>}</div><div className="grid gap-4 sm:grid-cols-2"><div className="flex flex-col gap-1.5"><Label htmlFor="portal-email">{t("clients.detail.portalEmail")}</Label><Input id="portal-email" name="portal_email" type="email" defaultValue={client.portal_email || ""} placeholder={t("clients.detail.portalEmailPlaceholder")} /></div><div className="flex flex-col gap-1.5"><Label htmlFor="portal-password">{t("clients.detail.portalPassword")}</Label><Input id="portal-password" name="portal_password" type="password" autoComplete="new-password" placeholder={client.portal_password_configured ? t("clients.detail.portalPasswordKeep") : t("clients.detail.portalPasswordMin")} /></div></div><label className="flex items-center justify-between gap-4 rounded-lg border p-3 [&_p]:text-sm [&_p]:text-muted-foreground"><span><strong className="block">{t("clients.detail.publishPortal")}</strong><small className="block text-muted-foreground">{t("clients.detail.publishPortalHint")}</small></span><Switch name="portal_enabled" defaultChecked={client.portal_enabled} /></label></div></Card><div className="flex flex-wrap justify-end gap-2 border-t pt-5"><Button type="submit" disabled={busy}>{busy ? <LoaderCircle className="animate-spin" size={17} /> : <Save size={17} />} {t("clients.detail.savePortal")}</Button></div></form><PortalDomain clientId={client.id} /></>}
+  </div>;
+}
+
+function ClientUsageView({ clientId }: { clientId: string }) {
+  const t = useT();
+  const [usage, setUsage] = useState<ClientUsage | null>(null);
+  const [days, setDays] = useState(30);
+  useEffect(() => { api<ClientUsage>(`/clients/${clientId}/usage?days=${days}`).then(setUsage); }, [clientId, days]);
+
+  const maxUsage = Math.max(1, ...(usage?.usage_by_model.map((item) => item.input_tokens + item.output_tokens) ?? [0]));
+
+  return <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
+    <div className="flex flex-wrap items-center justify-between gap-3">
+      <p className="text-sm text-muted-foreground">{t("clients.detail.usageSubtitle")}</p>
+      <Select value={String(days)} onValueChange={(value) => value && setDays(Number(value))}>
+        <SelectTrigger className="w-40"><SelectValue>{t("clients.detail.usageRangeDays", { count: days })}</SelectValue></SelectTrigger>
+        <SelectContent>{[7, 14, 30, 90].map((d) => <SelectItem key={d} value={String(d)}>{t("clients.detail.usageRangeDays", { count: d })}</SelectItem>)}</SelectContent>
+      </Select>
+    </div>
+    <section className="grid gap-4 sm:grid-cols-3">
+      <Card className="p-5 [&_small]:text-sm [&_small]:text-muted-foreground [&_strong]:mt-1 [&_strong]:block [&_strong]:text-2xl [&_strong]:font-semibold"><small>{t("clients.detail.usageMessages")}</small><strong>{usage?.messages ?? "—"}</strong></Card>
+      <Card className="p-5 [&_small]:text-sm [&_small]:text-muted-foreground [&_strong]:mt-1 [&_strong]:block [&_strong]:text-2xl [&_strong]:font-semibold"><small>{t("clients.detail.usageTokens")}</small><strong>{usage ? (usage.tokens_in + usage.tokens_out).toLocaleString() : "—"}</strong><p className="mt-1 text-xs text-muted-foreground">↓ {(usage?.tokens_in ?? 0).toLocaleString()} · ↑ {(usage?.tokens_out ?? 0).toLocaleString()}</p></Card>
+      <Card className="p-5 [&_small]:text-sm [&_small]:text-muted-foreground [&_strong]:mt-1 [&_strong]:block [&_strong]:text-2xl [&_strong]:font-semibold">
+        <small>{t("clients.detail.usageCost")}</small>
+        <strong>{usage?.estimated_cost_usd != null ? `$${usage.estimated_cost_usd.toFixed(2)}` : "—"}</strong>
+        {usage && usage.estimated_cost_usd == null && <p className="mt-1 text-xs text-muted-foreground">{t("clients.detail.usageCostUnsetHint")}</p>}
+      </Card>
+    </section>
+    <Card className="p-5">
+      <h3 className="font-heading">{t("clients.detail.usageByModel")}</h3>
+      {usage?.usage_by_model.length ? (
+        <div className="mt-4 space-y-3">
+          {usage.usage_by_model.map((item) => {
+            const total = item.input_tokens + item.output_tokens;
+            return <div className="grid items-center gap-3 text-sm sm:grid-cols-[minmax(8rem,1fr)_3fr_auto]" key={item.model}><strong>{item.model}</strong><Progress value={Math.round((total / maxUsage) * 100)} /><span className="text-xs tabular-nums text-muted-foreground">{total.toLocaleString()} tok</span></div>;
+          })}
+        </div>
+      ) : <div className="mt-4 flex min-h-24 items-center justify-center gap-3 rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground"><BarChart3 size={22} /><div><strong>{t("clients.detail.usageEmpty")}</strong></div></div>}
+    </Card>
   </div>;
 }
 

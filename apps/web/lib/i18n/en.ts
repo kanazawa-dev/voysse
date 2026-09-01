@@ -2,6 +2,7 @@
 // ./dicts. `es.ts` mirrors this exact shape. Access with dotted paths, e.g.
 // t("nav.clients"), t("clients.list.title").
 import { admin } from "./dicts/admin";
+import { alerts } from "./dicts/alerts";
 import { core } from "./dicts/core";
 import { home } from "./dicts/home";
 import { clients } from "./dicts/clients";
@@ -16,6 +17,7 @@ import { tools } from "./dicts/tools";
 export const en = {
   ...core.en,
   admin: admin.en,
+  alerts: alerts.en,
   home: home.en,
   clients: clients.en,
   agents: agents.en,

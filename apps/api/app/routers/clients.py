@@ -1,13 +1,23 @@
 import uuid
+from datetime import timedelta
 
-from fastapi import APIRouter, Depends, HTTPException, Response, status
-from sqlalchemy import select
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
 from ..database import get_db
 from ..deps import get_current_user
-from ..models import Client, User, new_domain_token
-from ..schemas import ClientCreate, ClientDomainOut, ClientDomainSet, ClientOut, ClientPortalUpdate, ClientUpdate
+from ..models import Agent, Client, Conversation, Message, UsageRecord, User, new_domain_token, now_utc
+from ..schemas import (
+    ClientCreate,
+    ClientDomainOut,
+    ClientDomainSet,
+    ClientOut,
+    ClientPortalUpdate,
+    ClientUpdate,
+    ClientUsageOut,
+    ModelUsage,
+)
 from ..security import hash_password
 from ..services import dns as dns_service
 from ..slugs import slugify, unique_slug
@@ -72,6 +82,63 @@ def update_client(client_id: uuid.UUID, payload: ClientUpdate, db: Session = Dep
         setattr(client, key, value)
     db.commit()
     return _client(db, user, client_id)
+
+
+@router.get("/{client_id}/usage", response_model=ClientUsageOut)
+def client_usage(
+    client_id: uuid.UUID,
+    days: int = Query(default=30, ge=1, le=365),
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    _client(db, user, client_id)
+    since = now_utc() - timedelta(days=days)
+
+    messages = db.scalar(
+        select(func.count(Message.id))
+        .join(Conversation, Message.conversation_id == Conversation.id)
+        .where(Conversation.client_id == client_id, Message.created_at >= since)
+    ) or 0
+
+    tokens_in, tokens_out = db.execute(
+        select(
+            func.coalesce(func.sum(UsageRecord.input_tokens), 0),
+            func.coalesce(func.sum(UsageRecord.output_tokens), 0),
+        )
+        .join(Agent, UsageRecord.agent_id == Agent.id)
+        .where(Agent.client_id == client_id, UsageRecord.created_at >= since)
+    ).one()
+    tokens_in, tokens_out = int(tokens_in), int(tokens_out)
+
+    usage_rows = db.execute(
+        select(
+            UsageRecord.model,
+            func.coalesce(func.sum(UsageRecord.input_tokens), 0),
+            func.coalesce(func.sum(UsageRecord.output_tokens), 0),
+        )
+        .join(Agent, UsageRecord.agent_id == Agent.id)
+        .where(Agent.client_id == client_id, UsageRecord.created_at >= since)
+        .group_by(UsageRecord.model)
+        .order_by((func.sum(UsageRecord.input_tokens) + func.sum(UsageRecord.output_tokens)).desc())
+    ).all()
+    usage_by_model = [ModelUsage(model=model, input_tokens=i, output_tokens=o) for model, i, o in usage_rows]
+
+    agency = user.agency
+    estimated_cost_usd = None
+    if agency.cost_per_million_input_tokens is not None and agency.cost_per_million_output_tokens is not None:
+        estimated_cost_usd = round(
+            tokens_in / 1_000_000 * agency.cost_per_million_input_tokens
+            + tokens_out / 1_000_000 * agency.cost_per_million_output_tokens,
+            2,
+        )
+
+    return ClientUsageOut(
+        messages=messages,
+        tokens_in=tokens_in,
+        tokens_out=tokens_out,
+        usage_by_model=usage_by_model,
+        estimated_cost_usd=estimated_cost_usd,
+    )
 
 
 @router.patch("/{client_id}/portal", response_model=ClientOut)

@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session, joinedload
 
+from ..alerts import raise_alert, resolve_alerts
 from ..config import get_settings
 from ..database import get_db
 from ..deps import get_current_user
@@ -127,6 +128,11 @@ async def connect_channel(client_id: uuid.UUID, db: Session = Depends(get_db), u
     except HTTPException as exc:
         channel.status = "error"
         channel.last_error = exc.detail
+        raise_alert(
+            db, channel.agency_id, "whatsapp_error", "error",
+            f"WhatsApp disconnected for {channel.client.name}", str(exc.detail),
+            "whatsapp_channel", channel.id,
+        )
         db.commit()
         raise
     db.refresh(channel)
@@ -184,6 +190,7 @@ def clear_auth(channel_id: uuid.UUID, db: Session = Depends(get_db)):
     channel.last_error = None
     channel.is_enabled = False
     channel.updated_at = now_utc()
+    resolve_alerts(db, channel.agency_id, "whatsapp_error", channel.id)
     db.commit()
 
 
@@ -203,6 +210,13 @@ def update_status(channel_id: uuid.UUID, payload: WhatsAppInternalStatus, db: Se
     if payload.status == "connected":
         channel.last_connected_at = now_utc()
         channel.is_enabled = True
+        resolve_alerts(db, channel.agency_id, "whatsapp_error", channel.id)
+    elif payload.status == "error":
+        raise_alert(
+            db, channel.agency_id, "whatsapp_error", "error",
+            f"WhatsApp disconnected for {channel.client.name}", payload.error or "",
+            "whatsapp_channel", channel.id,
+        )
     channel.updated_at = now_utc()
     db.commit()
 

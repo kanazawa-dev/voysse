@@ -8,6 +8,7 @@ from pypdf import PdfReader
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, joinedload
 
+from ..alerts import raise_alert, resolve_alerts
 from ..config import get_settings
 from ..database import get_db
 from ..deps import get_current_user
@@ -150,6 +151,13 @@ async def upload_document(
     db.add(document)
     db.commit()
     db.refresh(document)
+    if document.status == "error":
+        raise_alert(
+            db, agent.agency_id, "knowledge_document_error", "warning",
+            f"'{safe_name}' failed to process for {agent.name}", document.error_message or "",
+            "knowledge_document", document.id,
+        )
+        db.commit()
     if document.status == "processed":
         # Best-effort: index embeddings for semantic search. Never fail the
         # upload if the provider has no embeddings support.
@@ -172,6 +180,7 @@ def delete_document(agent_id: uuid.UUID, document_id: uuid.UUID, db: Session = D
     if not document:
         raise HTTPException(status_code=404, detail="Document not found")
     db.delete(document)
+    resolve_alerts(db, agent.agency_id, "knowledge_document_error", document.id)
     db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 

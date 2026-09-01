@@ -4,6 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { ReactNode, useEffect, useState } from "react";
 import { ApiError, api } from "@/lib/api";
 import { useT } from "@/lib/i18n";
+import { AlertsBell } from "@/components/alerts-bell";
 import { AppSidebar } from "@/components/app-sidebar";
 import { OpenvoissBrand } from "@/components/openvoiss-brand";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
@@ -89,6 +90,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               </BreadcrumbList>
             </Breadcrumb>
           </div>
+          <div className="ml-auto px-4"><AlertsBell /></div>
         </header>
         <main className="flex min-w-0 flex-1 flex-col gap-4 p-4 pt-0">{children}</main>
       </SidebarInset>

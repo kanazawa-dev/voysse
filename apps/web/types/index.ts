@@ -6,7 +6,38 @@ export type User = {
   agency: Agency;
 };
 
-export type Agency = { id: string; name: string; slug: string; brand_color: string; logo_url: string | null; is_active: boolean };
+export type Agency = {
+  id: string;
+  name: string;
+  slug: string;
+  brand_color: string;
+  logo_url: string | null;
+  is_active: boolean;
+  cost_per_million_input_tokens: number | null;
+  cost_per_million_output_tokens: number | null;
+};
+
+export type Alert = {
+  id: string;
+  type: string;
+  severity: "info" | "warning" | "error";
+  title: string;
+  message: string;
+  resource_type: string | null;
+  resource_id: string | null;
+  created_at: string;
+  resolved_at: string | null;
+};
+
+export type ModelUsage = { model: string; input_tokens: number; output_tokens: number };
+
+export type ClientUsage = {
+  messages: number;
+  tokens_in: number;
+  tokens_out: number;
+  usage_by_model: ModelUsage[];
+  estimated_cost_usd: number | null;
+};
 
 export type AgentSummary = { id: string; name: string; description: string; is_active: boolean };
 

@@ -55,6 +55,18 @@ class AgencyStatusUpdate(BaseModel):
     is_active: bool
 
 
+class AlertOut(ORMModel):
+    id: uuid.UUID
+    type: str
+    severity: str
+    title: str
+    message: str
+    resource_type: str | None
+    resource_id: uuid.UUID | None
+    created_at: datetime
+    resolved_at: datetime | None
+
+
 class AdminStatsOut(BaseModel):
     agencies_total: int
     agencies_active: int
@@ -111,12 +123,16 @@ class AgencyOut(ORMModel):
     brand_color: str
     logo_url: str | None = None
     is_active: bool
+    cost_per_million_input_tokens: float | None = None
+    cost_per_million_output_tokens: float | None = None
 
 
 class AgencyUpdate(BaseModel):
     name: str | None = Field(default=None, min_length=2, max_length=180)
     slug: str | None = Field(default=None, min_length=2, max_length=180)
     brand_color: str | None = Field(default=None, pattern=r"^#[0-9a-fA-F]{6}$")
+    cost_per_million_input_tokens: float | None = Field(default=None, ge=0)
+    cost_per_million_output_tokens: float | None = Field(default=None, ge=0)
 
 
 class UserOut(ORMModel):
@@ -470,6 +486,16 @@ class DashboardMetrics(BaseModel):
     tokens_in: int
     tokens_out: int
     usage_by_model: list[ModelUsage]
+
+
+class ClientUsageOut(BaseModel):
+    messages: int
+    tokens_in: int
+    tokens_out: int
+    usage_by_model: list[ModelUsage]
+    # Null when the agency hasn't set a cost rate in Settings -- Voysse
+    # doesn't guess at pricing on the agency's behalf.
+    estimated_cost_usd: float | None = None
 
 
 class WhatsAppChannelUpdate(BaseModel):
