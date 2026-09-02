@@ -111,7 +111,7 @@ export function AppSidebar({ user, ...props }: React.ComponentProps<typeof Sideb
         <NavMain items={mainNav} />
         {EXTRA_NAV.length > 0 && (
           <SidebarGroup className="px-3 py-2">
-            <SidebarMenu className="gap-1 rounded-2xl border border-sidebar-border/65 bg-sidebar-accent/35 p-1.5 shadow-sm">
+            <SidebarMenu className="gap-1">
               {EXTRA_NAV.map((item) => {
                 const Icon = item.icon
                 const active = pathname === item.href || pathname.startsWith(`${item.href}/`)

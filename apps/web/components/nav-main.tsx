@@ -28,7 +28,7 @@ export function NavMain({
       <SidebarGroupLabel className="mb-1 px-2 font-pixel text-[10px] uppercase tracking-[0.16em] text-sidebar-foreground/60">
         {t("nav.section")}
       </SidebarGroupLabel>
-      <SidebarMenu className="gap-1 rounded-2xl border border-sidebar-border/65 bg-sidebar-accent/35 p-1.5 shadow-sm">
+      <SidebarMenu className="gap-1">
       {items.map((item) => {
         const Icon = item.icon
         return (
