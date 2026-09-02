@@ -513,7 +513,7 @@ export default function LandingPage() {
               <Card>
                 <CardHeader><Badge className="mb-2" variant="default">{t("welcome.plans.selfhost.tag")}</Badge><CardTitle className="text-2xl">{t("welcome.plans.selfhost.title")}</CardTitle><div className="font-heading text-3xl font-semibold text-primary">{t("welcome.plans.selfhost.price")}</div></CardHeader>
                 <CardContent className="flex flex-1 flex-col gap-5"><p className="leading-6 text-muted-foreground">{t("welcome.plans.selfhost.desc")}</p><ul className="space-y-2.5"><li className="flex gap-2.5"><Check className="mt-0.5 size-4 shrink-0 text-primary" />{t("welcome.plans.selfhost.p1")}</li><li className="flex gap-2.5"><Check className="mt-0.5 size-4 shrink-0 text-primary" />{t("welcome.plans.selfhost.p2")}</li><li className="flex gap-2.5"><Check className="mt-0.5 size-4 shrink-0 text-primary" />{t("welcome.plans.selfhost.p3")}</li><li className="flex gap-2.5"><Check className="mt-0.5 size-4 shrink-0 text-primary" />{t("welcome.plans.selfhost.p4")}</li></ul></CardContent>
-                <CardFooter><Button className={ctaClass} render={<a href={`${appUrl}/login`} />} nativeButton={false}>{t("welcome.plans.selfhost.cta")}</Button></CardFooter>
+                <CardFooter><Button className={ctaClass} render={<a href="https://github.com/kanazawa-dev/voysse" />} nativeButton={false}>{t("welcome.plans.selfhost.cta")}</Button></CardFooter>
               </Card>
 
               <Card className="relative isolate border-0 bg-primary text-primary ring-primary/20">
