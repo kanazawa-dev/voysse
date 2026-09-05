@@ -210,3 +210,7 @@ Los plazos, umbrales y tareas concretas son estimaciones propias para este repos
 no garantías ni valores universales extraídos de esas fuentes.
 
 Actualización: envíos humanos del portal implementados en0028; ver implementation-status.md. Q05 continúa abierto por QR entrante y validación real.
+
+Q07, avance posterior al PR #2: healthcheck local de progreso para workers social
+ y Cloud implementado en rama separada; no sustituye alertas externas ni comprueba
+que todos los workers esperados estén desplegados. Ver worker-health.md.
