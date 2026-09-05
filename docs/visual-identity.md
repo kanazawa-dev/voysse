@@ -86,3 +86,11 @@ conservando icono y tooltip. Reduced motion elimina la transición, no el estado
 La prueba dashboard verifica esquinas, foco, tema oscuro y sidebar colapsado.
 Reversión acotada: clase `cy-sidebar-action`, su bloque CSS y espacio de navegación;
 no afecta rutas ni permisos.
+
+### Acceso sencillo
+
+Login y registro comparten un único formulario centrado (sin panel lateral ni
+métricas de ejemplo), logo compacto, controles rectangulares y selector de idioma.
+Los mismos endpoints, validaciones y pantalla de aprobación pendiente permanecen.
+Autocompletado distingue contraseña actual/nueva. Revertir `app/login/page.tsx`
+restaura la composición anterior sin cambios de backend.
