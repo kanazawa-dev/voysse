@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import {
   ArrowUpRight,
   ArrowRight,
@@ -291,6 +291,20 @@ export default function WelcomePage() {
   const es = lang === "es";
   const text = (a: string, b: string) => (es ? a : b);
   const [menuOpen, setMenuOpen] = useState(false);
+  useEffect(() => {
+    const dismiss = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      document
+        .querySelectorAll<HTMLDetailsElement>(".cy-nav-links details[open]")
+        .forEach((menu) => {
+          menu.open = false;
+        });
+      setMenuOpen(false);
+    };
+    document.addEventListener("keydown", dismiss);
+    return () => document.removeEventListener("keydown", dismiss);
+  }, []);
+
   const appUrl = (
     process.env.NEXT_PUBLIC_APP_URL || "https://app.voysse.cl"
   ).replace(/\/$/, "");
@@ -333,7 +347,31 @@ export default function WelcomePage() {
           </a>
           <div className={`cy-nav-links${menuOpen ? " is-open" : ""}`}>
             {nav.map(([label, links]) => (
-              <details key={label} name="primary-navigation">
+              <details
+                key={label}
+                name="primary-navigation"
+                onPointerEnter={(event) => {
+                  if (
+                    event.pointerType === "mouse" &&
+                    window.matchMedia("(min-width: 761px) and (hover: hover)")
+                      .matches
+                  )
+                    event.currentTarget.open = true;
+                }}
+                onPointerLeave={(event) => {
+                  if (
+                    event.pointerType === "mouse" &&
+                    !event.currentTarget.contains(document.activeElement)
+                  )
+                    event.currentTarget.open = false;
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === "Escape") {
+                    event.currentTarget.open = false;
+                    event.currentTarget.querySelector("summary")?.focus();
+                  }
+                }}
+              >
                 <summary>
                   {label}
                   <ChevronDown size={12} />
