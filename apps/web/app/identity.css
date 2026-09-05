@@ -35,7 +35,7 @@
   --accent: #eeebff;
   --accent-foreground: var(--brand-violet);
   --border: var(--brand-line);
-  --input: var(--brand-line);
+  --input: #85858f;
   --ring: var(--brand-violet);
   --radius: 0.125rem;
 }
@@ -78,7 +78,7 @@ body {
   --accent: #302843;
   --accent-foreground: #d3c9ff;
   --border: #35353d;
-  --input: #41414b;
+  --input: #85858f;
   --ring: #a698ff;
   --sidebar: #1b1b20;
   --sidebar-foreground: #b4b4c1;
@@ -241,7 +241,6 @@ body {
 [data-slot="textarea"],
 [data-slot="select-trigger"] {
   border-radius: 2px;
-  box-shadow: none;
   background: var(--card);
   transition:
     border-color var(--motion-fast),
@@ -308,9 +307,16 @@ body {
     background: var(--sidebar-accent);
     color: var(--sidebar-accent-foreground);
   }
-  [data-slot="input"]:not(:disabled):hover,
-  [data-slot="select-trigger"]:not(:disabled):hover {
-    border-color: color-mix(in srgb, var(--primary) 40%, var(--border));
+  [data-slot="input"]:not(:disabled):not(:focus-visible):not(
+      [aria-invalid="true"]
+    ):hover,
+  [data-slot="textarea"]:not(:disabled):not(:focus-visible):not(
+      [aria-invalid="true"]
+    ):hover,
+  [data-slot="select-trigger"]:not(:disabled):not(:focus-visible):not(
+      [aria-invalid="true"]
+    ):hover {
+    border-color: color-mix(in srgb, var(--primary) 55%, var(--input));
   }
 }
 @media (max-width: 640px) {

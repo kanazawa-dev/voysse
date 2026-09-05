@@ -30,6 +30,9 @@ const en = {
   },
   future: {
     comingSoon: "Coming soon",
+    manualStatus: "Manual setup · validation",
+    manualHint: "Requires your Meta credentials and permissions; guided OAuth is not available yet.",
+    webchatStatus: "Available",
     ownerPlaceholder: "Configurable inside each client",
     connect: "Connect channel",
     instagram: {
@@ -82,6 +85,9 @@ const es: typeof en = {
   },
   future: {
     comingSoon: "Próximamente",
+    manualStatus: "Configuración manual · validación",
+    manualHint: "Requiere credenciales y permisos de Meta; la conexión guiada por OAuth aún no está disponible.",
+    webchatStatus: "Disponible",
     ownerPlaceholder: "Configurable dentro de cada cliente",
     connect: "Conectar canal",
     instagram: {

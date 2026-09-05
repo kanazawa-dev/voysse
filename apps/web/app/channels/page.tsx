@@ -27,7 +27,7 @@ import { useT, useLanguage } from "@/lib/i18n";
 import type { Client } from "@/types";
 import { Card } from "@/components/ui/card";
 
-const futureChannels: {
+const socialChannels: {
   key: "instagram" | "facebook" | "webchat";
   icon: LucideIcon;
   className: string;
@@ -158,7 +158,7 @@ export default function ChannelsPage() {
             </Button>
           )}
         </Card>
-        {futureChannels.map((channel) => (
+        {socialChannels.map((channel) => (
           <Card className="p-5" key={channel.key}>
             <div
               className={`flex size-11 items-center justify-center rounded-xl ${channel.className}`}
@@ -166,12 +166,11 @@ export default function ChannelsPage() {
               <channel.icon size={24} />
             </div>
             <span className="text-sm text-muted-foreground">
-              {es
-                ? "Integración en validación"
-                : "Integration under validation"}
+              {t("channels.future.manualStatus")}
             </span>
             <h3>{t(`channels.future.${channel.key}.name`)}</h3>
             <p>{t(`channels.future.${channel.key}.description`)}</p>
+            <p className="text-sm text-muted-foreground">{t("channels.future.manualHint")}</p>
             {selected ? (
               <Button
                 variant="secondary"
