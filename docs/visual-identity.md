@@ -76,6 +76,17 @@ La base visual está aplicada al dashboard y a los componentes compartidos. Los 
   selección, teclado y ancho móvil. Reversión: componentes LanguageSwitcher,
   bloque CSS correspondiente y eliminación del `dark` forzado en dropdown.
 
+### Sidebar: botones como la landing
+
+Los enlaces principales y adicionales usan borde rectangular y marcadores de
+esquina que se recogen de -3px a 0px en 200ms, tanto con hover como con foco de
+teclado. Activo y hover usan violeta; no hay saltos de tamaño. El espacio entre
+botones evita superponer los marcadores. En modo colapsado se oculta la etiqueta,
+conservando icono y tooltip. Reduced motion elimina la transición, no el estado.
+La prueba dashboard verifica esquinas, foco, tema oscuro y sidebar colapsado.
+Reversión acotada: clase `cy-sidebar-action`, su bloque CSS y espacio de navegación;
+no afecta rutas ni permisos.
+
 ### Acceso sencillo
 
 Login y registro comparten un único formulario centrado (sin panel lateral ni

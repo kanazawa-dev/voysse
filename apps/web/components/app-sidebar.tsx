@@ -76,7 +76,7 @@ export function AppSidebar({ user, ...props }: React.ComponentProps<typeof Sideb
         <NavMain items={user.role === "operator" ? mainNav.filter((item) => item.url === "/inbox") : mainNav} />
         {user.role === "admin" && EXTRA_NAV.length > 0 && (
           <SidebarGroup className="px-3 py-2">
-            <SidebarMenu className="gap-1">
+            <SidebarMenu className="gap-2">
               {EXTRA_NAV.map((item) => {
                 const Icon = item.icon
                 const active = pathname === item.href || pathname.startsWith(`${item.href}/`)
@@ -86,7 +86,7 @@ export function AppSidebar({ user, ...props }: React.ComponentProps<typeof Sideb
                       render={<Link href={item.href} onClick={() => setOpenMobile(false)} />}
                       isActive={active}
                       tooltip={item.label}
-                      className="h-11 rounded-none px-3 font-medium tracking-[0.03em] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-active:bg-sidebar-accent data-active:text-sidebar-accent-foreground"
+                      className="cy-sidebar-action h-11 rounded-none px-3 font-medium tracking-[0.03em] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-active:bg-sidebar-accent data-active:text-sidebar-accent-foreground"
                     >
                       <Icon />
                       <span>{item.label}</span>

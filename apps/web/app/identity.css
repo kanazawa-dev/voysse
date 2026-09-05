@@ -407,3 +407,72 @@ body {
     transition: none;
   }
 }
+
+/* Landing registration corners on sidebar navigation, without layout shifts. */
+[data-slot="sidebar-menu-button"].cy-sidebar-action {
+  position: relative;
+  overflow: visible;
+  border: 1px solid var(--sidebar-border);
+  background: var(--sidebar);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition:
+    background-color 200ms,
+    color 200ms,
+    border-color 200ms;
+}
+.cy-sidebar-action:before {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  pointer-events: none;
+  opacity: 0.45;
+  color: var(--primary);
+  background:
+    linear-gradient(currentColor, currentColor) left top/7px 1px no-repeat,
+    linear-gradient(currentColor, currentColor) left top/1px 7px no-repeat,
+    linear-gradient(currentColor, currentColor) right top/7px 1px no-repeat,
+    linear-gradient(currentColor, currentColor) right top/1px 7px no-repeat,
+    linear-gradient(currentColor, currentColor) left bottom/7px 1px no-repeat,
+    linear-gradient(currentColor, currentColor) left bottom/1px 7px no-repeat,
+    linear-gradient(currentColor, currentColor) right bottom/7px 1px no-repeat,
+    linear-gradient(currentColor, currentColor) right bottom/1px 7px no-repeat;
+  transition:
+    inset 200ms cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 200ms;
+}
+[data-slot="sidebar-menu-button"].cy-sidebar-action[data-active] {
+  background: var(--primary);
+  color: var(--primary-foreground);
+  border-color: var(--primary);
+  box-shadow: none;
+}
+.cy-sidebar-action:focus-visible:before {
+  inset: 0;
+  opacity: 1;
+}
+@media (hover: hover) and (pointer: fine) {
+  [data-slot="sidebar-menu-button"].cy-sidebar-action:not(
+      [aria-disabled="true"]
+    ):hover {
+    background: var(--primary);
+    color: var(--primary-foreground);
+    border-color: var(--primary);
+  }
+  .cy-sidebar-action:not([aria-disabled="true"]):hover:before {
+    inset: 0;
+    opacity: 1;
+  }
+}
+.cy-sidebar-action[aria-disabled="true"]:before {
+  display: none;
+}
+[data-collapsible="icon"] .cy-sidebar-action > span {
+  display: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-slot="sidebar-menu-button"].cy-sidebar-action,
+  .cy-sidebar-action:before {
+    transition: none;
+  }
+}
