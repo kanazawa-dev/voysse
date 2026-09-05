@@ -7,7 +7,8 @@ taken over. The caller is responsible for actually delivering the reply.
 """
 
 import uuid
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from datetime import datetime
 
 from fastapi import HTTPException
 from sqlalchemy import select
@@ -30,6 +31,7 @@ class InboundMessage:
     media_kind: str | None = None
     media_bytes: bytes | None = None
     media_mime: str | None = None
+    received_at: datetime | None = None
 
 
 @dataclass
@@ -39,6 +41,8 @@ class InboundResult:
     conversation_id: uuid.UUID | None = None
     mode: str | None = None
     outbound_message_id: uuid.UUID | None = None
+    sources: list = field(default_factory=list)
+    tool_calls: list | None = None
 
 
 def _media_placeholder(kind: str) -> str:
@@ -84,6 +88,8 @@ async def process_inbound(
     *,
     conversation_channel: str,
     channel_fk_field: str,
+    persist_reply: bool = True,
+    generate_reply: bool = True,
 ) -> InboundResult:
     """Run the shared pipeline for one inbound message.
 
@@ -137,11 +143,12 @@ async def process_inbound(
         sender_type="visitor",
         sender_name=inbound.sender_name or "WhatsApp contact",
         external_message_id=inbound.external_message_id,
+        external_received_at=inbound.received_at,
     )
     conversation.updated_at = now_utc()
     db.add(visitor_message)
     db.commit()
-    if conversation.mode == "human":
+    if conversation.mode == "human" or not generate_reply:
         return InboundResult(accepted=True, conversation_id=conversation.id, mode="human")
 
     agent = channel.agent
@@ -176,12 +183,19 @@ async def process_inbound(
             temperature=agent.temperature,
             max_tokens=agent.max_tokens,
         )
-    except Exception as exc:
-        channel.last_error = f"Message received, but the agent could not reply: {str(exc)[:400]}"
+    except Exception:
+        channel.last_error = "Message received, but reply preparation failed. Check agent configuration."
         channel.updated_at = now_utc()
         db.commit()
         return InboundResult(accepted=True, conversation_id=conversation.id, mode="ai")
 
+    # Refresh after the provider await: an operator may have taken over while
+    # generation was in progress. Lock until the decision is persisted.
+    db.refresh(conversation, with_for_update={"of": Conversation})
+    if conversation.mode == "human":
+        record_usage(db, agent.agency_id, agent.id, agent.provider, agent.model.strip(), completion)
+        db.commit()
+        return InboundResult(accepted=True, conversation_id=conversation.id, mode="human")
     outbound = Message(
         conversation_id=conversation.id,
         role="assistant",
@@ -194,12 +208,14 @@ async def process_inbound(
     record_usage(db, agent.agency_id, agent.id, agent.provider, agent.model.strip(), completion)
     conversation.updated_at = now_utc()
     channel.last_error = None
-    db.add(outbound)
+    if persist_reply:
+        db.add(outbound)
     db.commit()
     return InboundResult(
         accepted=True,
         reply=completion.text,
         conversation_id=conversation.id,
         mode="ai",
-        outbound_message_id=outbound.id,
+        outbound_message_id=outbound.id if persist_reply else None,
+        sources=knowledge.sources, tool_calls=completion.tool_calls,
     )

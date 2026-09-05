@@ -2,7 +2,6 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { useEffect, useRef, useState } from "react"
 import {
   Bot,
   Building2,
@@ -14,8 +13,9 @@ import {
   Settings,
   Sparkles,
   Wallet,
+  Users,
 } from "lucide-react"
-import { useT } from "@/lib/i18n"
+import { useT, useLanguage } from "@/lib/i18n"
 import { NavMain } from "@/components/nav-main"
 import { NavUser } from "@/components/nav-user"
 import { TeamSwitcher } from "@/components/team-switcher"
@@ -31,43 +31,7 @@ import {
   SidebarRail,
   useSidebar,
 } from "@/components/ui/sidebar"
-import DitherBackground from "@/components/ui/dither-background"
 import type { User } from "@/types"
-
-// Same light dither as the dashboard cards: --sidebar is a near-white
-// surface with dark --sidebar-foreground text by default (the .dark theme
-// swaps both), so it uses the same white-dominant colors, not a dark base.
-function SidebarGrain() {
-  const containerRef = useRef<HTMLDivElement>(null)
-  const [isVisible, setIsVisible] = useState(false)
-
-  useEffect(() => {
-    const node = containerRef.current
-    if (!node) return
-    const observer = new IntersectionObserver(([entry]) => setIsVisible(entry.isIntersecting), { rootMargin: "200px" })
-    observer.observe(node)
-    return () => observer.disconnect()
-  }, [])
-
-  return (
-    <div ref={containerRef} className="pointer-events-none absolute inset-0 -z-10 overflow-hidden" aria-hidden="true">
-      {isVisible ? (
-        <DitherBackground
-          className="absolute inset-0"
-          colorNum={2.5}
-          waveAmplitude={0.31}
-          waveSpeed={0.01}
-          waveFrequency={1.8}
-          waveColor={[0.09, 0.282, 0.78]}
-          backgroundColor={[0.98, 0.969, 0.937]}
-          enableMouseInteraction={false}
-          disableAnimation
-        />
-      ) : null}
-      <div className="absolute inset-0 bg-sidebar/80" />
-    </div>
-  )
-}
 
 const EXTRA_NAV_ICONS: Record<string, typeof LayoutDashboard> = {
   wallet: Wallet,
@@ -88,6 +52,7 @@ const EXTRA_NAV = (process.env.NEXT_PUBLIC_EXTRA_NAV || "")
 
 export function AppSidebar({ user, ...props }: React.ComponentProps<typeof Sidebar> & { user: User }) {
   const t = useT()
+  const { lang: language } = useLanguage()
   const pathname = usePathname()
   const { setOpenMobile } = useSidebar()
 
@@ -98,18 +63,18 @@ export function AppSidebar({ user, ...props }: React.ComponentProps<typeof Sideb
     { title: t("nav.inbox"), url: "/inbox", icon: Inbox, isActive: pathname.startsWith("/inbox") },
     { title: t("nav.playground"), url: "/playground", icon: MessageSquareText, isActive: pathname.startsWith("/playground") },
     { title: t("nav.channels"), url: "/channels", icon: Radio, isActive: pathname.startsWith("/channels") },
+    { title: language === "es" ? "Equipo" : "Team", url: "/team", icon: Users, isActive: pathname === "/team" },
     { title: t("nav.settings"), url: "/settings", icon: Settings, isActive: pathname.startsWith("/settings") },
   ]
 
   return (
     <Sidebar collapsible="icon" {...props}>
-      <SidebarGrain />
       <SidebarHeader className="px-3 pt-3 pb-1">
         <TeamSwitcher agency={user.agency} />
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={mainNav} />
-        {EXTRA_NAV.length > 0 && (
+        <NavMain items={user.role === "operator" ? mainNav.filter((item) => item.url === "/inbox") : mainNav} />
+        {user.role === "admin" && EXTRA_NAV.length > 0 && (
           <SidebarGroup className="px-3 py-2">
             <SidebarMenu className="gap-1">
               {EXTRA_NAV.map((item) => {
@@ -121,7 +86,7 @@ export function AppSidebar({ user, ...props }: React.ComponentProps<typeof Sideb
                       render={<Link href={item.href} onClick={() => setOpenMobile(false)} />}
                       isActive={active}
                       tooltip={item.label}
-                      className="h-10 rounded-xl px-3 font-semibold tracking-[0.01em] hover:bg-white hover:text-sidebar-foreground hover:shadow-sm data-active:bg-white data-active:text-sidebar-foreground data-active:shadow-sm"
+                      className="h-11 rounded-full px-3 font-semibold tracking-[0.01em] hover:bg-white hover:text-sidebar-foreground hover:shadow-sm data-active:bg-sidebar-primary data-active:text-sidebar-primary-foreground data-active:shadow-sm"
                     >
                       <Icon />
                       <span>{item.label}</span>

@@ -14,13 +14,13 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import PlainTextResponse
 from sqlalchemy.orm import Session
+from sqlalchemy.dialects.postgresql import insert
+from datetime import datetime, timezone
 
 from ..database import get_db
-from ..models import Message, WhatsAppCloudChannel, now_utc
+from ..models import Agency, WhatsAppCloudChannel, WhatsAppCloudEvent, now_utc
 from ..ratelimit import whatsapp_cloud_webhook_rate_limit
 from ..security import decrypt_secret
-from ..services.whatsapp_cloud import fetch_media, send_text
-from ..services.whatsapp_inbound import InboundMessage, process_inbound
 
 
 public_router = APIRouter(prefix="/public/whatsapp-cloud", tags=["WhatsApp Cloud public"])
@@ -51,28 +51,8 @@ def verify_webhook(
     return PlainTextResponse(hub_challenge)
 
 
-def _parse_message(message: dict, contacts: dict[str, str]) -> InboundMessage | None:
-    """Map one Cloud API message to the shared inbound shape; None to skip."""
-    kind = message.get("type")
-    sender = message.get("from") or ""
-    base = {
-        "external_message_id": message.get("id") or "",
-        "external_chat_id": sender,
-        "sender_name": contacts.get(sender),
-    }
-    if not base["external_message_id"] or not sender:
-        return None
-    if kind == "text":
-        return InboundMessage(**base, text=message.get("text", {}).get("body") or "")
-    if kind in {"image", "audio"}:
-        media = message.get(kind) or {}
-        return InboundMessage(
-            **base,
-            text=media.get("caption") or "",
-            media_kind=kind,
-            media_mime=(media.get("mime_type") or "").split(";")[0] or None,
-        )
-    return None
+def _items(value):
+    return value if isinstance(value, list) else []
 
 
 @public_router.post(
@@ -83,79 +63,71 @@ async def receive_webhook(channel_id: uuid.UUID, request: Request, db: Session =
     channel = _channel(db, channel_id)
     if not channel.encrypted_app_secret:
         raise HTTPException(status_code=403, detail="Channel is not configured")
-    raw = await request.body()
+    raw = bytearray()
+    async for chunk in request.stream():
+        raw.extend(chunk)
+        if len(raw) > 1024 * 1024:
+            raise HTTPException(413, "Webhook too large")
+    raw = bytes(raw)
     app_secret = decrypt_secret(channel.encrypted_app_secret)
     expected = "sha256=" + hmac.new(app_secret.encode(), raw, hashlib.sha256).hexdigest()
     signature = request.headers.get("X-Hub-Signature-256") or ""
     if not hmac.compare_digest(signature, expected):
         raise HTTPException(status_code=403, detail="Invalid signature")
 
-    # From here on always acknowledge with 200: Meta retries non-2xx responses,
-    # and a payload that fails once will fail on every retry.
     try:
         payload = json.loads(raw)
     except ValueError:
+        raise HTTPException(400, "Invalid webhook JSON")
+    if not isinstance(payload, dict) or payload.get("object") != "whatsapp_business_account":
+        raise HTTPException(400, "Invalid webhook object")
+    if not channel.is_enabled or not channel.client.is_active or not db.get(Agency, channel.agency_id).is_active:
         return {"status": "ok"}
-    if not channel.is_enabled:
-        return {"status": "ok"}
-
-    access_token = decrypt_secret(channel.encrypted_access_token) if channel.encrypted_access_token else None
-    for entry in payload.get("entry") or []:
-        for change in entry.get("changes") or []:
-            if change.get("field") != "messages":
+    for entry in _items(payload.get("entry")):
+        if not isinstance(entry, dict):
+            continue
+        for change in _items(entry.get("changes")):
+            if not isinstance(change, dict) or change.get("field") != "messages":
                 continue
-            value = change.get("value") or {}
-            contacts = {
-                contact.get("wa_id"): (contact.get("profile") or {}).get("name")
-                for contact in value.get("contacts") or []
-            }
-            for raw_message in value.get("messages") or []:
-                inbound = _parse_message(raw_message, contacts)
-                if not inbound:
+            value = change.get("value")
+            if not isinstance(value, dict):
+                continue
+            metadata = value.get("metadata") or {}
+            if not isinstance(metadata, dict) or str(metadata.get("phone_number_id")) != channel.phone_number_id:
+                continue
+            contacts = {}
+            for contact in _items(value.get("contacts")):
+                if isinstance(contact, dict) and isinstance(contact.get("profile"), dict):
+                    contacts[str(contact.get("wa_id"))] = str(contact["profile"].get("name") or "")[:160]
+            for message in _items(value.get("messages")):
+                if not isinstance(message, dict):
                     continue
-                await _handle_message(db, channel, inbound, raw_message, access_token)
+                mid, sender = message.get("id"), message.get("from")
+                if not isinstance(mid, str) or not 1 <= len(mid) <= 255 or not isinstance(sender, str) or not sender.isdigit() or len(sender) > 80:
+                    continue
+                kind = message.get("type")
+                detail = message.get(kind) if isinstance(kind, str) else None
+                detail = detail if isinstance(detail, dict) else {}
+                body = detail.get("body") if kind == "text" else detail.get("caption", "")
+                body = body if isinstance(body, str) else ""
+                supported = kind in ("text", "image", "audio") and len(body) <= 10000
+                try:
+                    received = min(datetime.fromtimestamp(int(message["timestamp"]), timezone.utc), now_utc())
+                except (KeyError, ValueError, TypeError, OverflowError, OSError):
+                    # Never extend the reply window for a missing provider timestamp.
+                    received = datetime.fromtimestamp(0, timezone.utc)
+                normalized = {
+                    "phone_number_id": channel.phone_number_id,
+                    "agent_id": str(channel.agent_id),
+                    "sender": sender, "name": contacts.get(sender), "text": body[:10000],
+                    "kind": kind if supported else "unsupported",
+                    "media_id": str(detail.get("id") or "")[:255],
+                    "mime": str(detail.get("mime_type") or "")[:120],
+                }
+                db.execute(insert(WhatsAppCloudEvent).values(
+                    id=uuid.uuid4(), channel_id=channel.id, external_id=mid,
+                    payload=normalized, reply_metadata={}, status="queued", received_at=received, updated_at=now_utc(),
+                ).on_conflict_do_nothing(constraint="uq_cloud_event_external"))
+    # Never acknowledge failed storage: non-2xx lets the provider retry safely.
+    db.commit()
     return {"status": "ok"}
-
-
-async def _handle_message(
-    db: Session,
-    channel: WhatsAppCloudChannel,
-    inbound: InboundMessage,
-    raw_message: dict,
-    access_token: str | None,
-) -> None:
-    if inbound.media_kind and access_token:
-        media_id = (raw_message.get(inbound.media_kind) or {}).get("id")
-        if media_id:
-            try:
-                inbound.media_bytes, mime = await fetch_media(access_token, media_id)
-                inbound.media_mime = inbound.media_mime or mime
-            except HTTPException:
-                inbound.media_bytes = None
-    try:
-        result = await process_inbound(
-            db,
-            channel,
-            inbound,
-            conversation_channel="whatsapp_cloud",
-            channel_fk_field="whatsapp_cloud_channel_id",
-        )
-    except Exception as exc:
-        channel.last_error = f"An inbound message could not be processed: {str(exc)[:400]}"
-        channel.updated_at = now_utc()
-        db.commit()
-        return
-    if not result.reply or not access_token or not channel.phone_number_id:
-        return
-    try:
-        wamid = await send_text(access_token, channel.phone_number_id, inbound.external_chat_id, result.reply)
-    except HTTPException as exc:
-        channel.last_error = f"The reply could not be sent: {exc.detail}"
-        channel.updated_at = now_utc()
-        db.commit()
-        return
-    if wamid and result.outbound_message_id:
-        message = db.get(Message, result.outbound_message_id)
-        if message:
-            message.external_message_id = wamid
-            db.commit()

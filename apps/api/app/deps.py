@@ -8,24 +8,26 @@ from .models import AdminUser, User
 from .security import decode_access_token, decode_admin_token
 
 
-def get_current_user(
+def get_inbox_user(
     access_token: str | None = Cookie(default=None),
     db: Session = Depends(get_db),
 ) -> User:
     if not access_token:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="You are not signed in")
-    user_id = decode_access_token(access_token)
-    if not user_id:
+    claims = decode_access_token(access_token)
+    if not claims:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="The session expired")
     try:
-        parsed_id = uuid.UUID(user_id)
+        parsed_id = uuid.UUID(claims["sub"])
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid session") from exc
     user = db.get(User, parsed_id)
-    if not user:
+    if not user or claims.get("ver", 0) != user.session_version:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
     if not user.agency.is_active:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="agency_pending_approval")
+    if user.role not in {"admin", "operator"}:
+        raise HTTPException(status_code=403, detail="Role not permitted")
     return user
 
 
@@ -46,3 +48,10 @@ def get_current_admin(
     if not admin:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Admin not found")
     return admin
+
+
+def get_current_user(user: User = Depends(get_inbox_user)) -> User:
+    """Administrative access is the default; operator routes opt in explicitly."""
+    if user.role != "admin":
+        raise HTTPException(status_code=403, detail="Administrator access required")
+    return user

@@ -1,3 +1,5 @@
+import asyncio
+import time
 import hashlib
 import hmac
 import json
@@ -9,6 +11,8 @@ from fastapi.testclient import TestClient
 from app.routers import whatsapp_cloud as whatsapp_cloud_router
 from app.routers import whatsapp_cloud_webhook as webhook_router
 from app.services import ai as ai_service
+from app.services import whatsapp_cloud_worker as cloud_worker
+from conftest import TestingSession
 from app.services import whatsapp as whatsapp_service
 from app.services import whatsapp_inbound as whatsapp_inbound_service
 
@@ -21,6 +25,8 @@ def _sign(raw: bytes, secret: str = APP_SECRET) -> str:
 
 
 def _webhook_payload(messages: list[dict], contacts: list[dict] | None = None) -> dict:
+    for message in messages:
+        message.setdefault("timestamp", str(int(time.time())))
     return {
         "object": "whatsapp_business_account",
         "entry": [
@@ -42,13 +48,18 @@ def _webhook_payload(messages: list[dict], contacts: list[dict] | None = None) -
     }
 
 
-def _post_signed(client: TestClient, channel_id: str, payload: dict, secret: str = APP_SECRET):
+def _post_signed(client: TestClient, channel_id: str, payload: dict, secret: str = APP_SECRET, *, drain: bool = True):
     raw = json.dumps(payload).encode()
-    return client.post(
+    response = client.post(
         f"/api/public/whatsapp-cloud/channels/{channel_id}/webhook",
         content=raw,
         headers={"Content-Type": "application/json", "X-Hub-Signature-256": _sign(raw, secret)},
     )
+    if drain and response.status_code == 200:
+        with TestingSession() as db:
+            while asyncio.run(cloud_worker.work_once(db)):
+                pass
+    return response
 
 
 def _setup_channel(client: TestClient, *, image_enabled: bool = False) -> tuple[dict, dict, dict]:
@@ -176,7 +187,7 @@ def test_webhook_text_message_creates_conversation_and_replies(authenticated_cli
     fake_completion = AsyncMock(return_value=ai_service.Completion(text="We are open every day."))
     monkeypatch.setattr(whatsapp_inbound_service, "run_completion", fake_completion)
     fake_send = AsyncMock(return_value="wamid.out-1")
-    monkeypatch.setattr(webhook_router, "send_text", fake_send)
+    monkeypatch.setattr(cloud_worker, "send_text", fake_send)
 
     payload = _webhook_payload(
         [{"from": "5730011", "id": "wamid.in-1", "type": "text", "text": {"body": "Are you open?"}}],
@@ -197,6 +208,30 @@ def test_webhook_text_message_creates_conversation_and_replies(authenticated_cli
     assert _post_signed(client, channel["id"], payload).status_code == 200
     assert fake_completion.await_count == 1
     assert fake_send.await_count == 1
+
+
+def test_human_takeover_during_generation_suppresses_reply(authenticated_client: TestClient, monkeypatch):
+    from sqlalchemy import select
+    from conftest import TestingSession
+    from app.models import Conversation
+
+    client = authenticated_client
+    _customer, _agent, channel = _setup_channel(client)
+    async def generate(*args, **kwargs):
+        with TestingSession() as db:
+            conversation = db.scalar(select(Conversation))
+            conversation.mode = "human"
+            db.commit()
+        return ai_service.Completion(text="Must not be sent")
+    monkeypatch.setattr(whatsapp_inbound_service, "run_completion", generate)
+    fake_send = AsyncMock(return_value="out-1")
+    monkeypatch.setattr(cloud_worker, "send_text", fake_send)
+    payload = _webhook_payload([{"from": "5730011", "id": "race-in", "type": "text", "text": {"body": "Hello"}}])
+    assert _post_signed(client, channel["id"], payload).status_code == 200
+    assert fake_send.await_count == 0
+    conversation = client.get("/api/conversations").json()[0]
+    assert conversation["mode"] == "human"
+    assert len(client.get(f"/api/conversations/{conversation['id']}").json()["messages"]) == 1
 
 
 def test_webhook_ignores_statuses_and_unsupported_types(authenticated_client: TestClient, monkeypatch):
@@ -230,7 +265,7 @@ def test_webhook_human_mode_skips_ai(authenticated_client: TestClient, monkeypat
     fake_completion = AsyncMock(return_value=ai_service.Completion(text="AI reply"))
     monkeypatch.setattr(whatsapp_inbound_service, "run_completion", fake_completion)
     fake_send = AsyncMock(return_value="wamid.out-1")
-    monkeypatch.setattr(webhook_router, "send_text", fake_send)
+    monkeypatch.setattr(cloud_worker, "send_text", fake_send)
 
     first = _webhook_payload([{"from": "5730011", "id": "wamid.h-1", "type": "text", "text": {"body": "Hola"}}])
     _post_signed(client, channel["id"], first)
@@ -244,6 +279,13 @@ def test_webhook_human_mode_skips_ai(authenticated_client: TestClient, monkeypat
     detail = client.get(f"/api/conversations/{conversation['id']}").json()
     assert detail["messages"][-1]["sender_type"] == "visitor"
 
+    # The operator answers only after the channel is connected.
+    import uuid
+    from conftest import TestingSession
+    from app.models import WhatsAppCloudChannel
+    with TestingSession() as db:
+        db.get(WhatsAppCloudChannel, uuid.UUID(channel["id"])).status = "connected"
+        db.commit()
     # The operator answers from the Inbox through the Graph API.
     operator_send = AsyncMock(return_value="wamid.human-1")
     monkeypatch.setattr(whatsapp_service, "send_text", operator_send)
@@ -256,11 +298,11 @@ def test_webhook_human_mode_skips_ai(authenticated_client: TestClient, monkeypat
 def test_webhook_image_uses_capability(authenticated_client: TestClient, monkeypatch):
     client = authenticated_client
     _customer, _agent, channel = _setup_channel(client, image_enabled=True)
-    monkeypatch.setattr(webhook_router, "fetch_media", AsyncMock(return_value=(b"fake-image-bytes", "image/jpeg")))
+    monkeypatch.setattr(cloud_worker, "fetch_media", AsyncMock(return_value=(b"fake-image-bytes", "image/jpeg")))
     monkeypatch.setattr(whatsapp_inbound_service, "describe_image", AsyncMock(return_value="a photo of the menu"))
     fake_completion = AsyncMock(return_value=ai_service.Completion(text="Here are the dishes!"))
     monkeypatch.setattr(whatsapp_inbound_service, "run_completion", fake_completion)
-    monkeypatch.setattr(webhook_router, "send_text", AsyncMock(return_value="wamid.out-img"))
+    monkeypatch.setattr(cloud_worker, "send_text", AsyncMock(return_value="wamid.out-img"))
 
     payload = _webhook_payload(
         [

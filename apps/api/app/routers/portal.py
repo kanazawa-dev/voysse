@@ -1,3 +1,4 @@
+import asyncio
 import uuid
 
 from fastapi import APIRouter, Cookie, Depends, HTTPException, Response, status
@@ -16,10 +17,10 @@ from ..schemas import (
     PortalLoginRequest,
     PortalPublicOut,
     PortalSessionOut,
-    SendMessageRequest,
+    HumanReplyRequest,
 )
 from ..security import create_portal_token, decode_portal_token, verify_password
-from ..services.whatsapp import send_channel_message
+from ..services.human_delivery import conversation_deliveries, deliver_human
 
 
 router = APIRouter(prefix="/portal", tags=["Client portal"])
@@ -47,7 +48,8 @@ def _portal_client(
     except (ValueError, KeyError, TypeError) as exc:
         raise HTTPException(status_code=401, detail="Invalid portal session") from exc
     client = db.scalar(select(Client).where(Client.id == client_id, Client.portal_slug == slug, Client.portal_enabled.is_(True)))
-    if not client:
+    agency = db.get(Agency, client.agency_id) if client else None
+    if not client or not client.is_active or not agency or not agency.is_active:
         raise HTTPException(status_code=401, detail="The portal is no longer available")
     return client
 
@@ -62,6 +64,14 @@ def _detail(db: Session, client: Client, conversation_id: uuid.UUID) -> Conversa
     if not conversation:
         raise HTTPException(status_code=404, detail="Conversation not found")
     return conversation
+
+
+def _visible_detail(db: Session, client: Client, conversation_id: uuid.UUID):
+    detail = ConversationDetail.model_validate(_detail(db, client, conversation_id))
+    detail.deliveries = conversation_deliveries(db, conversation_id)
+    for message in detail.messages:
+        message.tool_calls = None
+    return detail
 
 
 @router.get("/{slug}", response_model=PortalPublicOut)
@@ -149,7 +159,7 @@ def portal_conversations(slug: str, client: Client = Depends(_portal_client), db
 
 @router.get("/{slug}/conversations/{conversation_id}", response_model=ConversationDetail)
 def portal_conversation(slug: str, conversation_id: uuid.UUID, client: Client = Depends(_portal_client), db: Session = Depends(get_db)):
-    return _detail(db, client, conversation_id)
+    return _visible_detail(db, client, conversation_id)
 
 
 @router.patch("/{slug}/conversations/{conversation_id}/mode", response_model=ConversationDetail)
@@ -164,31 +174,16 @@ def portal_mode(
     conversation.mode = payload.mode
     conversation.updated_at = now_utc()
     db.commit()
-    return _detail(db, client, conversation_id)
+    return _visible_detail(db, client, conversation_id)
 
 
 @router.post("/{slug}/conversations/{conversation_id}/reply", response_model=ConversationDetail)
-async def portal_reply(
+def portal_reply(
     slug: str,
     conversation_id: uuid.UUID,
-    payload: SendMessageRequest,
+    payload: HumanReplyRequest,
     client: Client = Depends(_portal_client),
     db: Session = Depends(get_db),
 ):
-    conversation = _detail(db, client, conversation_id)
-    if conversation.mode != "human":
-        raise HTTPException(status_code=409, detail="Take control of the conversation before replying")
-    external_message_id = await send_channel_message(db, conversation, payload.content.strip())
-    db.add(
-        Message(
-            conversation_id=conversation.id,
-            role="assistant",
-            content=payload.content.strip(),
-            sender_type="human",
-            sender_name=client.name,
-            external_message_id=external_message_id,
-        )
-    )
-    conversation.updated_at = now_utc()
-    db.commit()
-    return _detail(db, client, conversation_id)
+    asyncio.run(deliver_human(db, client, conversation_id, payload.request_id, payload.content))
+    return _visible_detail(db, client, conversation_id)

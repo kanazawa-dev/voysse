@@ -23,6 +23,15 @@ class Settings(BaseSettings):
     # /admin. Off by default: self-hosted deployments always keep the
     # existing instant-access registration.
     require_agency_approval: bool = False
+    # Recovery is unavailable until these are configured. Never infer link origin
+    # from Host headers or the comma-separated CORS frontend_url setting.
+    auth_public_url: str = ""
+    smtp_host: str = ""
+    smtp_port: int = 587
+    smtp_username: str = ""
+    smtp_password: str = ""
+    smtp_from: str = ""
+    smtp_starttls: bool = True
     access_token_minutes: int = 60 * 24 * 7
     # Session cookie flags. Defaults suit local HTTP; set cookie_secure=true (and
     # cookie_samesite=none when the frontend and API are on different sites)
@@ -43,6 +52,10 @@ class Settings(BaseSettings):
     # Meta Graph API root used by the WhatsApp Cloud API channel; override to
     # point at a mock server in tests.
     meta_graph_base_url: str = "https://graph.facebook.com/v23.0"
+    meta_instagram_graph_base_url: str = "https://graph.instagram.com/v23.0"
+    # One Meta app per installation. Never expose these through the client API.
+    meta_social_app_secret: str = ""
+    meta_social_verify_token: str = ""
 
     model_config = SettingsConfigDict(
         env_file=(REPO_ROOT / ".env", APP_DIR / ".env"),

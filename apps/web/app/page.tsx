@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { BloubAvatar } from "@/components/bloub-avatar";
+import { useEffect, useState } from "react";
 import { ArrowRight, Bot, Building2, Cpu, MessagesSquare, MessageSquareText, Radio, UserRound } from "lucide-react";
 import { api } from "@/lib/api";
 import { useT } from "@/lib/i18n";
@@ -12,44 +13,6 @@ import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { CountingNumber } from "@/components/animate-ui/primitives/texts/counting-number";
 import { useReducedMotion } from "motion/react";
-import DitherBackground from "@/components/ui/dither-background";
-import { cn } from "@/lib/utils";
-
-// Subtle animated brand backdrop for non-data, welcome-style cards. Only
-// mounts its WebGL canvas while the card is (near) the viewport, and the
-// pattern is frozen (disableAnimation) so it doesn't compete with the
-// surrounding metrics for attention.
-function GrainLayer({ className }: { className?: string }) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [isVisible, setIsVisible] = useState(false);
-
-  useEffect(() => {
-    const node = containerRef.current;
-    if (!node) return;
-    const observer = new IntersectionObserver(([entry]) => setIsVisible(entry.isIntersecting), { rootMargin: "200px" });
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, []);
-
-  return (
-    <div ref={containerRef} className={cn("pointer-events-none absolute inset-0 -z-10 overflow-hidden", className)} aria-hidden="true">
-      {isVisible ? (
-        <DitherBackground
-          className="absolute inset-0"
-          colorNum={2.5}
-          waveAmplitude={0.31}
-          waveSpeed={0.01}
-          waveFrequency={1.8}
-          waveColor={[0.09, 0.282, 0.78]}
-          backgroundColor={[0.98, 0.969, 0.937]}
-          enableMouseInteraction={false}
-          disableAnimation
-        />
-      ) : null}
-      <div className="absolute inset-0 bg-background/80" />
-    </div>
-  );
-}
 
 type Dashboard = { clients: number; active_clients: number; agents: number; active_agents: number; conversations: number; channels: number; connected_channels: number; recent_agents: AgentSummary[] };
 type DailyPoint = { date: string; count: number };
@@ -82,18 +45,18 @@ export default function HomePage() {
     <div className="flex w-full flex-col gap-6">
       <PageHead eyebrow={t("home.head.eyebrow")} title={t("home.head.title")} description={t("home.head.description")} action={<Select value={String(range)} onValueChange={(value) => value && setRange(Number(value))}><SelectTrigger><SelectValue>{t("home.range.days", { count: range })}</SelectValue></SelectTrigger><SelectContent>{[7, 14, 30, 90].map((days) => <SelectItem key={days} value={String(days)}>{t("home.range.days", { count: days })}</SelectItem>)}</SelectContent></Select>} />
       <Card className="relative isolate overflow-hidden p-5 [&_ol]:grid [&_ol]:gap-3 md:[&_ol]:grid-cols-3 [&_li]:flex [&_li]:gap-3 [&_li]:rounded-lg [&_li]:bg-muted/50 [&_li]:p-3 [&_li>span]:flex [&_li>span]:size-7 [&_li>span]:shrink-0 [&_li>span]:items-center [&_li>span]:justify-center [&_li>span]:rounded-full [&_li>span]:bg-primary [&_li>span]:text-xs [&_li>span]:font-semibold [&_li>span]:text-primary-foreground [&_small]:block [&_small]:text-muted-foreground">
-        <GrainLayer />
+        <div aria-hidden="true" className="rivr-soft-backdrop" />
         <div className="relative z-10 mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between [&_h3]:font-semibold [&_p]:mt-1 [&_p]:text-sm [&_p]:text-muted-foreground"><div><h3 className="font-pixel">{t("home.nextSteps.title")}</h3><p>{t("home.nextSteps.subtitle")}</p></div></div>
         <ol className="relative z-10"><li className={data?.clients ? "opacity-70" : ""}><span>{data?.clients ? "✓" : "1"}</span><div><strong>{t("home.nextSteps.step1Title")}</strong><small>{t("home.nextSteps.step1Desc")}</small></div></li><li className={data?.agents ? "opacity-70" : ""}><span>{data?.agents ? "✓" : "2"}</span><div><strong>{t("home.nextSteps.step2Title")}</strong><small>{t("home.nextSteps.step2Desc")}</small></div></li><li><span>3</span><div><strong>{t("home.nextSteps.step3Title")}</strong><small>{t("home.nextSteps.step3Desc")}</small></div></li></ol>
       </Card>
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Card className="flex gap-4 p-5 [&_small]:text-sm [&_small]:text-muted-foreground [&_strong]:mt-1 [&_strong]:block [&_strong]:text-2xl [&_strong]:font-semibold [&_p]:mt-1 [&_p]:text-xs [&_p]:text-muted-foreground"><span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary bg-sky-500/10 text-sky-600"><Building2 size={20} /></span><div><small>{t("home.metrics.clients")}</small><strong><AnimatedMetric value={data?.clients} /></strong><p>{t("home.metrics.clientsActive", { count: data?.active_clients ?? 0 })}</p></div></Card>
-        <Card className="flex gap-4 p-5 [&_small]:text-sm [&_small]:text-muted-foreground [&_strong]:mt-1 [&_strong]:block [&_strong]:text-2xl [&_strong]:font-semibold [&_p]:mt-1 [&_p]:text-xs [&_p]:text-muted-foreground"><span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary bg-violet-500/10 text-violet-600"><Bot size={20} /></span><div><small>{t("home.metrics.agents")}</small><strong><AnimatedMetric value={agents.length || data?.agents} /></strong><p>{t("home.metrics.agentsActive", { count: agents.filter((item) => item.is_active).length })}</p></div></Card>
-        <Card className="flex gap-4 p-5 [&_small]:text-sm [&_small]:text-muted-foreground [&_strong]:mt-1 [&_strong]:block [&_strong]:text-2xl [&_strong]:font-semibold [&_p]:mt-1 [&_p]:text-xs [&_p]:text-muted-foreground"><span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary bg-emerald-500/10 text-emerald-600"><MessageSquareText size={20} /></span><div><small>{t("home.metrics.conversations")}</small><strong><AnimatedMetric value={conversations.length} /></strong><p>{t("home.metrics.conversationsCaption")}</p></div></Card>
-        <Card className="flex gap-4 p-5 [&_small]:text-sm [&_small]:text-muted-foreground [&_strong]:mt-1 [&_strong]:block [&_strong]:text-2xl [&_strong]:font-semibold [&_p]:mt-1 [&_p]:text-xs [&_p]:text-muted-foreground"><span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary bg-amber-500/10 text-amber-600"><Radio size={20} /></span><div><small>{t("home.metrics.channels")}</small><strong><AnimatedMetric value={data?.channels} /></strong><p>{t("home.metrics.channelsConnected", { count: data?.connected_channels ?? 0 })}</p></div></Card>
+        <Card className="flex gap-4 p-5 [&_small]:text-sm [&_small]:text-muted-foreground [&_strong]:mt-1 [&_strong]:block [&_strong]:text-4xl [&_strong]:font-semibold [&_p]:mt-1 [&_p]:text-xs [&_p]:text-muted-foreground"><span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary "><Building2 size={20} /></span><div><small>{t("home.metrics.clients")}</small><strong><AnimatedMetric value={data?.clients} /></strong><p>{t("home.metrics.clientsActive", { count: data?.active_clients ?? 0 })}</p></div></Card>
+        <Card className="flex gap-4 p-5 [&_small]:text-sm [&_small]:text-muted-foreground [&_strong]:mt-1 [&_strong]:block [&_strong]:text-4xl [&_strong]:font-semibold [&_p]:mt-1 [&_p]:text-xs [&_p]:text-muted-foreground"><span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary "><Bot size={20} /></span><div><small>{t("home.metrics.agents")}</small><strong><AnimatedMetric value={agents.length || data?.agents} /></strong><p>{t("home.metrics.agentsActive", { count: agents.filter((item) => item.is_active).length })}</p></div></Card>
+        <Card className="flex gap-4 p-5 [&_small]:text-sm [&_small]:text-muted-foreground [&_strong]:mt-1 [&_strong]:block [&_strong]:text-4xl [&_strong]:font-semibold [&_p]:mt-1 [&_p]:text-xs [&_p]:text-muted-foreground"><span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary "><MessageSquareText size={20} /></span><div><small>{t("home.metrics.conversations")}</small><strong><AnimatedMetric value={conversations.length} /></strong><p>{t("home.metrics.conversationsCaption")}</p></div></Card>
+        <Card className="flex gap-4 p-5 [&_small]:text-sm [&_small]:text-muted-foreground [&_strong]:mt-1 [&_strong]:block [&_strong]:text-4xl [&_strong]:font-semibold [&_p]:mt-1 [&_p]:text-xs [&_p]:text-muted-foreground"><span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary "><Radio size={20} /></span><div><small>{t("home.metrics.channels")}</small><strong><AnimatedMetric value={data?.channels} /></strong><p>{t("home.metrics.channelsConnected", { count: data?.connected_channels ?? 0 })}</p></div></Card>
       </section>
       <section className="grid gap-4 xl:grid-cols-2">
-        <div className="rounded-xl border bg-card p-5 text-card-foreground shadow-sm min-w-0">
+        <div className="rounded-[28px] border border-foreground/5 bg-card p-6 text-card-foreground min-w-0">
           <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between [&_h3]:font-semibold [&_p]:mt-1 [&_p]:text-sm [&_p]:text-muted-foreground"><div><h3 className="font-heading">{t("home.activity.title")}</h3><p>{t("home.activity.subtitle", { count: range })}</p></div>
             <div className="flex flex-wrap gap-3 text-xs text-muted-foreground [&_span]:inline-flex [&_span]:items-center [&_span]:gap-1"><span><MessagesSquare size={14} /> {metrics?.messages ?? 0} · {t("home.activity.messages")}</span><span><UserRound size={14} /> {metrics?.human_conversations ?? 0} · {t("home.activity.humanHandled")}</span></div>
           </div>
@@ -102,9 +65,9 @@ export default function HomePage() {
             <div className="mt-2 flex justify-between text-xs text-muted-foreground"><span>{new Date(`${trend[0].date}T00:00:00`).toLocaleDateString("es", { day: "numeric", month: "short" })}</span><span>{new Date(`${trend[trend.length - 1].date}T00:00:00`).toLocaleDateString("es", { day: "numeric", month: "short" })}</span></div>
           </> : <div className="flex min-h-24 items-center justify-center gap-3 rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground"><MessagesSquare size={22} /><div><strong>{t("home.activity.empty")}</strong></div></div>}
         </div>
-        <div className="rounded-xl border bg-card p-5 text-card-foreground shadow-sm">
+        <div className="rounded-[28px] border border-foreground/5 bg-card p-6 text-card-foreground">
           <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between [&_h3]:font-semibold [&_p]:mt-1 [&_p]:text-sm [&_p]:text-muted-foreground"><div><h3 className="font-heading">{t("home.topAgents.title")}</h3><p>{t("home.topAgents.subtitle")}</p></div></div>
-          {metrics?.top_agents.length ? <div className="divide-y">{metrics.top_agents.map((agent, index) => <Link href={`/agents/${agent.id}`} key={agent.id} className="flex items-center gap-3 py-3 text-sm transition-colors hover:text-primary"><span className="w-5 text-center text-xs text-muted-foreground">{index + 1}</span><span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"><Bot size={16} /></span><strong>{agent.name}</strong><span className="ml-auto text-xs text-muted-foreground">{t("home.topAgents.conversations", { count: agent.conversations })}</span></Link>)}</div> : <div className="flex min-h-24 items-center justify-center gap-3 rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground"><Bot size={22} /><div><strong>{t("home.topAgents.empty")}</strong></div></div>}
+          {metrics?.top_agents.length ? <div className="divide-y">{metrics.top_agents.map((agent, index) => <Link href={`/agents/${agent.id}`} key={agent.id} className="flex items-center gap-3 py-3 text-sm transition-colors hover:text-primary"><span className="w-5 text-center text-xs text-muted-foreground">{index + 1}</span><span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"><BloubAvatar size={32} animated={false} /></span><strong>{agent.name}</strong><span className="ml-auto text-xs text-muted-foreground">{t("home.topAgents.conversations", { count: agent.conversations })}</span></Link>)}</div> : <div className="flex min-h-24 items-center justify-center gap-3 rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground"><BloubAvatar size={42} animated={false} /><div><strong>{t("home.topAgents.empty")}</strong></div></div>}
         </div>
       </section>
       <Card className="p-5">
@@ -115,7 +78,7 @@ export default function HomePage() {
       </Card>
       <Card className="p-5">
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between [&_h3]:font-semibold [&_p]:mt-1 [&_p]:text-sm [&_p]:text-muted-foreground"><div><h3 className="font-heading">{t("home.recentAgents.title")}</h3><p>{t("home.recentAgents.subtitle")}</p></div><Link href="/agents" className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline">{t("home.recentAgents.viewAll")} <ArrowRight size={15} /></Link></div>
-        {agents.length ? <div className="divide-y">{agents.slice(0, 5).map((agent) => <Link href={`/agents/${agent.id}`} key={agent.id} className="flex items-center gap-3 py-3 transition-colors hover:text-primary [&>div]:min-w-0 [&_small]:block [&_small]:truncate [&_small]:text-xs [&_small]:text-muted-foreground"><span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"><Bot size={18} /></span><div><strong>{agent.name}</strong><small>{agent.client.name} · {agent.description || t("common.noDescription")}</small></div><StatusBadge active={agent.is_active} /><ArrowRight size={16} /></Link>)}</div> : <div className="flex min-h-28 items-center justify-center gap-3 rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground"><Bot size={24} /><div><strong className="block">{t("home.recentAgents.emptyTitle")}</strong><span className="block">{t("home.recentAgents.emptyDesc")}</span></div></div>}
+        {agents.length ? <div className="divide-y">{agents.slice(0, 5).map((agent) => <Link href={`/agents/${agent.id}`} key={agent.id} className="flex items-center gap-3 py-3 transition-colors hover:text-primary [&>div]:min-w-0 [&_small]:block [&_small]:truncate [&_small]:text-xs [&_small]:text-muted-foreground"><span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"><BloubAvatar size={36} animated={false} /></span><div><strong>{agent.name}</strong><small>{agent.client.name} · {agent.description || t("common.noDescription")}</small></div><StatusBadge active={agent.is_active} /><ArrowRight size={16} /></Link>)}</div> : <div className="flex min-h-28 items-center justify-center gap-3 rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground"><BloubAvatar size={56} mood="listening" /><div><strong className="block">{t("home.recentAgents.emptyTitle")}</strong><span className="block">{t("home.recentAgents.emptyDesc")}</span></div></div>}
       </Card>
     </div>
   );

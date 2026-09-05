@@ -37,7 +37,7 @@ export function NavMain({
               render={<Link href={item.url} onClick={() => setOpenMobile(false)} />}
               isActive={item.isActive}
               tooltip={item.title}
-              className="h-10 rounded-xl px-3 font-semibold tracking-[0.01em] hover:bg-white hover:text-sidebar-foreground hover:shadow-sm data-active:bg-white data-active:text-sidebar-foreground data-active:shadow-sm"
+              className="h-11 rounded-full px-3 font-semibold tracking-[0.01em] hover:bg-white hover:text-sidebar-foreground hover:shadow-sm data-active:bg-sidebar-primary data-active:text-sidebar-primary-foreground data-active:shadow-sm"
             >
               <Icon />
               <span>{item.title}</span>

@@ -3,12 +3,17 @@ import os
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
+from sqlalchemy.engine import make_url
 from sqlalchemy.orm import sessionmaker
 
 os.environ["DATABASE_URL"] = os.getenv(
     "TEST_DATABASE_URL",
     "postgresql+psycopg://openvoiss:openvoiss@localhost:5432/openvoiss_test",
 )
+# Every test drops ALL application tables. Never fall back to an application's
+# DATABASE_URL or accept a production database by mistake.
+if not (make_url(os.environ["DATABASE_URL"]).database or "").endswith("_test"):
+    raise RuntimeError("Destructive tests require a dedicated database whose name ends with _test")
 os.environ.setdefault("RATE_LIMIT_ENABLED", "false")
 
 from app.database import Base, get_db  # noqa: E402

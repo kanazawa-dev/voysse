@@ -1,0 +1,766 @@
+.rivr-landing {
+  --hero-title: #505764;
+  font-weight: 400;
+}
+.rivr-landing a {
+  text-decoration: none;
+}
+.rivr-landing h1,
+.rivr-landing h2,
+.rivr-landing h3 {
+  font-weight: 500;
+  letter-spacing: -0.035em;
+}
+.rivr-landing h2 {
+  font-size: clamp(2rem, 3.7vw, 3.3rem);
+  line-height: 1.12;
+  text-wrap: balance;
+}
+.rivr-landing h3 {
+  font-size: 1.5rem;
+  line-height: 1.2;
+}
+.rivr-landing p {
+  color: var(--muted-foreground);
+  line-height: 1.75;
+  font-size: 0.9rem;
+}
+.rivr-frame {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  margin: 20px auto;
+  width: calc(100% - 40px);
+  max-width: 1536px;
+  border-radius: 48px;
+}
+.rivr-hero {
+  min-height: max(720px, calc(100svh - 40px));
+}
+.rivr-scene {
+  position: absolute;
+  z-index: -2;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: #c6d1dc;
+}
+.rivr-scene-shade {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(#f0f0f0b3, #f0f0f080 55%, #f0f0f066);
+}
+.rivr-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 24px 32px;
+}
+.rivr-nav-links,
+.rivr-nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+  font-size: 14px;
+}
+.rivr-nav-actions {
+  gap: 12px;
+}
+.rivr-nav a:hover,
+.rivr-footer a:hover {
+  opacity: 0.75;
+}
+.rivr-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 6px 6px 6px 21px;
+  min-height: 42px;
+  border-radius: 99px;
+  background: var(--primary);
+  color: white;
+  font-size: 14px;
+  white-space: nowrap;
+  transition:
+    background 0.2s,
+    transform 0.2s;
+}
+.rivr-pill:hover {
+  transform: translateY(-2px);
+  background: #354d73;
+}
+.rivr-pill > span {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #ffffff26;
+}
+.rivr-pill-light {
+  background: white;
+  color: var(--primary);
+}
+.rivr-pill-light:hover {
+  background: #e9edf2;
+}
+.rivr-pill-light > span {
+  background: #20365b12;
+}
+.rivr-hero-copy {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  padding: 120px 24px 160px;
+  pointer-events: none;
+  text-align: center;
+}
+.rivr-eyebrow {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  background: #ffffff99;
+  border: 1px solid #ffffff66;
+  border-radius: 99px;
+  padding: 9px 16px;
+  backdrop-filter: blur(12px);
+  font-size: 13px;
+  margin-bottom: 22px;
+}
+.rivr-hero h1 {
+  color: var(--hero-title);
+  font-size: clamp(3rem, 6.3vw, 5.4rem);
+  line-height: 1.04;
+  margin: 0 0 22px;
+}
+.rivr-hero-copy p {
+  color: #30425b;
+  max-width: 550px;
+  font-size: 17px;
+  line-height: 1.6;
+}
+.rivr-glass-note {
+  position: absolute;
+  bottom: 40px;
+  left: 40px;
+  border-radius: 30px;
+  background: #ffffff55;
+  border: 1px solid #ffffff70;
+  backdrop-filter: blur(20px);
+  padding: 20px;
+  min-width: 180px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.rivr-glass-note strong {
+  font-size: 30px;
+  font-weight: 500;
+  letter-spacing: -0.04em;
+}
+.rivr-glass-note small {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.rivr-glass-note a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 5px 16px 5px 5px;
+  background: white;
+  border-radius: 99px;
+  margin-top: 8px;
+  font-size: 13px;
+  width: fit-content;
+}
+.rivr-glass-note a span {
+  padding: 5px;
+  border-radius: 50%;
+  background: var(--secondary);
+}
+.rivr-doc-notch {
+  --notch-curve: 40px;
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  background: var(--background);
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 30px 34px 20px 44px;
+  border-top-left-radius: 48px;
+}
+.rivr-doc-notch::before,
+.rivr-doc-notch::after {
+  content: "";
+  position: absolute;
+  width: var(--notch-curve);
+  height: var(--notch-curve);
+  pointer-events: none;
+  background: radial-gradient(
+    circle at 0 0,
+    transparent calc(var(--notch-curve) - 0.5px),
+    var(--background) var(--notch-curve)
+  );
+}
+.rivr-doc-notch::before {
+  right: 0;
+  top: calc(-1 * var(--notch-curve));
+}
+.rivr-doc-notch::after {
+  left: calc(-1 * var(--notch-curve));
+  bottom: 0;
+}
+/* Keep keyboard focus visible on the icon, not around the sculpted cutout. */
+.rivr-landing .rivr-doc-notch:focus-visible {
+  outline: none;
+}
+.rivr-doc-notch:focus-visible > span {
+  outline: 2px solid var(--foreground);
+  outline-offset: 4px;
+}
+.rivr-doc-notch > span {
+  border-radius: 50%;
+  padding: 17px;
+  border: 1px solid var(--border);
+}
+.rivr-doc-notch strong {
+  font-weight: 500;
+  font-size: 19px;
+}
+.rivr-doc-notch small {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  color: var(--muted-foreground);
+  margin-top: 4px;
+}
+.rivr-motion {
+  position: absolute;
+  right: 25px;
+  bottom: 132px;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #ffffffaa;
+  z-index: 2;
+}
+.rivr-section {
+  width: calc(100% - 80px);
+  max-width: 1456px;
+  margin: 88px auto;
+  scroll-margin-top: 30px;
+}
+.rivr-facts {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border: 1px solid #20365b0d;
+  border-radius: 40px;
+  background: #20365b05;
+  padding: 42px;
+  margin-top: 48px;
+  margin-bottom: 64px;
+}
+.rivr-facts > div {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 30px;
+}
+.rivr-facts > div + div {
+  border-left: 1px solid var(--border);
+}
+.rivr-facts strong {
+  font-size: clamp(2rem, 3.2vw, 3.1rem);
+  font-weight: 500;
+  letter-spacing: -0.045em;
+}
+.rivr-facts span {
+  font-size: 13px;
+  color: var(--muted-foreground);
+}
+.rivr-section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 30px;
+  margin-bottom: 36px;
+}
+.rivr-section-head h2 {
+  max-width: 780px;
+}
+.rivr-section-head > .rivr-pill {
+  flex-shrink: 0;
+}
+.rivr-bento {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+.rivr-feature {
+  position: relative;
+  overflow: hidden;
+  background: white;
+  border-radius: 32px;
+  padding: 34px;
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+  gap: 26px;
+}
+.rivr-feature p {
+  margin-top: 12px;
+}
+.rivr-feature-0 {
+  grid-row: span 2;
+  min-height: 510px;
+  justify-content: space-between;
+}
+.rivr-feature-0 h3 {
+  font-size: 30px;
+}
+.rivr-feature-1 {
+  grid-column: span 2;
+}
+.rivr-feature-2,
+.rivr-feature-3 {
+  gap: 36px;
+}
+.rivr-feature-2 p,
+.rivr-feature-3 p {
+  font-size: 13px;
+}
+.rivr-icon {
+  display: grid;
+  place-items: center;
+  width: 50px;
+  height: 50px;
+  border-radius: 17px;
+  background: var(--secondary);
+  flex-shrink: 0;
+}
+.rivr-watermark {
+  position: absolute;
+  width: 280px;
+  height: 280px;
+  top: 80px;
+  right: -60px;
+  opacity: 0.025;
+}
+.rivr-three {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+.rivr-kicker {
+  display: block;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 18px;
+  color: var(--muted-foreground);
+}
+.rivr-stack {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  padding: 60px;
+  border-radius: 40px;
+  background: #e7ebef;
+}
+.rivr-stack p {
+  margin: 20px 0;
+}
+.rivr-steps article {
+  display: flex;
+  gap: 22px;
+  border-bottom: 1px solid var(--border);
+  padding: 25px 0;
+}
+.rivr-steps article > span {
+  font-size: 13px;
+}
+.rivr-steps h3 {
+  font-size: 19px;
+}
+.rivr-steps p {
+  margin: 10px 0 0;
+}
+.rivr-plan {
+  background: white;
+  border-radius: 32px;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  border: 1px solid transparent;
+}
+.rivr-plan-featured {
+  border-color: #20365b55;
+  background: #e9edf2;
+}
+.rivr-plan .rivr-kicker {
+  margin: 0;
+}
+.rivr-price {
+  font-size: 28px;
+  font-weight: 500;
+  letter-spacing: -0.04em;
+}
+.rivr-plan ul {
+  display: grid;
+  gap: 16px;
+  font-size: 13px;
+  padding: 0;
+  margin: 0 0 16px;
+  list-style: none;
+}
+.rivr-plan li {
+  display: flex;
+  gap: 10px;
+}
+.rivr-plan li svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.rivr-plan .rivr-pill,
+.rivr-cloud-button {
+  margin-top: auto;
+}
+.rivr-cloud-button {
+  min-height: 42px;
+  width: 100%;
+  background: var(--primary);
+  color: white;
+  border-radius: 99px;
+}
+.rivr-faq {
+  max-width: 850px;
+}
+.rivr-faq h2 {
+  margin-bottom: 35px;
+}
+.rivr-faq details {
+  border-bottom: 1px solid var(--border);
+  padding: 24px 0;
+}
+.rivr-faq summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  list-style: none;
+  font-size: 17px;
+  cursor: pointer;
+}
+.rivr-faq summary::-webkit-details-marker {
+  display: none;
+}
+.rivr-faq details[open] summary > span {
+  transform: rotate(45deg);
+}
+.rivr-faq details p {
+  margin-top: 18px;
+}
+.rivr-cta {
+  min-height: 650px;
+  display: grid;
+  place-items: center;
+  padding: 100px 24px;
+}
+.rivr-cta .rivr-scene-shade {
+  background: #13284799;
+}
+.rivr-cta-copy {
+  max-width: 700px;
+  text-align: center;
+  color: white;
+}
+.rivr-cta h2 {
+  font-size: clamp(2.7rem, 5vw, 4.2rem);
+}
+.rivr-cta p {
+  color: #ffffffe6;
+  margin: 24px auto;
+  max-width: 530px;
+}
+.rivr-cta-copy > div {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.rivr-cta-docs {
+  padding: 10px 20px;
+  border: 1px solid #ffffff55;
+  background: #ffffff15;
+  border-radius: 99px;
+  font-size: 14px;
+}
+.rivr-cta .rivr-motion {
+  bottom: 24px;
+}
+.rivr-footer {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 50px;
+  margin-top: 70px;
+  margin-bottom: 35px;
+}
+.rivr-footer p {
+  max-width: 300px;
+  margin-top: 20px;
+}
+.rivr-footer nav {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 30px;
+  font-size: 13px;
+}
+.rivr-footer nav div {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+.rivr-footer nav strong {
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+.rivr-footer nav a {
+  color: var(--muted-foreground);
+}
+.rivr-footer > small {
+  grid-column: 1/-1;
+  border-top: 1px solid var(--border);
+  padding-top: 28px;
+  color: var(--muted-foreground);
+}
+.rivr-mobile-links {
+  display: none;
+}
+.rivr-skip {
+  position: fixed;
+  top: -100px;
+  left: 24px;
+  z-index: 50;
+  padding: 12px 20px;
+  background: white;
+  border-radius: 99px;
+}
+.rivr-skip:focus {
+  top: 20px;
+}
+.rivr-landing :is(a, button, summary):focus-visible {
+  outline: 3px solid #58749d;
+  outline-offset: 5px;
+}
+@media (max-width: 1000px) {
+  .rivr-nav-links {
+    display: none;
+  }
+  .rivr-mobile-links {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    font-size: 13px;
+  }
+  .rivr-stack {
+    gap: 32px;
+    padding: 36px;
+  }
+  .rivr-facts {
+    padding: 20px;
+  }
+  .rivr-facts > div {
+    padding: 12px;
+  }
+  .rivr-feature,
+  .rivr-plan {
+    padding: 26px;
+  }
+}
+@media (max-width: 700px) {
+  .rivr-frame {
+    width: calc(100% - 24px);
+    margin: 12px auto;
+    border-radius: 26px;
+  }
+  .rivr-hero {
+    min-height: max(720px, calc(100svh - 24px));
+  }
+  .rivr-nav {
+    gap: 10px;
+    padding: 20px 16px;
+  }
+  .rivr-nav-actions {
+    gap: 5px;
+  }
+  .rivr-nav .rivr-pill {
+    font-size: 12px;
+    gap: 8px;
+    padding-left: 13px;
+  }
+  .rivr-nav .openvoiss-brand-name {
+    font-size: 16px;
+  }
+  .rivr-hero-copy {
+    padding: 130px 20px 175px;
+  }
+  .rivr-hero h1 {
+    font-size: clamp(2.6rem, 10vw, 4rem);
+  }
+  .rivr-hero-copy p {
+    font-size: 15px;
+  }
+  .rivr-eyebrow {
+    font-size: 11px;
+  }
+  .rivr-glass-note {
+    left: 20px;
+    bottom: 95px;
+    padding: 14px;
+    border-radius: 22px;
+    min-width: 135px;
+  }
+  .rivr-glass-note strong {
+    font-size: 23px;
+  }
+  .rivr-doc-notch {
+    --notch-curve: 24px;
+    padding: 18px 20px;
+    gap: 10px;
+    border-top-left-radius: 26px;
+  }
+  .rivr-doc-notch > span {
+    padding: 11px;
+  }
+  .rivr-doc-notch strong {
+    font-size: 15px;
+  }
+  .rivr-doc-notch small {
+    font-size: 11px;
+  }
+  .rivr-motion {
+    bottom: 108px;
+    right: 20px;
+  }
+  .rivr-section {
+    width: calc(100% - 32px);
+    margin: 55px auto;
+  }
+  .rivr-facts {
+    grid-template-columns: 1fr 1fr;
+    border-radius: 26px;
+    padding: 18px;
+  }
+  .rivr-facts > div:nth-child(3) {
+    border-left: 0;
+  }
+  .rivr-facts > div:nth-child(n + 3) {
+    border-top: 1px solid var(--border);
+  }
+  .rivr-facts span {
+    font-size: 11px;
+  }
+  .rivr-section-head {
+    align-items: start;
+    flex-direction: column;
+  }
+  .rivr-bento,
+  .rivr-three,
+  .rivr-stack,
+  .rivr-footer {
+    grid-template-columns: 1fr;
+  }
+  .rivr-feature-0 {
+    grid-row: auto;
+    min-height: 360px;
+  }
+  .rivr-feature-1 {
+    grid-column: auto;
+  }
+  .rivr-feature {
+    min-height: 260px;
+  }
+  .rivr-stack {
+    padding: 26px;
+    border-radius: 26px;
+  }
+  .rivr-cta {
+    min-height: 540px;
+  }
+  .rivr-footer nav {
+    gap: 15px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rivr-landing * {
+    scroll-behavior: auto;
+    transition: none;
+  }
+}
+
+.rivr-roadmap {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+@media (max-width: 1000px) {
+  .rivr-roadmap {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+@media (max-width: 700px) {
+  .rivr-roadmap {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Original Voysse cloud imagery, separate from the Bloub companion. */
+.rivr-hero .rivr-scene-shade {
+  background: linear-gradient(180deg, #f5f8fc26, transparent 70%);
+}
+.rivr-hero h1 {
+  color: #20365b;
+}
+.rivr-hero-copy p {
+  color: #344b68;
+}
+.rivr-cta .rivr-scene-shade {
+  background: linear-gradient(180deg, #07142d22, #07142d11);
+}
+.rivr-bloub-note {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+.rivr-bloub-note strong {
+  font-size: 24px;
+}
+.rivr-bloub-feature {
+  align-self: center;
+  margin: -10px 0;
+}
+.rivr-bloub-cta {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+@media (max-width: 700px) {
+  .rivr-nav-actions {
+    gap: 2px;
+  }
+  .rivr-glass-note {
+    bottom: 94px;
+    padding: 10px 14px;
+  }
+}
