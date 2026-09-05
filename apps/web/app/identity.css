@@ -1,0 +1,339 @@
+/* Voysse visual foundation. Applies to marketing, legal pages and portalled UI. */
+@font-face {
+  font-family: Geist;
+  src: url("/fonts/geist-latin.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Geist Mono";
+  src: url("/fonts/geist-mono-latin.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+:root {
+  --brand-surface: #f4f4f5;
+  --brand-ink: #18181b;
+  --brand-violet: #5135ff;
+  --brand-line: #d4d4d8;
+  --brand-muted: #666670;
+  --brand-mono: "Geist Mono", monospace;
+  --background: var(--brand-surface);
+  --foreground: var(--brand-ink);
+  --primary: var(--brand-violet);
+  --primary-foreground: #fff;
+  --card: #fafafa;
+  --card-foreground: var(--brand-ink);
+  --popover: #fff;
+  --popover-foreground: var(--brand-ink);
+  --muted: #ededf0;
+  --muted-foreground: var(--brand-muted);
+  --secondary: #e6e6eb;
+  --secondary-foreground: var(--brand-ink);
+  --accent: #eeebff;
+  --accent-foreground: var(--brand-violet);
+  --border: var(--brand-line);
+  --input: var(--brand-line);
+  --ring: var(--brand-violet);
+  --radius: 0.125rem;
+}
+body {
+  font-family: Geist, Arial, sans-serif;
+}
+
+/* Semantic tokens: one visual language, independent app build contexts. */
+:root {
+  --sidebar: #fafafa;
+  --sidebar-foreground: #52525b;
+  --sidebar-primary: #5135ff;
+  --sidebar-primary-foreground: #fff;
+  --sidebar-accent: #eeebff;
+  --sidebar-accent-foreground: #4326df;
+  --sidebar-border: #d4d4d8;
+  --sidebar-ring: #5135ff;
+  --chart-1: #5135ff;
+  --chart-2: #8067ff;
+  --chart-3: #a698ff;
+  --chart-4: #c4baff;
+  --chart-5: #ddd7ff;
+  --font-mono: "Geist Mono", monospace;
+  --motion-fast: 200ms;
+  --motion-ease: cubic-bezier(0.4, 0, 0.2, 1);
+}
+.dark {
+  --background: #141417;
+  --foreground: #e4e4eb;
+  --card: #1b1b20;
+  --card-foreground: #e4e4eb;
+  --popover: #222228;
+  --popover-foreground: #e4e4eb;
+  --primary: #a698ff;
+  --primary-foreground: #171221;
+  --secondary: #2b2738;
+  --secondary-foreground: #e4e4eb;
+  --muted: #24242b;
+  --muted-foreground: #a3a3b2;
+  --accent: #302843;
+  --accent-foreground: #d3c9ff;
+  --border: #35353d;
+  --input: #41414b;
+  --ring: #a698ff;
+  --sidebar: #1b1b20;
+  --sidebar-foreground: #b4b4c1;
+  --sidebar-accent: #302843;
+  --sidebar-accent-foreground: #d3c9ff;
+  --sidebar-border: #35353d;
+  --sidebar-primary: #a698ff;
+  --sidebar-ring: #a698ff;
+  --chart-1: #a698ff;
+  --chart-2: #8e78ff;
+  --chart-3: #7760df;
+  --brand-line: #35353d;
+  --brand-muted: #a3a3b2;
+}
+.cy-workspace {
+  background: var(--background);
+}
+.cy-workspace-topbar {
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+}
+.cy-workspace-topbar [data-slot="breadcrumb-page"] {
+  font: 11px var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted-foreground);
+}
+.cy-workspace-content {
+  position: relative;
+}
+.cy-workspace-content:before {
+  content: "";
+  height: 12px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  border-bottom: 1px solid var(--border);
+  background: repeating-linear-gradient(
+    135deg,
+    transparent 0,
+    transparent 6px,
+    var(--border) 6px,
+    var(--border) 7px
+  );
+  opacity: 0.6;
+  pointer-events: none;
+}
+[data-slot="sidebar-inner"] {
+  background: var(--sidebar);
+}
+[data-slot="sidebar-header"] {
+  border-bottom: 1px solid var(--border);
+  padding-block: 14px;
+}
+[data-slot="sidebar-footer"] {
+  border-top: 1px solid var(--border);
+}
+[data-slot="sidebar-group-label"],
+[data-slot="sidebar-menu-button"] {
+  font-family: var(--font-mono);
+}
+[data-slot="sidebar-menu-button"] {
+  border-radius: 0;
+  font-size: 11px;
+  transition:
+    background-color var(--motion-fast),
+    color var(--motion-fast);
+  box-shadow: none;
+}
+[data-slot="sidebar-menu-button"][data-active="true"] {
+  background: var(--sidebar-accent);
+  color: var(--sidebar-accent-foreground);
+  box-shadow: inset 2px 0 var(--primary);
+}
+[data-slot="sidebar-menu-button"] svg {
+  transition: color var(--motion-fast);
+}
+.cy-page-head {
+  padding: 16px 0 24px;
+  border-bottom: 1px solid var(--border);
+}
+.cy-page-head h1 {
+  font-weight: 500;
+  letter-spacing: -0.05em;
+}
+.cy-page-head .tracking-widest {
+  font: 10px/1.6 var(--font-mono);
+  letter-spacing: 0.15em;
+  margin-bottom: 8px;
+}
+[data-slot="card"] {
+  border-radius: 2px;
+  border: 1px solid var(--border);
+  box-shadow: none;
+  background: var(--card);
+  transition:
+    border-color var(--motion-fast),
+    background-color var(--motion-fast);
+}
+.cy-workspace [data-slot="card-title"] {
+  font-weight: 500;
+  letter-spacing: -0.025em;
+}
+[data-slot="table-head"] {
+  font: 10px/1.5 var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--muted-foreground);
+  background: var(--muted);
+}
+[data-slot="table-cell"] {
+  padding-block: 16px;
+}
+[data-slot="table-row"] {
+  transition: background-color var(--motion-fast);
+}
+[data-slot="button"] {
+  position: relative;
+  border-radius: 2px;
+  font-family: var(--font-mono);
+  letter-spacing: 0.035em;
+  transition:
+    background-color var(--motion-fast),
+    color var(--motion-fast),
+    border-color var(--motion-fast);
+}
+[data-slot="button"][data-variant="default"] {
+  border-radius: 0;
+}
+[data-slot="button"][data-variant="default"]:not([data-size^="icon"]):before {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  pointer-events: none;
+  opacity: 0.5;
+  color: var(--primary);
+  transition:
+    inset var(--motion-fast) var(--motion-ease),
+    opacity var(--motion-fast);
+  background:
+    linear-gradient(currentColor, currentColor) left top/7px 1px no-repeat,
+    linear-gradient(currentColor, currentColor) left top/1px 7px no-repeat,
+    linear-gradient(currentColor, currentColor) right top/7px 1px no-repeat,
+    linear-gradient(currentColor, currentColor) right top/1px 7px no-repeat,
+    linear-gradient(currentColor, currentColor) left bottom/7px 1px no-repeat,
+    linear-gradient(currentColor, currentColor) left bottom/1px 7px no-repeat,
+    linear-gradient(currentColor, currentColor) right bottom/7px 1px no-repeat,
+    linear-gradient(currentColor, currentColor) right bottom/1px 7px no-repeat;
+}
+[data-slot="button"]:disabled:before,
+[data-slot="button"][aria-disabled="true"]:before {
+  display: none;
+}
+[data-slot="button"]:focus-visible:before {
+  inset: 0;
+  opacity: 1;
+}
+[data-slot="input"],
+[data-slot="textarea"],
+[data-slot="select-trigger"] {
+  border-radius: 2px;
+  box-shadow: none;
+  background: var(--card);
+  transition:
+    border-color var(--motion-fast),
+    box-shadow var(--motion-fast);
+}
+[data-slot="input"],
+[data-slot="select-trigger"] {
+  min-height: 38px;
+}
+[data-slot="dialog-content"],
+[data-slot="sheet-content"],
+[data-slot="dropdown-menu-content"],
+[data-slot="select-content"],
+[data-slot="popover-content"] {
+  border-radius: 3px;
+}
+[data-slot="dialog-title"],
+[data-slot="alert-title"] {
+  letter-spacing: -0.025em;
+}
+[data-slot="badge"] {
+  border-radius: 3px;
+  font-size: 10px;
+}
+.cy-onboarding {
+  border-top: 2px solid var(--primary);
+}
+.cy-workspace-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(120deg, var(--card), var(--accent));
+}
+.cy-onboarding ol li {
+  border-radius: 2px;
+  border: 1px solid var(--border);
+  background: var(--card);
+}
+.cy-onboarding ol li > span {
+  border-radius: 0;
+  font-family: var(--font-mono);
+}
+.cy-workspace .rounded-2xl {
+  border-radius: 3px;
+}
+.cy-workspace .rounded-xl {
+  border-radius: 3px;
+}
+.cy-workspace .openvoiss-brand-name {
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+@media (hover: hover) and (pointer: fine) {
+  [data-slot="button"]:not(:disabled):not([aria-disabled="true"]):hover:before {
+    inset: 0;
+    opacity: 1;
+  }
+  [data-slot="card"]:hover {
+    border-color: color-mix(in srgb, var(--primary) 36%, var(--border));
+  }
+  [data-slot="sidebar-menu-button"]:not([data-active="true"]):hover {
+    background: var(--sidebar-accent);
+    color: var(--sidebar-accent-foreground);
+  }
+  [data-slot="input"]:not(:disabled):hover,
+  [data-slot="select-trigger"]:not(:disabled):hover {
+    border-color: color-mix(in srgb, var(--primary) 40%, var(--border));
+  }
+}
+@media (max-width: 640px) {
+  .cy-page-head {
+    padding-top: 20px;
+  }
+  .cy-page-head h1 {
+    font-size: 30px;
+  }
+  [data-slot="button"] {
+    letter-spacing: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *:before,
+  *:after {
+    transition-duration: 0s !important;
+    animation-duration: 0s !important;
+    scroll-behavior: auto !important;
+  }
+}
+.openvoiss-brand-name {
+  font-family: var(--font-mono);
+  letter-spacing: 0.03em;
+}
