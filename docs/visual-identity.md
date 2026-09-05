@@ -65,3 +65,13 @@ La base visual está aplicada al dashboard y a los componentes compartidos. Los 
 - Reversión de esta extensión: revertir hooks/CSS hover de marketing y cambios
   de layout/componentes/tokens/fonts del dashboard. No hay migraciones ni cambios
   en API. La landing Cypon previa puede conservarse independientemente.
+
+### Selector de idioma
+
+- Ambas apps usan el mismo control rectangular, Geist Mono, chevron y estados
+  violeta. El menú portalled hereda el tema en lugar de forzar modo oscuro.
+- Elegir idioma cierra el menú; se conservan radio seleccionado, navegación por
+  teclado, Escape y persistencia del idioma existentes.
+- `scripts/ui/cypon-language-smoke.cjs` verifica ambas apps, ES/EN, geometría,
+  selección, teclado y ancho móvil. Reversión: componentes LanguageSwitcher,
+  bloque CSS correspondiente y eliminación del `dark` forzado en dropdown.

@@ -294,7 +294,7 @@ export default function SettingsPage() {
           <p>{t("settings.index.languageCopy")}</p>
         </div>
         <div className="flex justify-start md:justify-end">
-          <LanguageSwitcher className="h-11 w-full max-w-56 justify-between border border-primary/20 bg-white/80 px-4 font-semibold shadow-sm hover:bg-white sm:w-56" />
+          <LanguageSwitcher className="h-11 w-full max-w-56 sm:w-56" />
         </div>
       </Card>
 

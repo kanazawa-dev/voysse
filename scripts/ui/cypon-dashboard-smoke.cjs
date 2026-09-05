@@ -160,7 +160,7 @@ const assert = require("node:assert/strict");
           borderBefore,
         );
         const nav = p
-          .locator('[data-slot="sidebar-menu-button"][data-active="false"]')
+          .locator('[data-slot="sidebar-menu-button"]:not([data-active])')
           .first();
         const navBefore = await nav.evaluate(
           (e) => getComputedStyle(e).backgroundColor,
