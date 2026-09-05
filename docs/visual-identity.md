@@ -75,3 +75,11 @@ La base visual está aplicada al dashboard y a los componentes compartidos. Los 
 - `scripts/ui/cypon-language-smoke.cjs` verifica ambas apps, ES/EN, geometría,
   selección, teclado y ancho móvil. Reversión: componentes LanguageSwitcher,
   bloque CSS correspondiente y eliminación del `dark` forzado en dropdown.
+
+### Acceso sencillo
+
+Login y registro comparten un único formulario centrado (sin panel lateral ni
+métricas de ejemplo), logo compacto, controles rectangulares y selector de idioma.
+Los mismos endpoints, validaciones y pantalla de aprobación pendiente permanecen.
+Autocompletado distingue contraseña actual/nueva. Revertir `app/login/page.tsx`
+restaura la composición anterior sin cambios de backend.
