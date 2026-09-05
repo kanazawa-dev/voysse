@@ -159,12 +159,30 @@ const assert = require("node:assert/strict");
           await card.evaluate((e) => getComputedStyle(e).borderColor),
           borderBefore,
         );
-        const nav = p
-          .locator('[data-slot="sidebar-menu-button"]:not([data-active])')
-          .first();
+        const nav = p.locator(".cy-sidebar-action:not([data-active])").first();
         const navBefore = await nav.evaluate(
           (e) => getComputedStyle(e).backgroundColor,
         );
+        assert.equal(
+          await nav.evaluate((e) => getComputedStyle(e, "::before").top),
+          "-3px",
+        );
+        await nav.hover();
+        assert.equal(
+          await nav.evaluate((e) => getComputedStyle(e, "::before").top),
+          "0px",
+        );
+        assert.equal(
+          await nav.evaluate((e) => getComputedStyle(e).borderRadius),
+          "0px",
+        );
+        await p.mouse.move(1400, 0);
+        await nav.focus();
+        assert.equal(
+          await nav.evaluate((e) => getComputedStyle(e, "::before").top),
+          "0px",
+        );
+        await nav.evaluate((e) => e.blur());
         await nav.hover();
         assert.notEqual(
           await nav.evaluate((e) => getComputedStyle(e).backgroundColor),
@@ -179,7 +197,27 @@ const assert = require("node:assert/strict");
             .evaluate((e) => getComputedStyle(e).backgroundColor),
           "rgb(27, 27, 32)",
         );
+        await nav.hover();
+        assert.equal(
+          await nav.evaluate((e) => getComputedStyle(e, "::before").top),
+          "0px",
+        );
         await p.screenshot({ path: "/tmp/cypon-web-dark.png", fullPage: true });
+        await p.locator('[data-slot="sidebar-trigger"]').click();
+        await p.waitForTimeout(250);
+        assert.equal(
+          await nav
+            .locator("span")
+            .evaluate((e) => getComputedStyle(e).display),
+          "none",
+        );
+        await nav.hover();
+        assert.equal(
+          await nav.evaluate((e) => getComputedStyle(e, "::before").top),
+          "0px",
+        );
+        await p.screenshot({ path: "/tmp/cypon-sidebar-collapsed.png" });
+        await p.locator('[data-slot="sidebar-trigger"]').click();
         await p.evaluate(() =>
           document.documentElement.classList.remove("dark"),
         );
