@@ -160,3 +160,17 @@ Backup previo `backups/voysse-20260905T170015Z-ii3Rn4.dump`, privado, índice y
 checksum validados; esta copia no se restauró. Sin cuenta Meta real ni SMTP real.
 La entrega acumulada se prepara en `feat/product-quality-channels`; main publica
 imágenes automáticamente, por eso no se actualiza main en este paso.
+
+## Seguimiento separado — salud de workers (Q07 parcial)
+
+PR #2 hacia main contiene las cinco entregas anteriores y tiene CI verde; no
+fusionado. El seguimiento en feat/worker-healthchecks añade healthchecks locales
+para workers social/Cloud, sin cambios de migraciones ni a los estados de envío.
+Un loop sin progreso caduca; reiniciar borra la señal anterior. Ver worker-health.md.
+Las alertas externas siguen pendientes y Docker unhealthy no implica auto-reinicio.
+
+Seguimiento validado:143 tests API (13 nuevos), Compose config correcto y simulación
+Docker healthy→unhealthy en contenedor desechable. Sin nuevas migraciones.
+Ambos workers locales quedaron healthy tras su primera iteración; API original
+healthy, DB de pruebas detenida. La sonda puede fallar justo al arrancar hasta
+el primer progreso, cubierto por start_period; no indica un fallo de migración.

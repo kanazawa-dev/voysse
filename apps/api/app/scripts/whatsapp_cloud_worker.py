@@ -3,14 +3,17 @@ import asyncio
 import logging
 
 from ..database import SessionLocal
+from ..services.worker_health import record_progress, reset
 from ..services.whatsapp_cloud_worker import work_once
 
 
 async def main():
+    reset()
     while True:
         try:
             with SessionLocal() as db:
                 worked = await work_once(db)
+            record_progress()
         except Exception:
             logging.error("Cloud worker iteration failed; inspect event states")
             worked = False
