@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "./identity.css";
 import { AppShell } from "@/components/app-shell";
 import { ToastProvider } from "@/components/toast";
 import { LanguageProvider } from "@/lib/i18n";

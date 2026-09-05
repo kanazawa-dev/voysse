@@ -86,7 +86,7 @@ export function AppSidebar({ user, ...props }: React.ComponentProps<typeof Sideb
                       render={<Link href={item.href} onClick={() => setOpenMobile(false)} />}
                       isActive={active}
                       tooltip={item.label}
-                      className="h-11 rounded-full px-3 font-semibold tracking-[0.01em] hover:bg-white hover:text-sidebar-foreground hover:shadow-sm data-active:bg-sidebar-primary data-active:text-sidebar-primary-foreground data-active:shadow-sm"
+                      className="h-11 rounded-none px-3 font-medium tracking-[0.03em] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-active:bg-sidebar-accent data-active:text-sidebar-accent-foreground"
                     >
                       <Icon />
                       <span>{item.label}</span>

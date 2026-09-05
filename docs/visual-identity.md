@@ -27,7 +27,7 @@ Los tokens viven en `apps/marketing/app/identity.css` y se cargan desde el layou
 - ES/EN, enlaces reales, acceso a la app, formulario de interés Cloud y FAQ conservados.
 - Sin vídeo, testimonios inventados, logos de clientes, métricas de conversión ni promesas de disponibilidad tomadas de la referencia. Los nombres de proveedores identifican opciones, no clientes ni patrocinadores.
 - Instagram/Messenger distinguen configuración manual/beta. No se presenta OAuth como terminado.
-- El dashboard real **no se ha rediseñado en esta entrega**. Usar esta base en su siguiente iteración; no confundir el preview ilustrativo con la UI actual de la aplicación.
+- El dashboard real ya adopta esta base: Geist/Mono, grises/violeta, sidebar y topbar, formularios, tarjetas, tablas y diálogos. El preview de la landing continúa siendo una ilustración, no datos en vivo.
 - `rivr.css` y los fondos anteriores quedan como material histórico no importado por la landing. El documento rivr-ui-review.md describe la dirección anterior, no el estándar vigente.
 
 ## Verificación y reversión
@@ -40,4 +40,28 @@ Los tokens viven en `apps/marketing/app/identity.css` y se cargan desde el layou
 
 ## Siguiente aplicación
 
-Tras validar esta landing: trasladar los tokens al dashboard y adaptar navegación, formularios y estados por grupos de pantallas, manteniendo accesibilidad y flujos. No cambiar precios, permisos ni lógica de canales para conseguir parecido visual.
+La base visual está aplicada al dashboard y a los componentes compartidos. Los colores de estado (error/advertencia/éxito) y el color propio de cada portal/widget permanecen semánticos. No se cambian precios, permisos ni lógica de canales para conseguir parecido visual.
+
+## Interacciones y dashboard
+
+- La referencia se inspeccionó en navegador: botones cambian color en 200 ms y sus
+  esquinas se recogen; no hay elevación/3D. Se reproduce ese comportamiento en
+  landing y botones principales del dashboard.
+- Menús de marketing abren por hover solo con ratón/puntero fino en escritorio;
+  mantienen navegación nativa por clic/teclado y móvil. Escape cierra incluso
+  un menú abierto por hover sin foco. Chevron gira y dropdown aparece suavemente.
+- Tarjetas responden con fondo/borde sutil, enlaces y FAQ cambian de énfasis.
+  Focus-visible sigue visible; disabled no adquiere hover; reduced motion elimina
+  transiciones y animación de menú sin ocultar los estados.
+- Web tiene identity.css equivalente y fuentes locales OFL en su propio contexto
+  de build Docker. Mantener equivalencia con marketing al actualizar los tokens.
+  El modo oscuro usa carbón/violeta, no la anterior paleta azul marino.
+- Revisiones específicas: scripts/ui/cypon-hover-smoke.cjs y
+  scripts/ui/cypon-dashboard-smoke.cjs. Se ejecutan además auth-team-smoke,
+  human-delivery-smoke y portal-delivery-smoke para detectar regresiones de flujos.
+- Builds webpack y lint de ambas apps pasan. Las pruebas de UI usan fixtures,
+  no crean clientes reales ni envían mensajes. Dashboard: 14 rutas en 1440/390/320 px,
+  tema oscuro y hover de botones, tarjetas y navegación.
+- Reversión de esta extensión: revertir hooks/CSS hover de marketing y cambios
+  de layout/componentes/tokens/fonts del dashboard. No hay migraciones ni cambios
+  en API. La landing Cypon previa puede conservarse independientemente.
