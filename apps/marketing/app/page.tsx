@@ -1,379 +1,866 @@
 "use client";
 
-import Image from "next/image";
-import { BloubAvatar } from "@/components/bloub-avatar";
+import { useState, type ReactNode } from "react";
 import {
   ArrowUpRight,
-  BookOpen,
+  ArrowRight,
   Bot,
   Check,
+  ChevronDown,
+  Code2,
+  Database,
+  Github,
   Layers,
+  Menu,
   MessageSquare,
   Radio,
-  ShieldCheck,
   Sparkles,
-  Wrench,
+  Workflow,
+  X,
 } from "lucide-react";
-import { useLanguage, useT } from "@/lib/i18n";
+import { BloubAvatar } from "@/components/bloub-avatar";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { OpenvoissBrand } from "@/components/openvoiss-brand";
 import { CloudInterestDialog } from "@/components/cloud-interest-dialog";
-import "./rivr.css";
+import { useLanguage, useT } from "@/lib/i18n";
+import "./cypon.css";
 
 const docs = "https://docs.voysse.cl/docs";
 const github = "https://github.com/kanazawa-dev/voysse";
 
-function Pill({
+function Action({
   href,
   children,
-  light = false,
+  secondary = false,
 }: {
   href: string;
-  children: React.ReactNode;
-  light?: boolean;
+  children: ReactNode;
+  secondary?: boolean;
 }) {
   return (
-    <a className={`rivr-pill${light ? " rivr-pill-light" : ""}`} href={href}>
+    <a
+      className={`cy-action${secondary ? " cy-action-secondary" : ""}`}
+      href={href}
+    >
       {children}
-      <span>
-        <ArrowUpRight size={17} aria-hidden="true" />
-      </span>
+      <ArrowUpRight size={15} aria-hidden="true" />
     </a>
   );
 }
-
-// Original cloud artwork: no video, autoplay, external request or animation loop.
-function Scene({ variant }: { variant: "hero" | "cta" }) {
+function Section({
+  id,
+  number,
+  name,
+  badge,
+  title,
+  description,
+  children,
+}: {
+  id: string;
+  number: string;
+  name: string;
+  badge: string;
+  title: ReactNode;
+  description?: string;
+  children: ReactNode;
+}) {
   return (
-    <>
-      <Image
-        className="rivr-scene"
-        src={`/media/voysse/cloud-connections-${variant === "hero" ? "day" : "night"}.png`}
-        alt=""
-        fill
-        sizes="100vw"
-        preload={variant === "hero"}
-        quality={85}
-      />
-      <div className="rivr-scene-shade" aria-hidden="true" />
-    </>
+    <section id={id} className="cy-section">
+      <div className="cy-index">
+        [ {number} / 07 ] <span>·</span> {name}
+      </div>
+      <div className="cy-heading cy-corners">
+        <span className="cy-tag">
+          <i />
+          {badge}
+        </span>
+        <h2>{title}</h2>
+        {description && <p>{description}</p>}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function ProductPreview({ es }: { es: boolean }) {
+  const text = (a: string, b: string) => (es ? a : b);
+  return (
+    <div className="cy-product-stage">
+      <div className="cy-product-note">
+        <span className="cy-live-dot" /> VOYSSE WORKSPACE{" "}
+        <span>
+          {text(
+            "VISTA ILUSTRATIVA · DATOS DE EJEMPLO",
+            "ILLUSTRATIVE PREVIEW · SAMPLE DATA",
+          )}
+        </span>
+      </div>
+      <div className="cy-dashboard">
+        <aside className="cy-dash-sidebar">
+          <div className="cy-workspace-mark">
+            <span>v.</span> Studio Norte <ChevronDown size={13} />
+          </div>
+          <small>WORKSPACE</small>
+          {[
+            [Layers, text("Resumen", "Overview")],
+            [MessageSquare, "Inbox"],
+            [Bot, text("Agentes", "Agents")],
+            [Radio, text("Canales", "Channels")],
+            [Database, text("Conocimiento", "Knowledge")],
+          ].map(([Icon, label], i) => {
+            const I = Icon as typeof Layers;
+            return (
+              <div className={i === 1 ? "is-active" : ""} key={String(label)}>
+                <I size={15} />
+                {String(label)}
+                {i === 1 && <em>3</em>}
+              </div>
+            );
+          })}
+          <div className="cy-dash-voxy">
+            <BloubAvatar
+              size={52}
+              color="#a698ff"
+              paper="#19191e"
+              mood="listening"
+            />
+            <span>
+              Voxy
+              <small>{text("Tu compañero de IA", "Your AI companion")}</small>
+            </span>
+          </div>
+        </aside>
+        <div className="cy-dash-main">
+          <header>
+            <span>
+              {text(
+                "Tu operación, en un solo lugar",
+                "Your operation, in one place",
+              )}
+            </span>
+            <span className="cy-demo-label">
+              DEMO <i />
+            </span>
+          </header>
+          <div className="cy-dash-metrics">
+            {[
+              ["24", text("Conversaciones", "Conversations")],
+              ["03", text("Agentes activos", "Active agents")],
+              ["04", text("Canales", "Channels")],
+            ].map(([value, label], i) => (
+              <div key={label}>
+                <small>{label}</small>
+                <strong>{value}</strong>
+                <svg viewBox="0 0 160 30" aria-hidden="true">
+                  <path
+                    d={`M0 26 L15 ${17 + i * 2} L28 21 L42 8 L56 19 L70 14 L85 18 L100 4 L114 11 L129 5 L145 9 L160 2`}
+                    fill="none"
+                    stroke="#a698ff"
+                    strokeWidth="1.5"
+                  />
+                </svg>
+              </div>
+            ))}
+          </div>
+          <div className="cy-dash-inbox">
+            <div className="cy-threads">
+              <strong>
+                Inbox <span>03</span>
+              </strong>
+              {[
+                [
+                  "M",
+                  "María González",
+                  text("¿Puedo agendar una visita?", "Can I book a visit?"),
+                ],
+                [
+                  "S",
+                  "Santiago Pérez",
+                  text(
+                    "Gracias por la información",
+                    "Thanks for the information",
+                  ),
+                ],
+                [
+                  "A",
+                  "Ana Torres",
+                  text("Quiero saber más", "I'd like to learn more"),
+                ],
+              ].map(([initial, name, message], i) => (
+                <div key={name} className={i === 0 ? "selected" : ""}>
+                  <b>{initial}</b>
+                  <span>
+                    {name}
+                    <small>{message}</small>
+                  </span>
+                  <time>12:4{i}</time>
+                </div>
+              ))}
+            </div>
+            <div className="cy-chat">
+              <header>
+                <span>
+                  <b>María González</b>
+                  <small>
+                    WhatsApp ·{" "}
+                    {text("Atendido por tu agente", "Handled by your agent")}
+                  </small>
+                </span>
+                <Bot size={16} />
+              </header>
+              <p className="cy-message cy-message-user">
+                {text(
+                  "Hola, ¿puedo agendar una visita para mañana?",
+                  "Hi, can I book a visit for tomorrow?",
+                )}
+              </p>
+              <p className="cy-message">
+                {text(
+                  "¡Hola María! Te ayudo a revisar las opciones. ¿Qué horario te acomoda?",
+                  "Hi María! I can help you explore the options. What time works for you?",
+                )}
+              </p>
+              <small className="cy-chat-source">
+                <Database size={11} />
+                {text(
+                  "Respuesta con contexto de tu negocio",
+                  "A reply with your business context",
+                )}
+              </small>
+              <div className="cy-fake-composer">
+                {text(
+                  "Tu equipo puede tomar el control…",
+                  "Your team can take over…",
+                )}
+                <ArrowRight size={15} />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+function MiniVisual({ type }: { type: number }) {
+  return (
+    <div className={`cy-mini cy-mini-${type}`} aria-hidden="true">
+      {type === 0 ? (
+        <>
+          <div className="cy-mini-list">
+            <span>
+              <i /> AGENT / 01 <b>READY</b>
+            </span>
+            <span>
+              <i /> AGENT / 02 <b>READY</b>
+            </span>
+            <span>
+              <i /> AGENT / 03 <b>READY</b>
+            </span>
+          </div>
+        </>
+      ) : type === 1 ? (
+        <div className="cy-mini-stack">
+          <span>DOCUMENTS</span>
+          <span>CONTEXT</span>
+          <span>
+            ANSWER <Sparkles size={12} />
+          </span>
+        </div>
+      ) : type === 2 ? (
+        <div className="cy-mini-flow">
+          <Code2 />
+          <span />
+          <Bot />
+          <span />
+          <Check />
+        </div>
+      ) : (
+        <div className="cy-pixel-grid">
+          {Array.from({ length: 32 }, (_, i) => (
+            <i key={i} style={{ opacity: (((i * 7) % 11) + 1) / 12 }} />
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
 export default function WelcomePage() {
-  const t = useT();
   const { lang } = useLanguage();
+  const t = useT();
+  const es = lang === "es";
+  const text = (a: string, b: string) => (es ? a : b);
+  const [menuOpen, setMenuOpen] = useState(false);
   const appUrl = (
     process.env.NEXT_PUBLIC_APP_URL || "https://app.voysse.cl"
   ).replace(/\/$/, "");
-  const features = [
-    { key: "agents", icon: Bot },
-    { key: "knowledge", icon: Layers },
-    { key: "tools", icon: Wrench },
-    { key: "channels", icon: Radio },
+  const nav = [
+    [
+      text("Producto", "Product"),
+      [
+        ["#features", text("Agentes y conocimiento", "Agents & knowledge")],
+        ["#channels", text("Canales", "Channels")],
+      ],
+    ],
+    [
+      text("Soluciones", "Solutions"),
+      [
+        ["#workspace", text("Para agencias", "For agencies")],
+        ["#control", text("Control y privacidad", "Control & privacy")],
+      ],
+    ],
+    [
+      text("Recursos", "Resources"),
+      [
+        [docs, text("Documentación", "Documentation")],
+        [github, "GitHub"],
+        ["#faq", text("Preguntas frecuentes", "FAQ")],
+      ],
+    ],
   ] as const;
   return (
-    <div className="rivr-landing">
-      <a href="#main-content" className="rivr-skip">
-        {lang === "es" ? "Ir al contenido" : "Skip to content"}
+    <div className="cy-landing">
+      <a href="#main-content" className="cy-skip">
+        {text("Ir al contenido", "Skip to content")}
       </a>
-      <main id="main-content">
-        <section className="rivr-hero rivr-frame" id="top">
-          <Scene variant="hero" />
-          <nav
-            className="rivr-nav"
-            aria-label={
-              lang === "es" ? "Navegación principal" : "Main navigation"
-            }
-          >
-            <a href="#top" aria-label="Voysse">
-              <OpenvoissBrand showName size={30} />
-            </a>
-            <div className="rivr-nav-links">
-              <a href="#features">{t("welcome.nav.features")}</a>
-              <a href="#channels">{t("welcome.nav.channels")}</a>
-              <a href="#pricing">{t("welcome.nav.pricing")}</a>
-              <a href={docs}>{t("welcome.nav.docs")}</a>
-            </div>
-            <div className="rivr-nav-actions">
-              <LanguageSwitcher />
-
-              <Pill href={`${appUrl}/login`}>
-                {t("welcome.nav.getStarted")}
-              </Pill>
-            </div>
-          </nav>
-          <div className="rivr-mobile-links">
-            <a href="#features">{t("welcome.nav.features")}</a>
-            <a href="#pricing">{t("welcome.nav.pricing")}</a>
-            <a href={docs}>{t("welcome.nav.docs")}</a>
-          </div>
-          <div className="rivr-hero-copy">
-            <span className="rivr-eyebrow">
-              <Sparkles size={15} />
-              {t("welcome.hero.eyebrow")}
-            </span>
-            <h1>
-              {t("welcome.hero.titleLine1")}
-              <br />
-              {t("welcome.hero.titleLine2")}
-            </h1>
-            <p>
-              {lang === "es"
-                ? "Crea agentes de IA, conecta tus canales y dale a cada cliente su propio espacio. Toda tu agencia, en un solo lugar."
-                : "Build AI agents, connect your channels, and give every client a space of their own. Your entire agency, in one place."}
-            </p>
-          </div>
-          <div className="rivr-glass-note">
-            <div className="rivr-bloub-note">
-              <BloubAvatar size={64} mood="idle" />
-              <strong>Voxy</strong>
-            </div>
-            <small>
-              {lang === "es" ? "Tu compañero de IA" : "Your AI companion"}
-            </small>
-            <a href={github}>
-              <span>
-                <ArrowUpRight size={16} />
-              </span>
-              GitHub
-            </a>
-          </div>
-          <a className="rivr-doc-notch" href={docs}>
-            <span>
-              <BookOpen size={22} />
-            </span>
-            <div>
-              <strong>{t("welcome.hero.readDocs")}</strong>
-              <small>
-                {t("welcome.footer.quickstart")} <ArrowUpRight size={13} />
-              </small>
-            </div>
-          </a>
-        </section>
-
-        <section
-          className="rivr-facts rivr-section"
-          aria-label={t("welcome.features.eyebrow")}
+      <header className="cy-nav-shell">
+        <nav
+          className="cy-nav"
+          aria-label={text("Navegación principal", "Main navigation")}
         >
-          {[
-            ["01", t("welcome.ops.whitelabel.title")],
-            ["02", "WhatsApp + Web"],
-            ["03", "OpenAI · Anthropic"],
-            ["FSL", t("welcome.trust.selfhost")],
-          ].map(([value, label]) => (
-            <div key={value}>
-              <strong>{value}</strong>
-              <span>{label}</span>
-            </div>
-          ))}
-        </section>
-
-        <section className="rivr-section" id="features">
-          <div className="rivr-section-head">
-            <h2>{t("welcome.features.title")}</h2>
-            <Pill href={`${appUrl}/login`}>{t("welcome.nav.getStarted")}</Pill>
-          </div>
-          <div className="rivr-bento">
-            {features.map(({ key, icon: Icon }, i) => (
-              <article className={`rivr-feature rivr-feature-${i}`} key={key}>
-                <span className="rivr-icon">
-                  <Icon size={24} />
-                </span>
-                {i === 0 && (
-                  <div className="rivr-bloub-feature">
-                    <BloubAvatar size={180} seed="agents" mood="listening" />
-                  </div>
-                )}
-                <div>
-                  <h3>{t(`welcome.panels.${key}.title`)}</h3>
-                  <p>{t(`welcome.panels.${key}.body`)}</p>
+          <a className="cy-brand" href="#top" aria-label="Voysse">
+            <OpenvoissBrand showName size={27} />
+          </a>
+          <div className={`cy-nav-links${menuOpen ? " is-open" : ""}`}>
+            {nav.map(([label, links]) => (
+              <details key={label} name="primary-navigation">
+                <summary>
+                  {label}
+                  <ChevronDown size={12} />
+                </summary>
+                <div className="cy-nav-dropdown">
+                  {links.map(([href, name]) => (
+                    <a
+                      key={href}
+                      href={href}
+                      onClick={(event) => {
+                        event.currentTarget
+                          .closest("details")
+                          ?.removeAttribute("open");
+                        setMenuOpen(false);
+                      }}
+                    >
+                      {name}
+                      <ArrowUpRight size={13} />
+                    </a>
+                  ))}
                 </div>
+              </details>
+            ))}
+            <a href="#pricing" onClick={() => setMenuOpen(false)}>
+              {text("Planes", "Plans")}
+            </a>
+          </div>
+          <div className="cy-nav-right">
+            <a className="cy-github" href={github}>
+              <Github size={15} /> GitHub
+            </a>
+            <LanguageSwitcher />
+            <Action href={`${appUrl}/login`}>
+              {text("Entrar", "Get started")}
+            </Action>
+            <button
+              className="cy-menu-toggle"
+              aria-expanded={menuOpen}
+              aria-label={text("Abrir menú", "Open menu")}
+              onClick={() => setMenuOpen(!menuOpen)}
+            >
+              {menuOpen ? <X size={19} /> : <Menu size={19} />}
+            </button>
+          </div>
+        </nav>
+      </header>
+      <main id="main-content">
+        <div className="cy-stripe" />
+        <section className="cy-hero cy-frame" id="top">
+          <span className="cy-tag cy-tag-solid">
+            <i />
+            {text(
+              "UNA PLATAFORMA. TODA TU AGENCIA.",
+              "ONE PLATFORM. YOUR ENTIRE AGENCY.",
+            )}
+          </span>
+          <h1>
+            {text("Tu agencia, conectada.", "Your agency, connected.")}
+            <br />
+            {text("Tus agentes, con IA.", "Your agents, with AI.")}
+          </h1>
+          <p>
+            {text(
+              "Crea agentes de IA, conecta tus canales y dale a cada cliente su propio espacio. Menos tareas repetitivas. Más conversaciones que importan.",
+              "Build AI agents, connect your channels, and give every client a space of their own. Less repetitive work. More conversations that matter.",
+            )}
+          </p>
+          <div className="cy-actions">
+            <Action href={`${appUrl}/login`}>
+              {text("Abrir Voysse", "Open Voysse")}
+            </Action>
+            <Action href={docs} secondary>
+              {text("Ver documentación", "Read the docs")}
+            </Action>
+          </div>
+        </section>
+        <div className="cy-stripe" />
+        <div className="cy-frame">
+          <ProductPreview es={es} />
+          <div className="cy-provider-strip">
+            <small>
+              {text("TU STACK. TUS CLAVES.", "YOUR STACK. YOUR KEYS.")}
+            </small>
+            <span>OpenAI</span>
+            <span>Anthropic</span>
+            <span>Google</span>
+            <span>Ollama</span>
+            <span>OpenRouter</span>
+          </div>
+        </div>
+        <Section
+          id="overview"
+          number="01"
+          name={text("PLATAFORMA", "PLATFORM")}
+          badge={text("DISEÑADA PARA AGENCIAS", "BUILT FOR AGENCIES")}
+          title={
+            <>
+              {text("Más control.", "More control.")}
+              <br />
+              {text("Menos herramientas sueltas.", "Fewer disconnected tools.")}
+            </>
+          }
+          description={text(
+            "Un espacio para operar tus agentes, el conocimiento de tus clientes y las conversaciones de tu equipo.",
+            "One space for your agents, your clients’ knowledge, and your team’s conversations.",
+          )}
+        >
+          <div className="cy-facts">
+            {[
+              [
+                "01",
+                text("ESPACIO POR CLIENTE", "SPACE PER CLIENT"),
+                text(
+                  "Organiza agentes, canales y conocimiento sin mezclar operaciones.",
+                  "Organize agents, channels and knowledge without mixing operations.",
+                ),
+              ],
+              [
+                "BYOK",
+                text("TUS MODELOS, TUS CLAVES", "YOUR MODELS, YOUR KEYS"),
+                text(
+                  "Conecta tus proveedores de IA y mantén el control de tu consumo.",
+                  "Connect AI providers and keep control of your usage.",
+                ),
+              ],
+              [
+                "AI + H",
+                text("IA Y EQUIPO HUMANO", "AI AND HUMAN TEAM"),
+                text(
+                  "Toma el control de la conversación cuando haga falta.",
+                  "Take over a conversation whenever you need to.",
+                ),
+              ],
+              [
+                "FSL",
+                text("CÓDIGO DISPONIBLE", "SOURCE AVAILABLE"),
+                text(
+                  "Despliega en tu infraestructura bajo licencia FSL-1.1-MIT.",
+                  "Deploy on your infrastructure under the FSL-1.1-MIT license.",
+                ),
+              ],
+            ].map(([n, label, body]) => (
+              <article key={n}>
+                <strong>{n}</strong>
+                <h3>{label}</h3>
+                <p>{body}</p>
               </article>
             ))}
           </div>
-        </section>
-
-        <section className="rivr-section" id="channels">
-          <div className="rivr-section-head">
-            <div>
-              <span className="rivr-kicker">{t("welcome.ops.eyebrow")}</span>
-              <h2>{t("welcome.ops.title")}</h2>
-            </div>
+        </Section>
+        <Section
+          id="features"
+          number="02"
+          name={text("FUNCIONALIDADES", "CORE FEATURES")}
+          badge={text("ASÍ FUNCIONA", "HOW IT WORKS")}
+          title={
+            <>
+              {text("De una conversación", "From a conversation")}
+              <br />
+              {text("a una mejor operación.", "to a better operation.")}
+            </>
+          }
+          description={text(
+            "Agentes que conocen tu negocio, herramientas que conectan tus procesos y un equipo que conserva el control.",
+            "Agents that know your business, tools that connect your processes, and a team that stays in control.",
+          )}
+        >
+          <div className="cy-feature-grid">
+            {(["agents", "knowledge", "tools", "channels"] as const).map(
+              (key, i) => (
+                <article key={key}>
+                  <MiniVisual type={i} />
+                  <h3>{t(`welcome.panels.${key}.title`)}</h3>
+                  <p>{t(`welcome.panels.${key}.body`)}</p>
+                </article>
+              ),
+            )}
           </div>
-          <div className="rivr-three">
-            {(
+        </Section>
+        <Section
+          id="channels"
+          number="03"
+          name={text("CANALES Y MODELOS", "CHANNELS & MODELS")}
+          badge={text("CONECTA TU OPERACIÓN", "CONNECT YOUR OPERATION")}
+          title={
+            <>
+              {text("Donde están tus clientes.", "Where your customers are.")}
+              <br />
+              {text("Con tus propias reglas.", "On your own terms.")}
+            </>
+          }
+          description={text(
+            "Conecta tu stack sin perder de vista qué está disponible y qué requiere configuración.",
+            "Connect your stack with a clear view of what is available and what needs setup.",
+          )}
+        >
+          <div className="cy-integrations">
+            {[
               [
-                { key: "inbox", icon: MessageSquare },
-                { key: "portals", icon: ShieldCheck },
-                { key: "whitelabel", icon: Layers },
-              ] as const
-            ).map(({ key, icon: Icon }) => (
-              <article className="rivr-feature" key={key}>
-                <span className="rivr-icon">
-                  <Icon size={22} />
+                MessageSquare,
+                "Web chat",
+                text("Widget embebible", "Embeddable widget"),
+              ],
+              [Radio, "WhatsApp", text("Cloud API / QR", "Cloud API / QR")],
+              [
+                MessageSquare,
+                "Instagram",
+                text("Configuración manual · beta", "Manual setup · beta"),
+              ],
+              [
+                MessageSquare,
+                "Messenger",
+                text("Configuración manual · beta", "Manual setup · beta"),
+              ],
+              [Sparkles, "OpenAI", "BYOK"],
+              [Bot, "Anthropic", "BYOK"],
+              [Code2, "Ollama", text("Modelos locales", "Local models")],
+              [Workflow, "OpenRouter", "BYOK"],
+            ].map(([Icon, label, status]) => {
+              const I = Icon as typeof Bot;
+              return (
+                <div key={String(label)}>
+                  <I size={27} />
+                  <strong>{String(label)}</strong>
+                  <small>{String(status)}</small>
+                </div>
+              );
+            })}
+          </div>
+          <div className="cy-section-foot">
+            <p>
+              {text(
+                "Meta requiere cuentas, permisos y validación del proveedor. No todos los canales tienen el mismo alcance.",
+                "Meta requires accounts, permissions and provider validation. Channel capabilities differ.",
+              )}
+            </p>
+            <a href={`${docs}/whatsapp`}>
+              {text("Explorar canales", "Explore channels")}
+              <ArrowRight size={15} />
+            </a>
+          </div>
+        </Section>
+        <Section
+          id="workspace"
+          number="04"
+          name="WORKSPACE"
+          badge={text("TU EQUIPO, CONECTADO", "YOUR TEAM, CONNECTED")}
+          title={
+            <>
+              {text("Hecho para agencias.", "Made for agencies.")}
+              <br />
+              {text("Pensado para personas.", "Built around people.")}
+            </>
+          }
+        >
+          <div className="cy-work-grid">
+            <article>
+              <span className="cy-card-label">01 / INBOX</span>
+              <h3>{t("welcome.ops.inbox.title")}</h3>
+              <p>{t("welcome.ops.inbox.body")}</p>
+              <div className="cy-inbox-mini">
+                <span>
+                  <i /> {text("Nueva conversación", "New conversation")}{" "}
+                  <b>AI</b>
+                </span>
+                <span>
+                  <i />
+                  {text("Requiere revisión", "Needs review")}
+                  <b>HUMAN</b>
+                </span>
+                <span>
+                  <i />
+                  {text("Respuesta confirmada", "Reply confirmed")}
+                  <Check size={13} />
+                </span>
+              </div>
+            </article>
+            <article>
+              <div className="cy-voxy-card">
+                <BloubAvatar
+                  size={100}
+                  seed="cypon-voxy"
+                  color="#5135ff"
+                  paper="#f4f4f5"
+                  mood="listening"
+                />
+                <span>
+                  Voxy
+                  <small>
+                    {text("Tu compañero de IA", "Your AI companion")}
+                  </small>
+                </span>
+              </div>
+              <h3>
+                {text(
+                  "Tecnología que te acompaña.",
+                  "Technology that stays with you.",
+                )}
+              </h3>
+              <p>
+                {text(
+                  "Una presencia familiar mientras configuras agentes y das forma a tu operación.",
+                  "A familiar presence while you configure agents and shape your operation.",
+                )}
+              </p>
+            </article>
+            {(["portals", "whitelabel"] as const).map((key, i) => (
+              <article key={key}>
+                <span className="cy-card-label">
+                  0{i + 3} / {key.toUpperCase()}
                 </span>
                 <h3>{t(`welcome.ops.${key}.title`)}</h3>
                 <p>{t(`welcome.ops.${key}.body`)}</p>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        <section className="rivr-section rivr-stack" id="open-source">
-          <div>
-            <span className="rivr-kicker">{t("welcome.stack.eyebrow")}</span>
-            <h2>{t("welcome.stack.title")}</h2>
-            <p>{t("welcome.stack.body")}</p>
-            <Pill href={`${docs}/self-hosting`}>
-              {t("welcome.stack.guideBtn")}
-            </Pill>
-          </div>
-          <div className="rivr-steps">
-            {([1, 2, 3] as const).map((i) => (
-              <article key={i}>
-                <span>0{i}</span>
-                <div>
-                  <h3>{t(`welcome.stack.step${i}.title`)}</h3>
-                  <p>{t(`welcome.stack.step${i}.body`)}</p>
+                <div className="cy-label-row">
+                  {(i
+                    ? ["BRAND", "CLIENT", "WORKSPACE"]
+                    : ["ADMIN", "OPERATOR", "PORTAL"]
+                  ).map((x) => (
+                    <span key={x}>
+                      {x}
+                      <Check size={12} />
+                    </span>
+                  ))}
                 </div>
               </article>
             ))}
           </div>
-        </section>
-
-        <section className="rivr-section" id="pricing">
-          <div className="rivr-section-head">
+        </Section>
+        <Section
+          id="control"
+          number="05"
+          name={text("CONTROL", "CONTROL")}
+          badge={text("SIN CAJAS NEGRAS", "NO BLACK BOXES")}
+          title={
+            <>
+              {text("Tus datos. Tu contexto.", "Your data. Your context.")}
+              <br />
+              {text("Tu forma de trabajar.", "Your way of working.")}
+            </>
+          }
+        >
+          <div className="cy-comparison">
             <div>
-              <span className="rivr-kicker">{t("welcome.plans.eyebrow")}</span>
-              <h2>{t("welcome.plans.title")}</h2>
+              <header>
+                {text("Herramientas desconectadas", "Disconnected tools")}
+              </header>
+              {[
+                text("Conversaciones repartidas", "Scattered conversations"),
+                text(
+                  "Configuración repetida por cliente",
+                  "Repeated setup per client",
+                ),
+                text("Respuestas sin contexto", "Replies without context"),
+                text("Errores sin seguimiento", "Errors without follow-up"),
+              ].map((x) => (
+                <p key={x}>
+                  <span>—</span>
+                  {x}
+                </p>
+              ))}
+            </div>
+            <div>
+              <header>
+                <OpenvoissBrand size={20} showName />
+              </header>
+              {[
+                text("Inbox para tu operación", "An inbox for your operation"),
+                text(
+                  "Espacios y agentes por cliente",
+                  "Client workspaces and agents",
+                ),
+                text(
+                  "Conocimiento conectado a tus agentes",
+                  "Knowledge connected to your agents",
+                ),
+                text(
+                  "Intentos y estados de envío visibles",
+                  "Visible attempts and send states",
+                ),
+              ].map((x) => (
+                <p key={x}>
+                  <Check size={15} />
+                  {x}
+                </p>
+              ))}
             </div>
           </div>
-          <div className="rivr-three">
+        </Section>
+        <Section
+          id="pricing"
+          number="06"
+          name={text("PLANES", "PRICING")}
+          badge={text("EMPIEZA A TU MANERA", "START YOUR WAY")}
+          title={
+            <>
+              {text("Tu siguiente etapa,", "Your next stage,")}
+              <br />
+              {text(
+                "sin cambiar de plataforma.",
+                "without changing platforms.",
+              )}
+            </>
+          }
+        >
+          <div className="cy-plans">
             {(["selfhost", "cloud", "enterprise"] as const).map((plan) => (
               <article
-                className={`rivr-plan ${plan === "cloud" ? "rivr-plan-featured" : ""}`}
                 key={plan}
+                className={plan === "cloud" ? "cy-plan-featured" : ""}
               >
-                <span className="rivr-kicker">
+                <span className="cy-card-label">
                   {t(`welcome.plans.${plan}.tag`)}
                 </span>
                 <h3>{t(`welcome.plans.${plan}.title`)}</h3>
-                <strong className="rivr-price">
+                <p>{t(`welcome.plans.${plan}.desc`)}</p>
+                <strong className="cy-price">
                   {t(`welcome.plans.${plan}.price`)}
                 </strong>
-                <p>{t(`welcome.plans.${plan}.desc`)}</p>
-                <ul>
-                  {([1, 2, 3, 4] as const).map((i) => (
-                    <li key={i}>
-                      <Check size={16} />
-                      {t(`welcome.plans.${plan}.p${i}`)}
-                    </li>
-                  ))}
-                </ul>
                 {plan === "cloud" ? (
-                  <CloudInterestDialog triggerClassName="rivr-cloud-button" />
+                  <CloudInterestDialog triggerClassName="cy-action cy-cloud-trigger" />
                 ) : (
-                  <Pill
+                  <Action
                     href={
                       plan === "selfhost"
                         ? `${docs}/getting-started`
                         : "mailto:ventas@voysse.cl"
                     }
+                    secondary
                   >
                     {t(`welcome.plans.${plan}.cta`)}
-                  </Pill>
+                  </Action>
                 )}
+                <ul>
+                  {([1, 2, 3, 4] as const).map((i) => (
+                    <li key={i}>
+                      <Check size={14} />
+                      {t(`welcome.plans.${plan}.p${i}`)}
+                    </li>
+                  ))}
+                </ul>
               </article>
             ))}
           </div>
-        </section>
-
-        <section className="rivr-section" id="roadmap">
-          <div className="rivr-section-head">
-            <div>
-              <span className="rivr-kicker">
-                {t("welcome.roadmap.eyebrow")}
-              </span>
-              <h2>{t("welcome.roadmap.title")}</h2>
-              <p>{t("welcome.roadmap.sub")}</p>
-            </div>
-            <Pill href={`${docs}/roadmap`}>{t("welcome.roadmap.cta")}</Pill>
-          </div>
-          <div className="rivr-roadmap">
-            {(["channels", "voice", "ops", "platform"] as const).map((key) => (
-              <article className="rivr-feature" key={key}>
-                <h3>{t(`welcome.roadmap.${key}.title`)}</h3>
-                <p>{t(`welcome.roadmap.${key}.desc`)}</p>
-              </article>
+        </Section>
+        <Section
+          id="faq"
+          number="07"
+          name="FAQ"
+          badge={text("ANTES DE EMPEZAR", "BEFORE YOU START")}
+          title={
+            <>
+              {text("Buenas preguntas.", "Good questions.")}
+              <br />
+              {text("Respuestas claras.", "Clear answers.")}
+            </>
+          }
+        >
+          <div className="cy-faq">
+            {([1, 2, 3, 4, 5] as const).map((i) => (
+              <details key={i}>
+                <summary>
+                  {t(`welcome.faq.q${i}`)}
+                  <span aria-hidden="true">+</span>
+                </summary>
+                <p>{t(`welcome.faq.a${i}`)}</p>
+              </details>
             ))}
           </div>
-        </section>
-
-        <section className="rivr-section rivr-faq" id="faq">
-          <span className="rivr-kicker">{t("welcome.faq.eyebrow")}</span>
-          <h2>{t("welcome.faq.title")}</h2>
-          {([1, 2, 3, 4, 5] as const).map((i) => (
-            <details key={i}>
-              <summary>
-                {t(`welcome.faq.q${i}`)}
-                <span aria-hidden="true">+</span>
-              </summary>
-              <p>{t(`welcome.faq.a${i}`)}</p>
-            </details>
-          ))}
-        </section>
-
-        <section className="rivr-cta rivr-frame">
-          <Scene variant="cta" />
-          <div className="rivr-cta-copy">
-            <div className="rivr-bloub-cta">
-              <BloubAvatar
-                size={88}
-                mood="success"
-                color="#e6efff"
-                paper="#20365b"
-              />
-            </div>
-            <h2>{t("welcome.cta.title")}</h2>
-            <p>{t("welcome.cta.body")}</p>
-            <div>
-              <Pill href={`${appUrl}/login`} light>
-                {t("welcome.nav.getStarted")}
-              </Pill>
-              <a className="rivr-cta-docs" href={docs}>
-                {t("welcome.hero.readDocs")}
-              </a>
-            </div>
+        </Section>
+        <section className="cy-cta cy-frame cy-corners">
+          <span className="cy-tag">
+            <i /> {text("TU PRÓXIMO PASO", "YOUR NEXT STEP")}
+          </span>
+          <h2>
+            {text("Menos fricción.", "Less friction.")}
+            <br />
+            {text("Más posibilidades.", "More possibilities.")}
+          </h2>
+          <p>
+            {text(
+              "Dale a tu agencia un espacio para crecer con IA.",
+              "Give your agency a space to grow with AI.",
+            )}
+          </p>
+          <div className="cy-actions">
+            <Action href={`${appUrl}/login`}>
+              {text("Abrir Voysse", "Open Voysse")}
+            </Action>
+            <Action href={docs} secondary>
+              {text("Ver documentación", "Read the docs")}
+            </Action>
           </div>
+          <div className="cy-dot-wave" aria-hidden="true" />
         </section>
       </main>
-      <footer className="rivr-footer rivr-section">
+      <footer className="cy-footer cy-frame">
         <div>
-          <OpenvoissBrand showName size={30} />
+          <OpenvoissBrand size={28} showName />
           <p>{t("welcome.footer.blurb")}</p>
+          <a href={github}>
+            <Github size={17} /> GitHub <ArrowUpRight size={13} />
+          </a>
         </div>
-        <nav aria-label={lang === "es" ? "Pie de página" : "Footer"}>
-          <div>
-            <strong>{t("welcome.footer.colProduct")}</strong>
-            <a href="#features">{t("welcome.nav.features")}</a>
-            <a href="#pricing">{t("welcome.nav.pricing")}</a>
-            <a href="#open-source">{t("welcome.nav.selfhost")}</a>
-          </div>
-          <div>
-            <strong>{t("welcome.footer.colResources")}</strong>
-            <a href={docs}>{t("welcome.footer.docs")}</a>
-            <a href={`${docs}/roadmap`}>{t("welcome.nav.roadmap")}</a>
-            <a href="#faq">{t("welcome.nav.faq")}</a>
-          </div>
-          <div>
-            <strong>{t("welcome.footer.colProject")}</strong>
-            <a href={github}>GitHub</a>
-            <a href="/privacy">{t("welcome.footer.privacy")}</a>
-            <a href="/terms">{t("welcome.footer.terms")}</a>
-          </div>
-        </nav>
-        <small>{t("welcome.footer.license")}</small>
+        <div>
+          <strong>{text("PRODUCTO", "PRODUCT")}</strong>
+          <a href="#features">{t("welcome.nav.features")}</a>
+          <a href="#channels">{t("welcome.nav.channels")}</a>
+          <a href="#pricing">{t("welcome.nav.pricing")}</a>
+        </div>
+        <div>
+          <strong>{text("RECURSOS", "RESOURCES")}</strong>
+          <a href={docs}>{t("welcome.footer.docs")}</a>
+          <a href={`${docs}/roadmap`}>Roadmap</a>
+          <a href="#faq">FAQ</a>
+        </div>
+        <div>
+          <strong>{text("PROYECTO", "PROJECT")}</strong>
+          <a href="/privacy">{t("welcome.footer.privacy")}</a>
+          <a href="/terms">{t("welcome.footer.terms")}</a>
+          <a href="mailto:ventas@voysse.cl">{text("Contacto", "Contact")}</a>
+        </div>
+        <div className="cy-footer-bottom">
+          <span>{t("welcome.footer.license")}</span>
+          <span>
+            <i className="cy-live-dot" /> SOURCE AVAILABLE / BUILT FOR AGENCIES
+          </span>
+        </div>
       </footer>
     </div>
   );
