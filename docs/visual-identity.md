@@ -94,3 +94,19 @@ métricas de ejemplo), logo compacto, controles rectangulares y selector de idio
 Los mismos endpoints, validaciones y pantalla de aprobación pendiente permanecen.
 Autocompletado distingue contraseña actual/nueva. Revertir `app/login/page.tsx`
 restaura la composición anterior sin cambios de backend.
+
+### Campos visibles sin interacción
+
+Input, Textarea y Select usan borde permanente `--input: #85858f`, también en
+modo oscuro; no dependen del hover. El foco mantiene su anillo y el hover no
+sobrescribe errores. Marketing comparte la corrección de Input. Los campos
+compuestos que declaran `border-0` conservan el borde de su contenedor.
+La prueba social cubre reposo, foco, error+hover y claro/oscuro.
+
+### Catálogo de canales consistente
+
+La pestaña de canales del cliente enlaza a las configuraciones ya implementadas
+igual que el catálogo general. Webchat está disponible; Instagram y Messenger
+indican configuración manual en validación, con credenciales/permisos propios y
+OAuth guiado pendiente. No se representan como funciones terminadas ni conectadas
+sin verificar su conexión real. Prueba social cubre ambas entradas y móvil.

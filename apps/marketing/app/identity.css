@@ -35,7 +35,7 @@
   --accent: #eeebff;
   --accent-foreground: var(--brand-violet);
   --border: var(--brand-line);
-  --input: var(--brand-line);
+  --input: #85858f;
   --ring: var(--brand-violet);
   --radius: 0.125rem;
 }

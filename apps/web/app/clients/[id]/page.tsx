@@ -85,16 +85,15 @@ export default function ClientDetailPage() {
         <CardContent className="mt-auto flex justify-end pt-1"><Button className="w-full sm:w-auto" variant="secondary" render={<Link href={`/clients/${client.id}/channels/whatsapp`} />}>{t("clients.detail.configure")} <ArrowRight size={15} /></Button></CardContent>
       </Card>
       {[
-        { name: "Instagram", icon: Instagram },
-        { name: "Facebook Messenger", icon: Facebook },
-        { name: "Webchat", icon: Globe2 },
-      ].map(({ name, icon: Icon }) => <Card className="h-full bg-muted/20" key={name}>
+        { name: "Instagram", icon: Instagram, route: "social/instagram", web: false },
+        { name: "Facebook Messenger", icon: Facebook, route: "social/messenger", web: false },
+        { name: "Webchat", icon: Globe2, route: "webchat", web: true },
+      ].map(({ name, icon: Icon, route, web }) => <Card className="h-full" key={name}>
         <CardHeader className="flex flex-row items-start gap-3">
           <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground"><Icon size={21} /></span>
-          <div className="min-w-0 flex-1"><CardTitle>{name}</CardTitle><CardDescription className="mt-1 leading-relaxed">{t("clients.detail.comingSoon")}</CardDescription></div>
-          <Badge variant="outline" className="text-muted-foreground">{t("clients.detail.comingSoon")}</Badge>
+          <div className="min-w-0 flex-1"><CardTitle>{name}</CardTitle><Badge variant="outline" className="mt-2 max-w-full whitespace-normal text-muted-foreground">{t(web ? "channels.future.webchatStatus" : "channels.future.manualStatus")}</Badge><CardDescription className="mt-2 leading-relaxed">{t(web ? "channels.future.webchat.description" : "channels.future.manualHint")}</CardDescription></div>
         </CardHeader>
-        <CardContent className="mt-auto flex justify-end pt-1"><Button className="w-full sm:w-auto" type="button" variant="secondary" disabled>{t("clients.detail.connect")}</Button></CardContent>
+        <CardContent className="mt-auto flex justify-end pt-1"><Button className="w-full sm:w-auto" variant="secondary" render={<Link href={`/clients/${client.id}/channels/${route}`} />}>{t("clients.detail.configure")} <ArrowRight size={15} /></Button></CardContent>
       </Card>)}
     </section>}
 

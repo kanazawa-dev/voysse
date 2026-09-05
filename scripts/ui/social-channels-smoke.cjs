@@ -67,7 +67,94 @@ const base = process.env.WEB_URL || "http://localhost:3101";
       }
       await route.fulfill({ json: data });
     });
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.goto(base + "/clients/client-1");
+    await page.locator("#client-detail-name").waitFor();
+    for (const selector of [
+      "#client-detail-name",
+      "#client-detail-description",
+    ]) {
+      const field = page.locator(selector);
+      for (const dark of [false, true]) {
+        await page.evaluate(
+          (dark) => document.documentElement.classList.toggle("dark", dark),
+          dark,
+        );
+        await page.mouse.move(0, 0);
+        await field.evaluate((e) => e.blur());
+        const rest = await field.evaluate((e) => ({
+          border: getComputedStyle(e).borderColor,
+          width: getComputedStyle(e).borderWidth,
+        }));
+        assert.equal(rest.border, "rgb(133, 133, 143)");
+        assert.equal(rest.width, "1px");
+        await field.focus();
+        assert.notEqual(
+          await field.evaluate((e) => getComputedStyle(e).boxShadow),
+          "none",
+        );
+        await field.evaluate((e) => {
+          e.blur();
+          e.setAttribute("aria-invalid", "true");
+        });
+        const invalid = await field.evaluate(
+          (e) => getComputedStyle(e).borderColor,
+        );
+        await field.hover();
+        assert.equal(
+          await field.evaluate((e) => getComputedStyle(e).borderColor),
+          invalid,
+        );
+        await field.evaluate((e) => e.removeAttribute("aria-invalid"));
+      }
+    }
+    await page.evaluate(() =>
+      document.documentElement.classList.remove("dark"),
+    );
+    await page.getByRole("tab", { name: "Channels", exact: true }).click();
+    assert.equal(
+      await page.getByText("Coming soon", { exact: true }).count(),
+      0,
+    );
+    for (const path of ["social/instagram", "social/messenger", "webchat"]) {
+      await page
+        .locator(`a[href="/clients/client-1/channels/${path}"]`)
+        .waitFor();
+    }
+    for (const width of [1440, 390, 320]) {
+      await page.setViewportSize({ width, height: 1000 });
+      assert(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= innerWidth,
+        ),
+      );
+    }
+    await page.evaluate(() => localStorage.setItem("openvoiss.lang", "es"));
+    await page.reload();
+    await page.getByRole("tab", { name: "Canales", exact: true }).click();
+    assert.equal(
+      await page.getByText("Próximamente", { exact: true }).count(),
+      0,
+    );
+    assert(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    );
+    await page.screenshot({
+      path: "/tmp/voysse-client-channels-es.png",
+      fullPage: true,
+    });
+    await page.evaluate(() => localStorage.setItem("openvoiss.lang", "en"));
+    await page.reload();
+    await page.setViewportSize({ width: 1440, height: 1000 });
     await page.goto(base + "/channels");
+    assert.equal(
+      await page
+        .locator("#channel-client")
+        .evaluate((e) => getComputedStyle(e).borderColor),
+      "rgb(133, 133, 143)",
+    );
     await page.locator("#channel-client").click();
     await page.getByRole("option", { name: "Test client" }).click();
     for (const route of ["social/instagram", "social/messenger", "webchat"]) {
