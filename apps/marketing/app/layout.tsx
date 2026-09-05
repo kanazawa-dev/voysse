@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "./identity.css";
 import { LanguageProvider } from "@/lib/i18n";
 
 

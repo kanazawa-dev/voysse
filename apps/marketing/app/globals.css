@@ -74,8 +74,8 @@
 }
 
 @theme inline {
-    --font-sans: "Helvetica Neue", Helvetica, Arial, sans-serif;
-    --font-heading: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    --font-sans: "Geist", Arial, sans-serif;
+    --font-heading: "Geist", Arial, sans-serif;
     --font-pixel: "Helvetica Neue", Helvetica, Arial, sans-serif;
     --color-sidebar-ring: var(--sidebar-ring);
     --color-sidebar-border: var(--sidebar-border);

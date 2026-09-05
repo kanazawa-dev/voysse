@@ -1,0 +1,44 @@
+/* Voysse visual foundation. Applies to marketing, legal pages and portalled UI. */
+@font-face {
+  font-family: Geist;
+  src: url("/fonts/geist-latin.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Geist Mono";
+  src: url("/fonts/geist-mono-latin.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+:root {
+  --brand-surface: #f4f4f5;
+  --brand-ink: #18181b;
+  --brand-violet: #5135ff;
+  --brand-line: #d4d4d8;
+  --brand-muted: #666670;
+  --brand-mono: "Geist Mono", monospace;
+  --background: var(--brand-surface);
+  --foreground: var(--brand-ink);
+  --primary: var(--brand-violet);
+  --primary-foreground: #fff;
+  --card: #fafafa;
+  --card-foreground: var(--brand-ink);
+  --popover: #fff;
+  --popover-foreground: var(--brand-ink);
+  --muted: #ededf0;
+  --muted-foreground: var(--brand-muted);
+  --secondary: #e6e6eb;
+  --secondary-foreground: var(--brand-ink);
+  --accent: #eeebff;
+  --accent-foreground: var(--brand-violet);
+  --border: var(--brand-line);
+  --input: var(--brand-line);
+  --ring: var(--brand-violet);
+  --radius: 0.125rem;
+}
+body {
+  font-family: Geist, Arial, sans-serif;
+}
