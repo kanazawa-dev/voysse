@@ -1,10 +1,15 @@
+from datetime import datetime, timezone
+from fastapi import BackgroundTasks
+from pydantic import BaseModel, EmailStr, Field, field_validator
+from ..services.password_recovery import recovery_configured, request_recovery, token_digest
+
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ..config import get_settings
 from ..database import get_db
-from ..deps import get_current_user
+from ..deps import get_inbox_user
 from ..models import Agency, User
 from ..ratelimit import login_rate_limit
 from ..schemas import LoginRequest, RegisterRequest, UserOut
@@ -19,7 +24,7 @@ def _set_session_cookie(response: Response, user: User) -> None:
     settings = get_settings()
     response.set_cookie(
         key="access_token",
-        value=create_access_token(str(user.id)),
+        value=create_access_token(str(user.id), user.session_version),
         httponly=True,
         secure=settings.cookie_secure,
         samesite=settings.cookie_samesite,
@@ -78,5 +83,53 @@ def logout(response: Response):
 
 
 @router.get("/me", response_model=UserOut)
-def me(user: User = Depends(get_current_user)):
+def me(user: User = Depends(get_inbox_user)):
     return user
+
+
+# Public recovery endpoints intentionally do not reveal account existence.
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str = Field(min_length=32, max_length=128)
+    password: str = Field(min_length=12, max_length=72)
+
+    @field_validator("password")
+    @classmethod
+    def bcrypt_byte_limit(cls, value: str) -> str:
+        if len(value.encode()) > 72:
+            raise ValueError("Password must be at most 72 UTF-8 bytes")
+        return value
+
+
+@router.post("/forgot-password", status_code=202, dependencies=[Depends(login_rate_limit)])
+def forgot_password(payload: ForgotPasswordRequest, tasks: BackgroundTasks, response: Response):
+    response.headers["Cache-Control"] = "no-store"
+    if not recovery_configured():
+        raise HTTPException(status_code=503, detail="Password recovery is not configured")
+    tasks.add_task(request_recovery, payload.email.lower())
+    return {"message": "If the account is eligible, a recovery email will be sent."}
+
+
+@router.post("/reset-password", status_code=204, dependencies=[Depends(login_rate_limit)])
+def reset_password(payload: ResetPasswordRequest, response: Response, db: Session = Depends(get_db)):
+    response.headers["Cache-Control"] = "no-store"
+    user = db.scalar(select(User).where(
+        User.reset_token_hash == token_digest(payload.token)
+    ).with_for_update())
+    if (
+        not user or not user.reset_expires_at
+        or user.reset_expires_at <= datetime.now(timezone.utc)
+        or not user.agency.is_active
+    ):
+        raise HTTPException(status_code=400, detail="Invalid or expired recovery link")
+    user.password_hash = hash_password(payload.password)
+    user.session_version += 1
+    user.reset_token_hash = None
+    user.reset_expires_at = None
+    db.commit()
+    response.delete_cookie("access_token", path="/")

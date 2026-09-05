@@ -1,12 +1,7 @@
 import type { Metadata } from "next";
-import { Geist_Mono, Geist_Pixel, IBM_Plex_Sans, Manrope } from "next/font/google";
 import "./globals.css";
 import { LanguageProvider } from "@/lib/i18n";
 
-const manrope = Manrope({ subsets: ["latin"], variable: "--font-sans" });
-const ibmPlexSansHeading = IBM_Plex_Sans({ subsets: ["latin"], variable: "--font-heading" });
-const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-mono" });
-const pixelSquare = Geist_Pixel({ subsets: ["latin"], weight: "400", variable: "--font-pixel" });
 
 export const metadata: Metadata = {
   title: "Voysse — Source-available AI agents for your agency",
@@ -18,7 +13,8 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html
       lang="en"
-      className={`${manrope.variable} ${ibmPlexSansHeading.variable} ${geistMono.variable} ${pixelSquare.variable} font-sans antialiased`}
+      dir="ltr"
+      className="font-sans antialiased"
     >
       <body>
         <LanguageProvider>{children}</LanguageProvider>

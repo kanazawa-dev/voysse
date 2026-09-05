@@ -6,7 +6,7 @@ import { ApiError, api } from "@/lib/api";
 import { useT } from "@/lib/i18n";
 import { AlertsBell } from "@/components/alerts-bell";
 import { AppSidebar } from "@/components/app-sidebar";
-import { OpenvoissBrand } from "@/components/openvoiss-brand";
+import { BloubAvatar } from "@/components/bloub-avatar";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -31,7 +31,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(pathname !== "/login");
   const [sidebarOpen, setSidebarOpen] = useState<boolean | null>(null);
-  const isLogin = pathname === "/login";
+  const isLogin = ["/login", "/forgot-password", "/reset-password", "/accept-invitation"].includes(pathname);
   const isPortal = pathname.startsWith("/portal/");
   const isWidget = pathname.startsWith("/widget/");
   // The admin panel is a separate Voysse-team-only auth system (its own
@@ -60,13 +60,18 @@ export function AppShell({ children }: { children: ReactNode }) {
     if (isBare) { setLoading(false); return; }
     setLoading(true);
     api<User>("/auth/me")
-      .then(setUser)
+      .then((current) => {
+        setUser(current);
+        if (current.role === "operator" && pathname !== "/inbox") router.replace("/inbox");
+      })
       .catch((err) => router.replace(err instanceof ApiError && err.message === "agency_pending_approval" ? "/login?pending=1" : "/login"))
       .finally(() => setLoading(false));
   }, [isBare, pathname, router]);
 
   if (isBare) return <>{children}</>;
-  if (loading || !user || sidebarOpen === null) return <div className="flex min-h-screen items-center justify-center gap-3 bg-background text-sm text-muted-foreground"><OpenvoissBrand decorative effect="benday" size={40} state="thinking" /><span>{t("shell.loading")}</span></div>;
+  if (loading || !user || sidebarOpen === null) return <div className="flex min-h-screen items-center justify-center gap-3 bg-background text-sm text-muted-foreground"><BloubAvatar size={64} mood="thinking" /><span>{t("shell.loading")}</span></div>;
+
+  if (user.role === "operator" && pathname !== "/inbox") return null;
 
   const currentSection = pathname === "/"
     ? "Dashboard"
@@ -79,8 +84,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <SidebarProvider open={sidebarOpen} onOpenChange={setSidebarOpen}>
       <AppSidebar user={user} />
-      <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+      <SidebarInset className="rivr-workspace">
+        <header className="mb-2 flex h-20 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
           <div className="flex items-center gap-2 px-4">
             <SidebarTrigger className="-ml-1" />
             <Separator orientation="vertical" className="mr-2 data-vertical:h-4 data-vertical:self-auto" />
@@ -90,9 +95,9 @@ export function AppShell({ children }: { children: ReactNode }) {
               </BreadcrumbList>
             </Breadcrumb>
           </div>
-          <div className="ml-auto px-4"><AlertsBell /></div>
+          <div className="ml-auto flex items-center gap-3 px-4">{user.role === "admin" && <AlertsBell />}</div>
         </header>
-        <main className="flex min-w-0 flex-1 flex-col gap-4 p-4 pt-0">{children}</main>
+        <main className="flex min-w-0 flex-1 flex-col gap-6 p-4 pt-0 sm:px-8 sm:pb-8">{children}</main>
       </SidebarInset>
     </SidebarProvider>
   );

@@ -5,7 +5,7 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from ..config import get_settings
-from ..models import Conversation, WhatsAppCloudChannel
+from ..models import Conversation, SocialChannel, WhatsAppCloudChannel
 from ..security import decrypt_secret
 from .whatsapp_cloud import send_text
 
@@ -39,6 +39,13 @@ async def bridge_command(method: str, path: str, payload: dict | None = None) ->
 async def send_channel_message(db: Session, conversation: Conversation, content: str) -> str | None:
     """Deliver an operator message through the conversation's channel. Returns
     the external message id, or None for channels without outbound delivery."""
+    if conversation.channel in ("instagram", "messenger"):
+        from .social import ensure_send_allowed, send_text as send_social_text
+        channel = db.get(SocialChannel, conversation.social_channel_id) if conversation.social_channel_id else None
+        if not channel or not conversation.external_chat_id:
+            raise HTTPException(409, "Social destination unavailable")
+        ensure_send_allowed(db, channel, conversation)
+        return await send_social_text(channel, conversation.external_chat_id, content)
     if conversation.channel == "whatsapp":
         if not conversation.whatsapp_channel_id or not conversation.external_chat_id:
             raise HTTPException(status_code=409, detail="This conversation does not have a valid WhatsApp destination")

@@ -667,7 +667,13 @@ def test_whatsapp_channel_inbound_ai_takeover_and_session(authenticated_client: 
     assert fake_completion.await_count == 1
 
     sender = AsyncMock(return_value="wa-out-human-1")
-    monkeypatch.setattr(conversations_router, "send_channel_message", sender)
+    from app.services import human_delivery
+    monkeypatch.setattr(human_delivery, "send_channel_message", sender)
+    # A disconnected/QR-only channel must not send human messages.
+    assert client.put(
+        f"/api/internal/whatsapp/channels/{channel_id}/status",
+        headers=headers, json={"status": "connected"},
+    ).status_code == 204
     reply = client.post(
         f"/api/conversations/{conversation_id}/reply", json={"content": "Hi Maria, I'll assist you personally."}
     )

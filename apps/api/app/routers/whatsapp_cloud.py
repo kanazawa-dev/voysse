@@ -8,7 +8,7 @@ from ..alerts import raise_alert, resolve_alerts
 from ..config import get_settings
 from ..database import get_db
 from ..deps import get_current_user
-from ..models import Agent, Client, User, WhatsAppCloudChannel, new_public_id, now_utc
+from ..models import Agent, Client, User, WhatsAppCloudChannel, WhatsAppCloudEvent, new_public_id, now_utc
 from ..schemas_whatsapp_cloud import WhatsAppCloudChannelOut, WhatsAppCloudChannelUpdate
 from ..security import decrypt_secret, encrypt_secret
 from ..services.whatsapp_cloud import verify_phone_number
@@ -152,3 +152,15 @@ def disconnect_channel(client_id: uuid.UUID, db: Session = Depends(get_db), user
     db.commit()
     db.refresh(channel)
     return _public_channel(channel)
+
+
+@router.get("/channels/{client_id}/events")
+def channel_events(client_id: uuid.UUID, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    channel = _channel_for_user(db, user, client_id)
+    return [{
+        "id": event.id, "status": event.status, "error_code": event.error_code,
+        "conversation_id": event.conversation_id, "received_at": event.received_at,
+        "updated_at": event.updated_at, "preview": event.payload.get("text", "")[:160],
+    } for event in db.scalars(select(WhatsAppCloudEvent).where(
+        WhatsAppCloudEvent.channel_id == channel.id
+    ).order_by(WhatsAppCloudEvent.updated_at.desc()).limit(50))]

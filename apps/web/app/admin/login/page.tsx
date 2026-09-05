@@ -1,5 +1,6 @@
 "use client";
 
+import { BloubAvatar } from "@/components/bloub-avatar";
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { LoaderCircle, ShieldCheck } from "lucide-react";
@@ -36,7 +37,7 @@ export default function AdminLoginPage() {
 
   return (
     <div className="flex min-h-screen w-full items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-sm p-6 sm:p-8">
+      <Card className="w-full max-w-sm p-6 sm:p-8"><div className="flex justify-center"><BloubAvatar size={72} mood={busy ? "thinking" : error ? "error" : "idle"} /></div>
         <div className="mb-5 flex items-center gap-2"><OpenvoissBrand effect="benday" showName size={30} state="thinking" /></div>
         <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary"><ShieldCheck size={14} /> {t("admin.login.eyebrow")}</span>
         <h1 className="mt-3 font-pixel text-2xl text-foreground">{t("admin.login.title")}</h1>

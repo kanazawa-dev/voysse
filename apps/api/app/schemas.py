@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
 
 class ORMModel(BaseModel):
@@ -108,7 +108,14 @@ class RegisterRequest(BaseModel):
     agency_name: str = Field(min_length=2, max_length=180)
     name: str = Field(min_length=2, max_length=160)
     email: EmailStr
-    password: str = Field(min_length=8, max_length=128)
+    password: str = Field(min_length=8, max_length=72)
+
+    @field_validator("password")
+    @classmethod
+    def password_byte_limit(cls, value: str) -> str:
+        if len(value.encode()) > 72:
+            raise ValueError("Password must be at most 72 UTF-8 bytes")
+        return value
 
 
 class LoginRequest(BaseModel):
@@ -401,8 +408,20 @@ class MessageOut(ORMModel):
     created_at: datetime
 
 
+class HumanDeliveryOut(ORMModel):
+    id: uuid.UUID
+    content: str
+    sender_name: str
+    status: str
+    error_code: str | None
+    external_message_id: str | None
+    created_at: datetime
+    updated_at: datetime
+
+
 class ConversationDetail(ConversationOut):
     messages: list[MessageOut] = []
+    deliveries: list[HumanDeliveryOut] = []
 
 
 class ConversationInboxOut(BaseModel):
@@ -422,6 +441,11 @@ class ConversationInboxOut(BaseModel):
 
 class SendMessageRequest(BaseModel):
     content: str = Field(min_length=1, max_length=50000)
+
+
+class HumanReplyRequest(SendMessageRequest):
+    # Optional for legacy API clients; explicit stable keys are needed for retries.
+    request_id: uuid.UUID = Field(default_factory=uuid.uuid4)
 
 
 class ConversationModeUpdate(BaseModel):

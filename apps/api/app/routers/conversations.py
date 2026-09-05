@@ -1,3 +1,4 @@
+import asyncio
 import uuid
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Response, UploadFile, status
@@ -5,10 +6,11 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session, joinedload, selectinload
 
 from ..database import get_db
-from ..deps import get_current_user
+from ..deps import get_current_user, get_inbox_user
 from ..models import Agent, Conversation, Message, User, now_utc
 from ..schemas import (
     ConversationCreate,
+    HumanReplyRequest,
     ConversationDetail,
     ConversationInboxOut,
     ConversationModeUpdate,
@@ -20,7 +22,7 @@ from ..services.knowledge import build_system_prompt, retrieve_knowledge
 from ..services.media import describe_image, transcribe_audio
 from ..services.providers import resolve_agent_credentials, resolve_provider_credentials
 from ..services.usage import record_usage
-from ..services.whatsapp import send_channel_message
+from ..services.human_delivery import conversation_deliveries, deliver_human
 
 
 router = APIRouter(prefix="/conversations", tags=["Conversations"])
@@ -41,6 +43,23 @@ def _conversation(db: Session, user: User, conversation_id: uuid.UUID) -> Conver
     if not conversation:
         raise HTTPException(status_code=404, detail="Conversation not found")
     return conversation
+
+
+def _visible_conversation(db: Session, user: User, conversation_id: uuid.UUID):
+    detail = ConversationDetail.model_validate(_conversation(db, user, conversation_id))
+    detail.deliveries = conversation_deliveries(db, conversation_id)
+    if user.role == "operator":
+        # Tool traces can contain provider/tool responses and internal arguments.
+        for message in detail.messages:
+            message.tool_calls = None
+    return detail
+
+
+@router.get("/inbox-agents")
+def inbox_agents(db: Session = Depends(get_db), user: User = Depends(get_inbox_user)):
+    return [{"id": agent.id, "name": agent.name} for agent in db.scalars(
+        select(Agent).where(Agent.agency_id == user.agency_id).order_by(Agent.name)
+    )]
 
 
 @router.get("", response_model=list[ConversationOut])
@@ -68,7 +87,7 @@ def inbox(
     limit: int = Query(default=30, ge=1, le=100),
     offset: int = Query(default=0, ge=0),
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    user: User = Depends(get_inbox_user),
 ):
     # Latest message per conversation, resolved in SQL so we never load full
     # message histories just to build the list.
@@ -151,7 +170,7 @@ def create_conversation(payload: ConversationCreate, db: Session = Depends(get_d
 
 
 @router.post("/{conversation_id}/read", status_code=status.HTTP_204_NO_CONTENT)
-def mark_read(conversation_id: uuid.UUID, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+def mark_read(conversation_id: uuid.UUID, db: Session = Depends(get_db), user: User = Depends(get_inbox_user)):
     conversation = _conversation(db, user, conversation_id)
     conversation.operator_read_at = now_utc()
     db.commit()
@@ -159,8 +178,8 @@ def mark_read(conversation_id: uuid.UUID, db: Session = Depends(get_db), user: U
 
 
 @router.get("/{conversation_id}", response_model=ConversationDetail)
-def get_conversation(conversation_id: uuid.UUID, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    return _conversation(db, user, conversation_id)
+def get_conversation(conversation_id: uuid.UUID, db: Session = Depends(get_db), user: User = Depends(get_inbox_user)):
+    return _visible_conversation(db, user, conversation_id)
 
 
 def _ready_agent(db: Session, conversation: Conversation) -> tuple[Agent, tuple[str, str]]:
@@ -197,6 +216,11 @@ async def _generate_reply(
     completion = await run_completion(
         db, agent, base_url, api_key, messages, temperature=agent.temperature, max_tokens=agent.max_tokens
     )
+    db.refresh(conversation, with_for_update={"of": Conversation})
+    if conversation.mode == "human":
+        record_usage(db, agent.agency_id, agent.id, agent.provider, agent.model.strip(), completion)
+        db.commit()
+        return _conversation(db, user, conversation.id)
     db.add(
         Message(
             conversation_id=conversation.id,
@@ -291,36 +315,24 @@ def set_conversation_mode(
     conversation_id: uuid.UUID,
     payload: ConversationModeUpdate,
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    user: User = Depends(get_inbox_user),
 ):
     conversation = _conversation(db, user, conversation_id)
     conversation.mode = payload.mode
     conversation.updated_at = now_utc()
     db.commit()
-    return _conversation(db, user, conversation_id)
+    return _visible_conversation(db, user, conversation_id)
 
 
 @router.post("/{conversation_id}/reply", response_model=ConversationDetail)
-async def reply_as_human(
+def reply_as_human(
     conversation_id: uuid.UUID,
-    payload: SendMessageRequest,
+    payload: HumanReplyRequest,
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    user: User = Depends(get_inbox_user),
 ):
-    conversation = _conversation(db, user, conversation_id)
-    if conversation.mode != "human":
-        raise HTTPException(status_code=409, detail="Take control of the conversation before replying")
-    external_message_id = await send_channel_message(db, conversation, payload.content.strip())
-    db.add(
-        Message(
-            conversation_id=conversation.id,
-            role="assistant",
-            content=payload.content.strip(),
-            sender_type="human",
-            sender_name=user.name,
-            external_message_id=external_message_id,
-        )
-    )
-    conversation.updated_at = now_utc()
-    db.commit()
-    return _conversation(db, user, conversation_id)
+    # Run this sync-DB/network transaction in FastAPI's worker thread. Existing
+    # async inbound handlers may wait synchronously for the conversation lock;
+    # they must not prevent this send's network await from finishing.
+    asyncio.run(deliver_human(db, user, conversation_id, payload.request_id, payload.content))
+    return _visible_conversation(db, user, conversation_id)

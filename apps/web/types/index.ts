@@ -164,6 +164,17 @@ export type ConversationInbox = {
   unread_count: number;
   updated_at: string;
 };
+export type HumanDelivery = {
+  id: string;
+  content: string;
+  sender_name: string;
+  status: "sending" | "confirmed" | "published" | "failed" | "uncertain";
+  error_code: string | null;
+  external_message_id: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type Conversation = {
   id: string;
   client_id: string;
@@ -177,6 +188,7 @@ export type Conversation = {
   updated_at: string;
   preview?: string;
   messages?: Message[];
+  deliveries?: HumanDelivery[];
 };
 
 export type WhatsAppChannel = {

@@ -60,9 +60,25 @@ class User(Base):
     email: Mapped[str] = mapped_column(String(320), index=True)
     password_hash: Mapped[str] = mapped_column(String(255))
     role: Mapped[str] = mapped_column(String(30), default="admin")
+    session_version: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    reset_token_hash: Mapped[str | None] = mapped_column(String(64), unique=True)
+    reset_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    reset_requested_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
 
     agency: Mapped[Agency] = relationship(back_populates="users")
+
+
+class TeamInvitation(Base):
+    __tablename__ = "team_invitations"
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=new_uuid)
+    agency_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("agencies.id", ondelete="CASCADE"), index=True)
+    email: Mapped[str] = mapped_column(String(320))
+    role: Mapped[str] = mapped_column(String(30))
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
 
 
 class Client(Base):
@@ -89,6 +105,7 @@ class Client(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc, onupdate=now_utc)
 
     agents: Mapped[list["Agent"]] = relationship(back_populates="client", cascade="all, delete-orphan")
+    social_channels: Mapped[list["SocialChannel"]] = relationship(back_populates="client", cascade="all, delete-orphan")
     whatsapp_channel: Mapped["WhatsAppChannel | None"] = relationship(
         back_populates="client", cascade="all, delete-orphan", uselist=False
     )
@@ -264,6 +281,67 @@ class WhatsAppCloudChannel(Base):
     conversations: Mapped[list["Conversation"]] = relationship(back_populates="whatsapp_cloud_channel")
 
 
+class WhatsAppCloudEvent(Base):
+    __tablename__ = "whatsapp_cloud_events"
+    __table_args__ = (UniqueConstraint("channel_id", "external_id", name="uq_cloud_event_external"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=new_uuid)
+    channel_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("whatsapp_cloud_channels.id", ondelete="CASCADE"), index=True)
+    conversation_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("conversations.id", ondelete="SET NULL"))
+    external_id: Mapped[str] = mapped_column(String(255))
+    payload: Mapped[dict] = mapped_column(JSON)
+    status: Mapped[str] = mapped_column(String(30), default="queued", index=True)
+    reply: Mapped[str | None] = mapped_column(Text)
+    reply_metadata: Mapped[dict] = mapped_column(JSON, default=dict)
+    error_code: Mapped[str | None] = mapped_column(String(80))
+    received_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc, onupdate=now_utc)
+
+
+class SocialChannel(Base):
+    __tablename__ = "social_channels"
+    __table_args__ = (
+        UniqueConstraint("client_id", "platform", name="uq_social_client_platform"),
+        UniqueConstraint("platform", "account_id", name="uq_social_account"),
+    )
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=new_uuid)
+    agency_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("agencies.id", ondelete="CASCADE"), index=True)
+    client_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("clients.id", ondelete="CASCADE"), index=True)
+    agent_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("agents.id", ondelete="RESTRICT"))
+    platform: Mapped[str] = mapped_column(String(20))
+    account_id: Mapped[str] = mapped_column(String(80))
+    display_name: Mapped[str] = mapped_column(String(180), default="")
+    encrypted_access_token: Mapped[str] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(String(30), default="disconnected")
+    is_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
+    last_error: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
+    agent: Mapped[Agent] = relationship()
+    client: Mapped[Client] = relationship(back_populates="social_channels")
+    conversations: Mapped[list["Conversation"]] = relationship(back_populates="social_channel", cascade="all, delete-orphan")
+
+
+class SocialEvent(Base):
+    """Durable inbox/outbox. Ambiguous external sends are never retried blindly."""
+    __tablename__ = "social_events"
+    __table_args__ = (UniqueConstraint("channel_id", "external_id", name="uq_social_event"),)
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=new_uuid)
+    channel_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("social_channels.id", ondelete="CASCADE"), index=True)
+    conversation_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("conversations.id", ondelete="CASCADE"), nullable=True)
+    external_id: Mapped[str] = mapped_column(String(255))
+    sender_id: Mapped[str] = mapped_column(String(255))
+    text: Mapped[str] = mapped_column(Text)
+    supported: Mapped[bool] = mapped_column(Boolean, default=True)
+    received_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    status: Mapped[str] = mapped_column(String(30), default="queued", index=True)
+    attempts: Mapped[int] = mapped_column(Integer, default=0)
+    reply: Mapped[str | None] = mapped_column(Text, nullable=True)
+    last_error: Mapped[str | None] = mapped_column(Text, nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
+    channel: Mapped[SocialChannel] = relationship()
+
+
 class AgentQA(Base):
     __tablename__ = "agent_qa"
 
@@ -329,6 +407,7 @@ class Conversation(Base):
         UniqueConstraint(
             "whatsapp_cloud_channel_id", "external_chat_id", name="uq_conversations_whatsapp_cloud_chat"
         ),
+        UniqueConstraint("social_channel_id", "external_chat_id", name="uq_conversations_social_chat"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=new_uuid)
@@ -345,6 +424,9 @@ class Conversation(Base):
         ForeignKey("whatsapp_cloud_channels.id", ondelete="CASCADE"), nullable=True, index=True
     )
     external_chat_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    social_channel_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("social_channels.id", ondelete="CASCADE"), nullable=True, index=True
+    )
     contact_name: Mapped[str | None] = mapped_column(String(180), nullable=True)
     operator_read_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
@@ -353,7 +435,28 @@ class Conversation(Base):
     agent: Mapped[Agent] = relationship(back_populates="conversations")
     whatsapp_channel: Mapped[WhatsAppChannel | None] = relationship(back_populates="conversations")
     whatsapp_cloud_channel: Mapped[WhatsAppCloudChannel | None] = relationship(back_populates="conversations")
+    social_channel: Mapped[SocialChannel | None] = relationship(back_populates="conversations")
     messages: Mapped[list["Message"]] = relationship(back_populates="conversation", cascade="all, delete-orphan", order_by="Message.created_at")
+    human_deliveries: Mapped[list["HumanDelivery"]] = relationship(back_populates="conversation", cascade="all, delete-orphan")
+
+
+class HumanDelivery(Base):
+    __tablename__ = "human_deliveries"
+
+    # Client supplied idempotency key; no retries with a different key on timeout.
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=new_uuid)
+    conversation_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("conversations.id", ondelete="CASCADE"), index=True)
+    actor_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
+    portal_client_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("clients.id", ondelete="CASCADE"))
+    sender_name: Mapped[str] = mapped_column(String(160))
+    content: Mapped[str] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(String(30))
+    error_code: Mapped[str | None] = mapped_column(String(80))
+    external_message_id: Mapped[str | None] = mapped_column(String(255))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc, onupdate=now_utc)
+
+    conversation: Mapped[Conversation] = relationship(back_populates="human_deliveries")
 
 
 class Message(Base):
@@ -372,6 +475,7 @@ class Message(Base):
     sender_type: Mapped[str] = mapped_column(String(30), default="visitor")
     sender_name: Mapped[str | None] = mapped_column(String(180), nullable=True)
     external_message_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    external_received_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
 
     conversation: Mapped[Conversation] = relationship(back_populates="messages")

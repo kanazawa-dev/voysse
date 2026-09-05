@@ -1,7 +1,12 @@
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
+from fastapi.responses import JSONResponse
+from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Session
 from fastapi.middleware.cors import CORSMiddleware
 
 from .config import get_settings
+from .database import get_db
 from .routers import (
     admin,
     agency,
@@ -17,6 +22,8 @@ from .routers import (
     domains,
     portal,
     providers,
+    social,
+    team,
     whatsapp,
     whatsapp_cloud,
     whatsapp_cloud_webhook,
@@ -53,6 +60,17 @@ def health():
     return {"status": "ok"}
 
 
+@app.get("/ready", tags=["System"])
+def readiness(db: Session = Depends(get_db)):
+    """Readiness checks storage; /health remains a dependency-free liveness probe."""
+    try:
+        db.execute(text("SELECT 1"))
+    except SQLAlchemyError:
+        # Do not expose connection strings or driver errors on a public endpoint.
+        return JSONResponse(status_code=503, content={"status": "unavailable"})
+    return {"status": "ready"}
+
+
 app.include_router(auth.router, prefix="/api")
 app.include_router(agency.router, prefix="/api")
 app.include_router(clients.router, prefix="/api")
@@ -72,3 +90,7 @@ app.include_router(widget.router, prefix="/api")
 app.include_router(domains.public_router, prefix="/api")
 app.include_router(cloud.public_router, prefix="/api")
 app.include_router(admin.router, prefix="/api")
+app.include_router(social.router, prefix="/api")
+app.include_router(social.public_router, prefix="/api")
+
+app.include_router(team.router, prefix="/api")

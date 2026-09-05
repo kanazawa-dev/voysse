@@ -50,6 +50,15 @@ export default function AgentDetailPage() {
   const [qaPairs, setQaPairs] = useState<QAPair[]>([]);
   const [tools, setTools] = useState<AgentTool[]>([]);
   const [tab, setTab] = useState<Tab>("details");
+  useEffect(() => {
+    const readTab = () => {
+      const value = window.location.hash.slice(1);
+      if (["details", "knowledge", "tools", "widget", "playground"].includes(value)) setTab(value as Tab);
+    };
+    readTab();
+    window.addEventListener("hashchange", readTab);
+    return () => window.removeEventListener("hashchange", readTab);
+  }, []);
   const [busy, setBusy] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 

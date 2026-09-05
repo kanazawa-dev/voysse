@@ -1,6 +1,8 @@
 "use client";
 
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
+import Link from "next/link";
+import { useLanguage } from "@/lib/i18n";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Bot, Building2, Clock, LoaderCircle, Mail, MessageSquareText, Phone, ShieldCheck } from "lucide-react";
 import { ApiError, api, messageFrom } from "@/lib/api";
@@ -12,52 +14,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { OpenvoissBrand } from "@/components/openvoiss-brand";
+import { BloubAvatar } from "@/components/bloub-avatar";
 import { LanguageSwitcher } from "@/components/language-switcher";
-import DitherBackground from "@/components/ui/dither-background";
-import { cn } from "@/lib/utils";
 
-// Same light dither treatment as the dashboard's non-data welcome cards
-// (home's "Next steps", the sidebar) — a brand touch, not a data surface.
-function GrainLayer({ className }: { className?: string }) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [isVisible, setIsVisible] = useState(false);
 
-  useEffect(() => {
-    const node = containerRef.current;
-    if (!node) return;
-    const observer = new IntersectionObserver(([entry]) => setIsVisible(entry.isIntersecting), { rootMargin: "200px" });
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, []);
-
-  return (
-    <div ref={containerRef} className={cn("pointer-events-none absolute inset-0 -z-10 overflow-hidden", className)} aria-hidden="true">
-      {isVisible ? (
-        <DitherBackground
-          className="absolute inset-0"
-          colorNum={2.5}
-          waveAmplitude={0.31}
-          waveSpeed={0.01}
-          waveFrequency={1.8}
-          waveColor={[0.09, 0.282, 0.78]}
-          backgroundColor={[0.98, 0.969, 0.937]}
-          enableMouseInteraction={false}
-          disableAnimation
-        />
-      ) : null}
-      <div className="absolute inset-0 bg-background/85" />
-    </div>
-  );
-}
-
-// Temporary contact channel shown on a pending-approval account; swap for the
-// company inbox once the new domain is live.
 const PENDING_CONTACT_EMAIL = "alex@voysse.cl";
 const PENDING_CONTACT_PHONE = "+56 9 4095 6827";
 const PENDING_CONTACT_PHONE_HREF = "+56940956827";
 
 export default function LoginPage() {
   const t = useT();
+  const { lang: language } = useLanguage();
   const router = useRouter();
   const [mode, setMode] = useState<"login" | "register">("login");
   const [busy, setBusy] = useState(false);
@@ -94,13 +61,13 @@ export default function LoginPage() {
 
   return (
     <div className="relative isolate min-h-screen w-full overflow-hidden bg-background">
-      <GrainLayer className="lg:hidden" />
+
       <div className="absolute top-4 right-4 z-20 sm:top-6 sm:right-6">
         <LanguageSwitcher className="border bg-background/85 backdrop-blur" />
       </div>
       <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-5xl flex-col justify-center gap-8 p-4 py-10 sm:p-8 lg:grid lg:grid-cols-2 lg:items-center lg:gap-10">
         <div className="relative isolate hidden overflow-hidden rounded-4xl border bg-card p-8 lg:flex lg:flex-col lg:justify-between">
-          <GrainLayer />
+          <div aria-hidden="true" className="rivr-soft-backdrop" />
           <div className="relative z-10">
             <OpenvoissBrand effect="benday" showName size={34} state="thinking" />
             <span className="mt-8 block text-xs font-semibold tracking-widest text-primary uppercase">{t("auth.introEyebrow")}</span>
@@ -125,7 +92,7 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <Card className="mx-auto w-full max-w-md p-6 sm:p-8 lg:mx-0">
+        <Card className="mx-auto w-full max-w-md p-6 sm:p-8 lg:mx-0"><div className="flex justify-center"><BloubAvatar size={88} mood={busy ? "thinking" : error ? "error" : pending ? "sleep" : "listening"} /></div>
           <div className="mb-5 flex items-center gap-2 lg:hidden"><OpenvoissBrand effect="benday" showName size={30} state="thinking" /></div>
 
           {pending ? (
@@ -178,6 +145,7 @@ export default function LoginPage() {
               {mode === "register" ? t("auth.submitRegister") : t("auth.submitLogin")}
             </Button>
           </form>
+          {mode === "login" && <Link href="/forgot-password" className="mt-4 block text-sm underline">{language === "es" ? "¿Olvidaste tu contraseña?" : "Forgot your password?"}</Link>}
           <p className="mt-5 flex items-center gap-1.5 text-xs text-muted-foreground"><ShieldCheck size={14} className="shrink-0" /> {t("auth.securityNote")}</p>
           </>
           )}

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { CloudEvents } from "@/components/cloud-events";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ArrowLeft, BadgeCheck, Bot, CheckCircle2, CircleAlert, ClipboardCopy, KeyRound, LoaderCircle, Plug, Power, RefreshCw, ShieldCheck, Smartphone, Webhook } from "lucide-react";
@@ -127,5 +128,6 @@ export default function WhatsAppCloudChannelPage() {
         <ol className="list-decimal space-y-2 pl-5 text-sm text-muted-foreground"><li>{t("clients.whatsappCloud.webhookStep1")}</li><li>{t("clients.whatsappCloud.webhookStep2")}</li><li>{t("clients.whatsappCloud.webhookStep3")}</li></ol>
       </Card>}
     </main><aside className="space-y-4"><ShieldCheck size={22} /><h3 className="font-heading">{t("clients.whatsapp.separationTitle")}</h3><p>{t("clients.whatsapp.separationCopy")}<strong>{client.name}</strong>.</p><hr /><h3 className="font-heading">{t("clients.whatsapp.humanControlTitle")}</h3><p>{t("clients.whatsapp.humanControlCopy")}</p></aside></div>
+    {channel && <CloudEvents clientId={id} />}
   </div>;
 }

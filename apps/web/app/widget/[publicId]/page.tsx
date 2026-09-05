@@ -1,5 +1,6 @@
 "use client";
 
+import { BloubAvatar } from "@/components/bloub-avatar";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import { LoaderCircle, Send, X } from "lucide-react";
@@ -57,7 +58,7 @@ export default function WidgetPage() {
   }
 
   if (error === "unavailable") return <div className="widget-shell"><div className="widget-empty">Chat unavailable</div></div>;
-  if (!config) return <div className="widget-shell"><div className="widget-empty"><LoaderCircle className="spin" /></div></div>;
+  if (!config) return <div className="widget-shell"><div className="widget-empty"><BloubAvatar size={64} mood="thinking" /></div></div>;
 
   const color = config.color || "#1748c7";
   const showGreeting = config.greeting && messages.length === 0;
@@ -65,15 +66,15 @@ export default function WidgetPage() {
     <div className="widget-shell" style={{ ["--widget-color" as string]: color }}>
       <header className="widget-head">
         <div className="widget-head-id">
-          {config.agency_logo_url ? <img src={config.agency_logo_url} alt="" /> : <span className="widget-avatar">{config.title.slice(0, 1).toUpperCase()}</span>}
+          {config.agency_logo_url ? <img src={config.agency_logo_url} alt="" /> : <BloubAvatar size={42} color="white" paper={color} animated={false} />}
           <div><strong>{config.title}</strong><small>{config.agency_name}</small></div>
         </div>
         <button type="button" className="widget-close" onClick={close} aria-label="Close"><X size={18} /></button>
       </header>
       <div className="widget-messages">
-        {showGreeting && <div className="widget-msg assistant"><div className="widget-bubble">{config.greeting}</div></div>}
+        {showGreeting && <div className="widget-msg assistant"><BloubAvatar size={56} color={color} mood="listening" /><div className="widget-bubble">{config.greeting}</div></div>}
         {messages.map((message, index) => <div key={index} className={`widget-msg ${message.role}`}><div className="widget-bubble">{message.content}</div></div>)}
-        {busy && <div className="widget-msg assistant"><div className="widget-bubble widget-typing"><i /><i /><i /></div></div>}
+        {busy && <div className="widget-msg assistant"><div className="widget-bubble widget-typing" role="status"><BloubAvatar size={44} color={color} mood="thinking" animated /><span className="sr-only">{t("shell.loading")}</span></div></div>}
         <div ref={endRef} />
       </div>
       {error && error !== "unavailable" && <div className="widget-error">{error}</div>}

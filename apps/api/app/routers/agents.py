@@ -12,7 +12,7 @@ from ..alerts import raise_alert, resolve_alerts
 from ..config import get_settings
 from ..database import get_db
 from ..deps import get_current_user
-from ..models import Agent, AgentQA, Client, KnowledgeDocument, User, WhatsAppChannel
+from ..models import Agent, AgentQA, Client, KnowledgeDocument, User, WhatsAppChannel, WhatsAppCloudChannel, SocialChannel
 from ..schemas import AgentCreate, AgentOut, AgentUpdate, DocumentOut, ManualContextRequest, QAPairCreate, QAPairOut
 from ..services.knowledge import embed_document_chunks
 
@@ -67,10 +67,10 @@ def update_agent(agent_id: uuid.UUID, payload: AgentUpdate, db: Session = Depend
     agent = _agent(db, user, agent_id)
     values = payload.model_dump(exclude_unset=True)
     client_id = values.get("client_id", agent.client_id)
-    if client_id != agent.client_id and db.scalar(select(WhatsAppChannel).where(WhatsAppChannel.agent_id == agent.id)):
+    if client_id != agent.client_id and any(db.scalar(select(model.id).where(model.agent_id == agent.id)) for model in (WhatsAppChannel, WhatsAppCloudChannel, SocialChannel)):
         raise HTTPException(
             status_code=409,
-            detail="This agent is assigned to WhatsApp. Assign another agent to the channel before changing its client.",
+            detail="This agent is assigned to a channel. Assign another agent to the channel before changing its client.",
         )
     _validate_client(db, user, client_id)
     for key, value in values.items():
@@ -82,10 +82,10 @@ def update_agent(agent_id: uuid.UUID, payload: AgentUpdate, db: Session = Depend
 @router.delete("/{agent_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_agent(agent_id: uuid.UUID, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     agent = _agent(db, user, agent_id)
-    if db.scalar(select(WhatsAppChannel).where(WhatsAppChannel.agent_id == agent.id)):
+    if any(db.scalar(select(model.id).where(model.agent_id == agent.id)) for model in (WhatsAppChannel, WhatsAppCloudChannel, SocialChannel)):
         raise HTTPException(
             status_code=409,
-            detail="This agent is assigned to WhatsApp. Assign another agent to the channel before deleting it.",
+            detail="This agent is assigned to a channel. Assign another agent to the channel before deleting it.",
         )
     db.delete(agent)
     db.commit()

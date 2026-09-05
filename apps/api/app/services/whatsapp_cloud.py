@@ -54,11 +54,13 @@ async def verify_phone_number(access_token: str, phone_number_id: str) -> dict:
 
 async def send_text(access_token: str, phone_number_id: str, to: str, body: str) -> str | None:
     """Send a text message; returns the outbound message id (wamid)."""
+    if not body.strip() or len(body) > MAX_TEXT_LENGTH:
+        raise HTTPException(400, "WhatsApp text must contain between 1 and 4096 characters")
     payload = {
         "messaging_product": "whatsapp",
         "to": to,
         "type": "text",
-        "text": {"body": body[:MAX_TEXT_LENGTH]},
+        "text": {"body": body},
     }
     response = await _graph_request("POST", _graph_url(f"{phone_number_id}/messages"), access_token, json=payload)
     if response.status_code >= 400:

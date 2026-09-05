@@ -404,3 +404,17 @@
 :is(.access-page, .portal-app, .portal-loader, .widget-shell) .mode-toggle { color: var(--purple); border-color: var(--line); background: var(--purple-soft); }
 :is(.access-page, .portal-app, .portal-loader, .widget-shell) .alert-info { color: var(--purple); border-color: var(--line); background: var(--purple-soft); }
 :is(.access-page, .portal-app, .portal-loader, .widget-shell) .access-brand strong { color: var(--ink); }
+
+/* Rivr public surfaces; tenant-specific --portal-color remains authoritative. */
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) {
+  --ink: #20365b; --text-muted: #5a687d; --subtle: #718096;
+  --line: #d9dfe7; --surface: #fff; --canvas: #f0f0f0;
+  --navy: #20365b; --purple: #20365b; --purple-dark: #162947;
+  --purple-soft: #e9edf2; --brand-blue: #20365b; --brand-blue-hover: #162947;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-weight: 400;
+}
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) :is(h1,h2,h3) { font-family: inherit; font-weight: 500; letter-spacing: -.03em; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .button { border-radius: 99px; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .button.primary { background: var(--portal-color, var(--purple)); border-color: var(--portal-color, var(--purple)); box-shadow: none; }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) .button.secondary { color: var(--ink); background: var(--purple-soft); border-color: var(--line); }
+:is(.access-page, .portal-app, .portal-loader, .widget-shell) :is(.access-card,.access-preview,.empty-state) { border-radius: 28px; }

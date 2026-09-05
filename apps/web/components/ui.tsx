@@ -1,5 +1,6 @@
 "use client";
 
+import { BloubAvatar } from "@/components/bloub-avatar";
 import { ReactNode } from "react";
 import { Alert as AlertPrimitive, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -15,11 +16,11 @@ export function Modal({ open, title, description, onClose, children }: { open: b
 }
 
 export function PageHead({ eyebrow, title, description, action }: { eyebrow?: string; title: string; description: string; action?: ReactNode }) {
-  return <header className="flex flex-col gap-4 border-b pb-5 sm:flex-row sm:items-end sm:justify-between"><div>{eyebrow && <span className="mb-1 block text-xs font-medium uppercase tracking-widest text-primary">{eyebrow}</span>}<h1 className="font-pixel text-2xl font-semibold tracking-tight">{title}</h1><p className="mt-1 max-w-2xl text-sm text-muted-foreground">{description}</p></div>{action}</header>;
+  return <header className="flex flex-col gap-4 pb-3 pt-2 sm:flex-row sm:items-end sm:justify-between"><div className="flex items-start gap-3"><BloubAvatar size={58} seed={title} /><div>{eyebrow && <span className="mb-1 block text-xs font-medium uppercase tracking-widest text-primary">{eyebrow}</span>}<h1 className="font-heading text-3xl font-medium tracking-tight sm:text-4xl">{title}</h1><p className="mt-3 max-w-2xl text-sm text-muted-foreground">{description}</p></div></div>{action}</header>;
 }
 
 export function EmptyState({ icon, title, description, action }: { icon: ReactNode; title: string; description: string; action?: ReactNode }) {
-  return <div className="flex min-h-64 flex-col items-center justify-center rounded-xl border border-dashed bg-muted/20 p-8 text-center"><div className="flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary">{icon}</div><h3 className="font-heading mt-4 font-semibold">{title}</h3><p className="mt-1 max-w-md text-sm text-muted-foreground">{description}</p>{action && <div className="mt-4">{action}</div>}</div>;
+  return <div className="flex min-h-64 flex-col items-center justify-center rounded-xl border border-dashed bg-muted/20 p-8 text-center"><div className="relative"><BloubAvatar size={88} mood="listening" /><span className="absolute -right-1 bottom-0 flex size-7 items-center justify-center rounded-full bg-card p-1 text-muted-foreground">{icon}</span></div><h3 className="font-heading mt-4 font-semibold">{title}</h3><p className="mt-1 max-w-md text-sm text-muted-foreground">{description}</p>{action && <div className="mt-4">{action}</div>}</div>;
 }
 
 export function Alert({ type = "error", children }: { type?: "error" | "success" | "info"; children: ReactNode }) {
