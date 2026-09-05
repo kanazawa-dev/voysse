@@ -1,0 +1,114 @@
+/* Voysse visual foundation. Applies to marketing, legal pages and portalled UI. */
+@font-face {
+  font-family: Geist;
+  src: url("/fonts/geist-latin.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Geist Mono";
+  src: url("/fonts/geist-mono-latin.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+:root {
+  --brand-surface: #f4f4f5;
+  --brand-ink: #18181b;
+  --brand-violet: #5135ff;
+  --brand-line: #d4d4d8;
+  --brand-muted: #666670;
+  --brand-mono: "Geist Mono", monospace;
+  --background: var(--brand-surface);
+  --foreground: var(--brand-ink);
+  --primary: var(--brand-violet);
+  --primary-foreground: #fff;
+  --card: #fafafa;
+  --card-foreground: var(--brand-ink);
+  --popover: #fff;
+  --popover-foreground: var(--brand-ink);
+  --muted: #ededf0;
+  --muted-foreground: var(--brand-muted);
+  --secondary: #e6e6eb;
+  --secondary-foreground: var(--brand-ink);
+  --accent: #eeebff;
+  --accent-foreground: var(--brand-violet);
+  --border: var(--brand-line);
+  --input: var(--brand-line);
+  --ring: var(--brand-violet);
+  --radius: 0.125rem;
+}
+body {
+  font-family: Geist, Arial, sans-serif;
+}
+
+/* Shared language control, including its portalled menu. */
+.cy-language-trigger {
+  display: inline-flex;
+  width: auto;
+  min-width: 84px;
+  height: 36px;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 0;
+  background: var(--card);
+  color: var(--foreground);
+  font:
+    11px/1 "Geist Mono",
+    monospace;
+  letter-spacing: 0.06em;
+  box-shadow: none;
+  transition:
+    background-color 200ms,
+    color 200ms,
+    border-color 200ms;
+}
+.cy-language-trigger:hover,
+.cy-language-trigger[aria-expanded="true"] {
+  background: var(--accent);
+  color: var(--primary);
+  border-color: var(--primary);
+}
+.cy-language-chevron {
+  transition: transform 200ms;
+}
+.cy-language-trigger[aria-expanded="true"] .cy-language-chevron {
+  transform: rotate(180deg);
+}
+.cy-language-menu[data-slot="dropdown-menu-content"] {
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  background: var(--card);
+  color: var(--foreground);
+  padding: 4px;
+  box-shadow: 0 8px 24px #18181b12;
+  --color-foreground: var(--foreground);
+}
+.cy-language-menu:before {
+  display: none;
+}
+.cy-language-menu [data-slot="dropdown-menu-radio-item"] {
+  min-height: 36px;
+  border-radius: 0;
+  font:
+    11px/1.5 "Geist Mono",
+    monospace;
+  transition:
+    background-color 200ms,
+    color 200ms;
+}
+.cy-language-menu [data-slot="dropdown-menu-radio-item"][data-highlighted],
+.cy-language-menu [data-slot="dropdown-menu-radio-item"][aria-checked="true"] {
+  background: var(--accent);
+  color: var(--primary);
+}
+@media (prefers-reduced-motion: reduce) {
+  .cy-language-trigger,
+  .cy-language-chevron,
+  .cy-language-menu [data-slot="dropdown-menu-radio-item"] {
+    transition: none;
+  }
+}

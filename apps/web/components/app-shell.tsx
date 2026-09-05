@@ -84,8 +84,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <SidebarProvider open={sidebarOpen} onOpenChange={setSidebarOpen}>
       <AppSidebar user={user} />
-      <SidebarInset className="rivr-workspace">
-        <header className="mb-2 flex h-20 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+      <SidebarInset className="cy-workspace">
+        <header className="cy-workspace-topbar flex h-16 shrink-0 items-center gap-2">
           <div className="flex items-center gap-2 px-4">
             <SidebarTrigger className="-ml-1" />
             <Separator orientation="vertical" className="mr-2 data-vertical:h-4 data-vertical:self-auto" />
@@ -97,7 +97,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
           <div className="ml-auto flex items-center gap-3 px-4">{user.role === "admin" && <AlertsBell />}</div>
         </header>
-        <main className="flex min-w-0 flex-1 flex-col gap-6 p-4 pt-0 sm:px-8 sm:pb-8">{children}</main>
+        <main className="cy-workspace-content flex min-w-0 flex-1 flex-col gap-6 p-4 sm:p-8">{children}</main>
       </SidebarInset>
     </SidebarProvider>
   );

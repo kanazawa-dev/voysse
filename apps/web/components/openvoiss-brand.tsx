@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 
 import { Benday, type BendayState, useDotMap } from "./ui/benday"
 
-const VOYSSE_BLUE = "#1748c7"
+const VOYSSE_BLUE = "#5135ff"
 const STATIC_MARK_MAX_SIZE = 24
 
 export interface OpenvoissBrandProps {

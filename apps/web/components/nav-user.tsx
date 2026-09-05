@@ -47,7 +47,7 @@ export function NavUser({ user }: { user: User }) {
                 <SidebarMenuButton
                   size="lg"
                   tooltip={user.name}
-                  className="h-14 border border-sidebar-border/70 bg-white/45 px-2.5 font-semibold shadow-sm hover:bg-white hover:text-sidebar-foreground data-open:bg-white data-open:text-sidebar-foreground"
+                  className="h-14 rounded-none border border-sidebar-border bg-sidebar px-2.5 font-medium shadow-none hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-open:bg-sidebar-accent data-open:text-sidebar-accent-foreground"
                 />
               }
             >

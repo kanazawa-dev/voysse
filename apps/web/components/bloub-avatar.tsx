@@ -42,7 +42,7 @@ export function BloubAvatar({
   size = 56,
   mood = "idle",
   seed = "voysse",
-  color = "var(--primary, #20365b)",
+  color = "var(--primary, #5135ff)",
   paper = "var(--card, #ffffff)",
   className,
   label,
