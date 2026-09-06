@@ -67,10 +67,11 @@ const base = process.env.MARKETING_URL || "http://localhost:3102";
     const faq = page.locator(".cy-faq details").first();
     await faq.locator("summary").click();
     assert.equal(await faq.getAttribute("open"), "");
-    await page.locator(".cy-cloud-trigger").click();
-    await page.getByRole("dialog").waitFor();
-    await page.keyboard.press("Escape");
-    await page.getByRole("dialog").waitFor({ state: "hidden" });
+    assert.equal(
+      await page.getByRole("link", { name: "Ver Cloud con Alex", exact: true }).getAttribute("href"),
+      "https://cal.com/voysse/voysse-cloud",
+    );
+    assert.equal(await page.getByRole("dialog").count(), 0);
     // Existing account route and legal links remain real, not dummy buttons.
     assert.match(
       await page.locator(".cy-hero .cy-action").first().getAttribute("href"),
@@ -111,7 +112,7 @@ const base = process.env.MARKETING_URL || "http://localhost:3102";
       .waitFor();
     assert.deepEqual(errors, []);
     console.log(
-      "PASS Cypon identity: ES/EN, 7 sections, navigation, FAQ, Cloud dialog, no video, reduced motion, no hydration errors, 1440/1024/768/390/320. No real interest submission.",
+      "PASS Cypon identity: ES/EN, 7 sections, navigation, FAQ, Cloud booking link, no video, reduced motion, no hydration errors, 1440/1024/768/390/320. No real booking.",
     );
   } finally {
     await browser.close();

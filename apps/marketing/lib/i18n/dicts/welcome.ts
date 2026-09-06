@@ -138,6 +138,7 @@ const en = {
     },
   },
   plans: {
+    emailAlex: "Prefer email? Write to Alex",
     eyebrow: "Choose how you run Voysse",
     title: "Self-hosted, Cloud-hosted, or fully custom.",
     sub: "Community is free forever. Cloud is a managed plan, ready today. Enterprise is tailored to your agency's scale.",
@@ -162,7 +163,8 @@ const en = {
       p2: "US$25/month per additional active client",
       p3: "BYOK AI and third-party channel charges stay separate",
       p4: "Routine updates, backups, and email support",
-      cta: "Choose Cloud",
+      cta: "Explore Cloud with Alex",
+      bookingNote: "20 min with Alex, creator of Voysse. Book on Cal.com, with no commitment.",
       formTitle: "Choose Voysse Cloud",
       formBody: "There's no self-serve checkout yet — leave your details and we'll reach out to set up your account.",
       formName: "Your name",
@@ -183,7 +185,8 @@ const en = {
       p2: "Security and compliance requirements assessed per proposal",
       p3: "Support and service levels tailored to your contract",
       p4: "SSO, audit logs, HA, and hybrid deployment, scoped to your needs",
-      cta: "Talk to sales",
+      cta: "Book a call with Alex",
+      bookingNote: "30 min with Alex to discuss your project. Book on Cal.com, with no commitment.",
     },
   },
   compare: {
@@ -399,6 +402,7 @@ const es: typeof en = {
   },
   plans: {
     eyebrow: "Elige cómo operar Voysse",
+    emailAlex: "¿Prefieres escribir? Contacta a Alex",
     title: "Auto-hospedado, en la nube, o a medida.",
     sub: "Community es gratis para siempre. Cloud es un plan gestionado, disponible hoy. Enterprise se adapta a la escala de tu agencia.",
     selfhost: {
@@ -422,7 +426,8 @@ const es: typeof en = {
       p2: "US$25/mes por cada cliente activo adicional",
       p3: "IA con tus claves y cargos de canales de terceros se pagan aparte",
       p4: "Actualizaciones, respaldos y soporte por correo",
-      cta: "Elegir Cloud",
+      cta: "Ver Cloud con Alex",
+      bookingNote: "20 min con Alex, creador de Voysse. Agenda en Cal.com, sin compromiso.",
       formTitle: "Elegir Voysse Cloud",
       formBody: "Todavía no hay pago automático — déjanos tus datos y te contactamos para activar tu cuenta.",
       formName: "Tu nombre",
@@ -443,7 +448,8 @@ const es: typeof en = {
       p2: "Requisitos de seguridad y cumplimiento evaluados por propuesta",
       p3: "Soporte y niveles de servicio a medida de tu contrato",
       p4: "SSO, auditoría, alta disponibilidad e híbrido, a medida de tus necesidades",
-      cta: "Hablar con ventas",
+      cta: "Agendar con Alex",
+      bookingNote: "30 min con Alex para conversar sobre tu proyecto. Agenda en Cal.com, sin compromiso.",
     },
   },
   compare: {
