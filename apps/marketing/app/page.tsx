@@ -18,6 +18,7 @@ import {
   Workflow,
   X,
 } from "lucide-react";
+import { BookingDialog } from "@/components/booking-dialog";
 import { BloubAvatar } from "@/components/bloub-avatar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LanguageSwitcher } from "@/components/language-switcher";
@@ -41,6 +42,7 @@ function Action({
   children: ReactNode;
   secondary?: boolean;
 }) {
+  if (Object.values(bookingLinks).includes(href)) return <BookingDialog href={href}>{children}</BookingDialog>;
   return (
     <a
       className={`cy-action${secondary ? " cy-action-secondary" : ""}`}

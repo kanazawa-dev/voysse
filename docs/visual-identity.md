@@ -147,3 +147,12 @@ initialize before paint, synchronize tabs and still work if storage is blocked.
 Marketing neutral surfaces use semantic tokens; illustrative product artwork
 retains its deliberate dark composition. Booking dialogs are a separate light
 surface, not a change to the visitor's chosen site theme.
+
+### In-page booking
+
+Both personal Cal.com CTAs open an accessible local dialog. The official React
+embed loads only after opening; the calendar receives `theme: light`, and the
+dialog stays white regardless of the visitor's site theme. Closing restores
+trigger focus. Direct Cal.com and email links remain available if the third-party
+service is blocked. No API key or booking data is sent through Voysse.
+The SDK integration follows [Cal.com's embed guidance](https://cal.com/help/embedding/adding-embed).
