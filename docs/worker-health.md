@@ -40,7 +40,9 @@ un worker que nunca se desplegó. Social sigue siendo un profile opcional.
 2. Revisar logs genéricos; no compartir tokens, payloads ni credenciales.
 3. Antes de reiniciar, revisar operaciones en curso y envíos inciertos. No
    reencolar/repetir herramientas ni envíos ambiguos automáticamente.
-4. Conectar un monitor externo a estos estados para recibir avisos: sigue pendiente.
+4. Run the [host service monitor](service-monitor.md) to detect absent containers
+   and route unhealthy states to an HTTPS receiver. Scheduling, a real receiver,
+   and an independent host-down monitor still require operator verification.
 
 ## Pruebas y reversión
 
