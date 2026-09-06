@@ -12,6 +12,8 @@ from app.routers import widget as widget_router
 from app.config import get_settings
 from app.services import ai as ai_service
 from app.services import whatsapp_inbound as whatsapp_inbound_service
+from app.services import whatsapp_qr_worker
+from conftest import TestingSession
 
 
 def _fake_http(monkeypatch, captured, response_json):
@@ -552,6 +554,14 @@ def test_provider_test_returns_models(authenticated_client: TestClient, monkeypa
     assert tested.json()["models"] == ["model-a", "model-b"]
 
 
+def _drain_qr(client, customer, monkeypatch):
+    monkeypatch.setattr(whatsapp_qr_worker, "bridge_command", AsyncMock(return_value={"external_message_id": "qr-out"}))
+    with TestingSession() as db:
+        while asyncio.run(whatsapp_qr_worker.work_once(db)):
+            pass
+    return client.get(f"/api/whatsapp/channels/{customer['id']}/events").json()[0]
+
+
 def test_whatsapp_inbound_image_uses_capability(authenticated_client: TestClient, monkeypatch):
     client = authenticated_client
     customer = client.post(
@@ -566,6 +576,7 @@ def test_whatsapp_inbound_image_uses_capability(authenticated_client: TestClient
     channel = client.put(f"/api/whatsapp/channels/{customer['id']}", json={"agent_id": agent["id"]}).json()
     headers = {"X-Bridge-Token": get_settings().whatsapp_bridge_token}
 
+    client.put(f"/api/internal/whatsapp/channels/{channel['id']}/status", headers=headers, json={"status": "connected", "phone_number": "569123"})
     monkeypatch.setattr(whatsapp_inbound_service, "describe_image", AsyncMock(return_value="a photo of the menu"))
     fake_completion = AsyncMock(return_value=ai_service.Completion(text="Here are the dishes!"))
     monkeypatch.setattr(whatsapp_inbound_service, "run_completion", fake_completion)
@@ -574,7 +585,7 @@ def test_whatsapp_inbound_image_uses_capability(authenticated_client: TestClient
         headers=headers,
         json={
             "external_message_id": "wa-img-1",
-            "remote_jid": "573001112233@s.whatsapp.net",
+            "source_phone_number": "569123", "remote_jid": "573001112233@s.whatsapp.net",
             "sender_name": "Ana",
             "media_kind": "image",
             "media_base64": base64.b64encode(b"fake-image-bytes").decode(),
@@ -582,8 +593,8 @@ def test_whatsapp_inbound_image_uses_capability(authenticated_client: TestClient
         },
     )
     assert inbound.status_code == 200, inbound.text
-    assert inbound.json()["reply"] == "Here are the dishes!"
-    conversation_id = inbound.json()["conversation_id"]
+    assert inbound.json()["reply"] is None
+    conversation_id = _drain_qr(client, customer, monkeypatch)["conversation_id"]
     stored = client.get(f"/api/conversations/{conversation_id}").json()
     assert "a photo of the menu" in stored["messages"][0]["content"]
     prompt_messages = fake_completion.await_args.args[4]
@@ -628,6 +639,7 @@ def test_whatsapp_channel_inbound_ai_takeover_and_session(authenticated_client: 
     restored = client.get(f"/api/internal/whatsapp/channels/{channel_id}", headers=headers).json()
     assert restored["auth_state"]["creds"]["registered"] is True
 
+    client.put(f"/api/internal/whatsapp/channels/{channel_id}/status", headers=headers, json={"status": "connected", "phone_number": "569123"})
     fake_completion = AsyncMock(return_value=ai_service.Completion(text="Yes, we are open Monday through Saturday."))
     monkeypatch.setattr(whatsapp_inbound_service, "run_completion", fake_completion)
     inbound = client.post(
@@ -635,14 +647,14 @@ def test_whatsapp_channel_inbound_ai_takeover_and_session(authenticated_client: 
         headers=headers,
         json={
             "external_message_id": "wa-in-1",
-            "remote_jid": "573001112233@s.whatsapp.net",
+            "source_phone_number": "569123", "remote_jid": "573001112233@s.whatsapp.net",
             "sender_name": "Maria",
             "text": "What days are you open?",
         },
     )
     assert inbound.status_code == 200, inbound.text
-    assert inbound.json()["reply"] == "Yes, we are open Monday through Saturday."
-    conversation_id = inbound.json()["conversation_id"]
+    assert inbound.json()["reply"] is None
+    conversation_id = _drain_qr(client, customer, monkeypatch)["conversation_id"]
     inbox = client.get(f"/api/conversations/{conversation_id}").json()
     assert inbox["channel"] == "whatsapp"
     assert inbox["contact_name"] == "Maria"
@@ -651,7 +663,7 @@ def test_whatsapp_channel_inbound_ai_takeover_and_session(authenticated_client: 
     duplicate = client.post(
         f"/api/internal/whatsapp/channels/{channel_id}/inbound",
         headers=headers,
-        json={"external_message_id": "wa-in-1", "remote_jid": "573001112233@s.whatsapp.net", "sender_name": "Maria", "text": "What days are you open?"},
+        json={"external_message_id": "wa-in-1", "source_phone_number": "569123", "remote_jid": "573001112233@s.whatsapp.net", "sender_name": "Maria", "text": "What days are you open?"},
     )
     assert duplicate.json()["accepted"] is False
     assert fake_completion.await_count == 1
@@ -660,10 +672,10 @@ def test_whatsapp_channel_inbound_ai_takeover_and_session(authenticated_client: 
     human_inbound = client.post(
         f"/api/internal/whatsapp/channels/{channel_id}/inbound",
         headers=headers,
-        json={"external_message_id": "wa-in-2", "remote_jid": "573001112233@s.whatsapp.net", "sender_name": "Maria", "text": "I need to speak with someone."},
+        json={"external_message_id": "wa-in-2", "source_phone_number": "569123", "remote_jid": "573001112233@s.whatsapp.net", "sender_name": "Maria", "text": "I need to speak with someone."},
     )
     assert human_inbound.json()["reply"] is None
-    assert human_inbound.json()["mode"] == "human"
+    assert _drain_qr(client, customer, monkeypatch)["status"] == "ignored"
     assert fake_completion.await_count == 1
 
     sender = AsyncMock(return_value="wa-out-human-1")

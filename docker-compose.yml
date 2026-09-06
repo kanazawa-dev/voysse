@@ -96,6 +96,30 @@ services:
       start_period: 30s
     restart: unless-stopped
 
+  # Required: QR inbound requests only enqueue; this worker performs processing.
+  whatsapp-qr-worker:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
+    image: ${OPENVOISS_IMAGE_PREFIX:-ghcr.io/kanazawa-dev/openvoiss}-api:${OPENVOISS_VERSION:-latest}
+    command: ["python", "-m", "app.scripts.whatsapp_qr_worker"]
+    env_file: [.env.docker]
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      STORAGE_DIR: /app/backend/storage
+    volumes:
+      - backend_storage:/app/backend/storage
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-m", "app.services.worker_health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+
   web:
     build:
       context: ./apps/web

@@ -17,7 +17,7 @@ type CloudEvent = {
   updated_at: string;
 };
 
-export function CloudEvents({ clientId }: { clientId: string }) {
+export function CloudEvents({ clientId, channel = "whatsapp-cloud" }: { clientId: string; channel?: "whatsapp-cloud" | "whatsapp" }) {
   const { lang } = useLanguage();
   const es = lang === "es";
   const [events, setEvents] = useState<CloudEvent[]>([]);
@@ -27,7 +27,7 @@ export function CloudEvents({ clientId }: { clientId: string }) {
     setBusy(true);
     try {
       setEvents(
-        await api<CloudEvent[]>(`/whatsapp-cloud/channels/${clientId}/events`),
+        await api<CloudEvent[]>(`/${channel}/channels/${clientId}/events`),
       );
       setError("");
     } catch (err) {
@@ -35,7 +35,7 @@ export function CloudEvents({ clientId }: { clientId: string }) {
     } finally {
       setBusy(false);
     }
-  }, [clientId]);
+  }, [clientId, channel]);
   useEffect(() => {
     void load();
     const id = setInterval(load, 8000);
@@ -63,6 +63,8 @@ export function CloudEvents({ clientId }: { clientId: string }) {
         uncertain: "Uncertain send",
       };
   const reasons: Record<string, [string, string]> = {
+    queue_expired: ["El mensaje lleva más de 24 horas en cola. Revísalo manualmente.", "The message has been queued for over 24 hours. Review it manually."],
+    conversation_unavailable: ["La conversación ya no está disponible.", "The conversation is no longer available."],
     preparation_interrupted: [
       "El proceso se interrumpió. Revisa si ejecutó herramientas antes de responder.",
       "Processing was interrupted. Check tool actions before replying.",
@@ -116,8 +118,8 @@ export function CloudEvents({ clientId }: { clientId: string }) {
       </div>
       <p className="text-sm text-muted-foreground">
         {es
-          ? "Últimos 50 eventos. El worker Cloud debe estar activo. Los estados inciertos no se reintentan automáticamente; aceptar un mensaje no garantiza su entrega."
-          : "Latest 50 events. The Cloud worker must be running. Uncertain events are not retried automatically; acceptance does not guarantee delivery."}
+          ? `Últimos 50 eventos. El worker ${channel === "whatsapp" ? "QR" : "Cloud"} debe estar activo. Los estados inciertos no se reintentan automáticamente; aceptar un mensaje no garantiza su entrega.`
+          : `Latest 50 events. The ${channel === "whatsapp" ? "QR" : "Cloud"} worker must be running. Uncertain events are not retried automatically; acceptance does not guarantee delivery.`}
       </p>
       {error && <p role="alert">{error}</p>}
       {!error && !events.length && (

@@ -53,7 +53,11 @@ const server = createServer(async (request, response) => {
     if (typeof payload.remote_jid !== "string" || typeof payload.text !== "string" || !payload.text.trim()) {
       return json(response, 400, { error: "Invalid destination or message" });
     }
-    const externalMessageId = await manager.sendMessage(channelId, payload.remote_jid, payload.text.trim());
+    if (payload.expected_phone_number !== undefined &&
+        (typeof payload.expected_phone_number !== "string" || !/^[0-9]{1,80}$/.test(payload.expected_phone_number))) {
+      return json(response, 400, { error: "Invalid source account" });
+    }
+    const externalMessageId = await manager.sendMessage(channelId, payload.remote_jid, payload.text.trim(), payload.expected_phone_number as string | undefined);
     return json(response, 200, { external_message_id: externalMessageId });
   } catch (error) {
     console.error("[WhatsApp] Operation error:", (error as Error).message);
