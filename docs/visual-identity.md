@@ -110,3 +110,26 @@ igual que el catálogo general. Webchat está disponible; Instagram y Messenger
 indican configuración manual en validación, con credenciales/permisos propios y
 OAuth guiado pendiente. No se representan como funciones terminadas ni conectadas
 sin verificar su conexión real. Prueba social cubre ambas entradas y móvil.
+
+## Login and sidebar refinement — 5 September 2026
+
+This follow-up supersedes the compact auth tabs and sidebar corner-frame styling
+above; the landing and primary action buttons retain their existing identity.
+
+- Login mode options use equal columns, 44px touch targets and a distinct selected
+  surface/underline. The CSS module is local to login, not shared dashboard tabs.
+- Voxy no longer appears beside shared internal page titles. One companion lives
+  in the sidebar footer: named when expanded, compact and static when collapsed.
+  Contextual empty states, agent avatars, the widget and the Voysse logo remain.
+- Navigation uses Geist 13px, 44px rows, 6px gaps and soft selected borders with
+  an inset indicator. The sidebar is 272px expanded and 72px collapsed; collapsed
+  icons stay centered, labels are hidden and accessible names/tooltips remain.
+- The account control stays distinct from Voxy. Mobile keeps agency/user labels,
+  includes an explicit close button and closes after choosing a navigation link.
+  Short viewports retain vertical menu scrolling.
+
+Final verification used local fixtures at desktop and mobile sizes, including a
+short viewport. Login smoke and the 14-route dashboard smoke passed at
+1440/390/320px; web lint and the production build passed. This completes the
+requested final test phase for these UI changes, not a production deployment. Rollback this refinement through PageHead/sidebar components, their CSS
+and smoke expectations; preserve unrelated auth logic and QR delivery changes.

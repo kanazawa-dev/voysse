@@ -34,6 +34,12 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
    assert(await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
    const box = await card.boundingBox();
    assert(Math.abs(box.x + box.width / 2 - width / 2) < 2);
+   const sizes = await p.getByRole('tab').evaluateAll(tabs => tabs.map(tab => ({
+    width: tab.getBoundingClientRect().width, height: tab.getBoundingClientRect().height,
+   })));
+   assert(sizes.every(tab => tab.height >= 44), 'Auth tabs need comfortable touch targets');
+   assert(Math.abs(sizes[0].width - sizes[1].width) < 1, 'Auth options must have equal widths');
+   assert.equal(await p.getByRole('tab', {selected:true}).count(), 1);
   }
   await p.locator('#agency_name').fill('Test agency');
   await p.locator('#name').fill('Test person');

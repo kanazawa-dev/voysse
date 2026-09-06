@@ -163,24 +163,16 @@ const assert = require("node:assert/strict");
         const navBefore = await nav.evaluate(
           (e) => getComputedStyle(e).backgroundColor,
         );
-        assert.equal(
-          await nav.evaluate((e) => getComputedStyle(e, "::before").top),
-          "-3px",
-        );
+        assert.equal(await nav.evaluate((e) => e.getBoundingClientRect().height), 44);
+        assert.equal(await p.locator('.cy-page-head [data-bloub]').count(), 0);
+        assert.equal(await p.locator('.cy-sidebar-companion [data-bloub]').count(), 1);
         await nav.hover();
-        assert.equal(
-          await nav.evaluate((e) => getComputedStyle(e, "::before").top),
-          "0px",
-        );
-        assert.equal(
-          await nav.evaluate((e) => getComputedStyle(e).borderRadius),
-          "0px",
-        );
+        assert.equal(await nav.evaluate((e) => getComputedStyle(e).borderRadius), "6px");
         await p.mouse.move(1400, 0);
         await nav.focus();
         assert.equal(
-          await nav.evaluate((e) => getComputedStyle(e, "::before").top),
-          "0px",
+          await nav.evaluate((e) => getComputedStyle(e, "::before").content),
+          "none",
         );
         await nav.evaluate((e) => e.blur());
         await nav.hover();
@@ -199,8 +191,8 @@ const assert = require("node:assert/strict");
         );
         await nav.hover();
         assert.equal(
-          await nav.evaluate((e) => getComputedStyle(e, "::before").top),
-          "0px",
+          await nav.evaluate((e) => getComputedStyle(e, "::before").content),
+          "none",
         );
         await p.screenshot({ path: "/tmp/cypon-web-dark.png", fullPage: true });
         await p.locator('[data-slot="sidebar-trigger"]').click();
@@ -213,9 +205,11 @@ const assert = require("node:assert/strict");
         );
         await nav.hover();
         assert.equal(
-          await nav.evaluate((e) => getComputedStyle(e, "::before").top),
-          "0px",
+          await nav.evaluate((e) => getComputedStyle(e, "::before").content),
+          "none",
         );
+        assert.equal(await nav.evaluate((e) => e.getBoundingClientRect().width), 44);
+        assert.equal(await p.locator('[data-slot="sidebar-container"]').evaluate((e) => e.getBoundingClientRect().width), 72);
         await p.screenshot({ path: "/tmp/cypon-sidebar-collapsed.png" });
         await p.locator('[data-slot="sidebar-trigger"]').click();
         await p.evaluate(() =>
