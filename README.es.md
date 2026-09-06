@@ -5,17 +5,19 @@
 <h1 align="center">Voysse</h1>
 
 <p align="center">
-  <strong>Plataforma open-source y white-label para que agencias creen, ejecuten y gestionen agentes de IA para sus clientes.</strong>
+  <strong>Agentes de IA de código disponible y marca blanca para agencias: WhatsApp, chat web y un espacio para cada cliente.</strong>
 </p>
 
 <p align="center">
+  <a href="https://voysse.cl">Sitio web</a> ·
   <a href="https://docs.voysse.cl/docs">Documentación</a> ·
   <a href="https://docs.voysse.cl/docs/getting-started">Inicio rápido</a> ·
   <a href="https://docs.voysse.cl/docs/self-hosting">Self-hosting</a> ·
-  <a href="https://github.com/kanazawa-dev/voysse/discussions">Discusiones</a>
+  <a href="https://cal.com/voysse/voysse-cloud">Cloud con Alex</a>
 </p>
 
 <p align="center">
+  <a href="https://github.com/kanazawa-dev/voysse/actions/workflows/quality.yml"><img src="https://github.com/kanazawa-dev/voysse/actions/workflows/quality.yml/badge.svg?branch=main" alt="Quality checks" /></a>
   <a href="./LICENSE"><img src="https://img.shields.io/badge/license-FSL--1.1--MIT-black" alt="FSL-1.1-MIT" /></a>
   <img src="https://img.shields.io/badge/backend-FastAPI-009688" alt="FastAPI" />
   <img src="https://img.shields.io/badge/frontend-Next.js-black" alt="Next.js" />
@@ -31,10 +33,17 @@ Voysse es un espacio de trabajo multi-tenant donde una agencia crea agentes de I
 
 Usa tus propias claves de OpenAI / Anthropic y despliega todo el stack con un solo comando.
 
-El producto ahora se llama **Voysse**. Las URLs del repositorio y los
-identificadores técnicos conservan temporalmente `openvoiss` durante el
-renombre gradual y compatible; consulta la
-[migración de marca](./docs/brand-migration.md).
+Algunos identificadores internos conservan `openvoiss` por compatibilidad;
+consulta la [migración de marca](./docs/brand-migration.md).
+
+## Elige cómo empezar
+
+- **Self-hosted:** despliega en tu infraestructura con tus propias claves de IA.
+- **Voysse Cloud:** [conoce la opción gestionada con Alex](https://cal.com/voysse/voysse-cloud).
+- **Un proyecto específico:** [habla directamente con Alex](https://cal.com/voysse/hablemos-de-tu-proyecto).
+
+Código disponible bajo [FSL-1.1-MIT](./LICENSE). Consulta sus términos antes de usarlo.
+Para distinguir lo implementado de lo pendiente, revisa el [estado del producto](./docs/implementation-status.md).
 
 ## Inicio rápido
 
@@ -78,7 +87,7 @@ Consulta la [guía de inicio rápido](https://docs.voysse.cl/docs/getting-starte
 - **WhatsApp Cloud API** (API oficial de Meta) — usa tus credenciales de app de Meta, webhooks firmados, número por cliente
 - **WhatsApp QR** a través de Baileys — enlace QR, número por cliente, sesión persistente encriptada
 - **Widget de chat web** embebible para cualquier sitio
-- Instagram DM y Facebook Messenger *(próximamente)*
+- Instagram DM y Facebook Messenger — configuración manual y pipeline de texto implementados; OAuth guiado, medios soportados y validación con cuentas reales aún en desarrollo ([estado](./docs/social-channels-setup.md))
 - [Más información](https://docs.voysse.cl/docs/whatsapp)
 
 ### Operaciones
@@ -90,7 +99,7 @@ Consulta la [guía de inicio rápido](https://docs.voysse.cl/docs/getting-starte
 
 ## Arquitectura
 
-Tres servicios más PostgreSQL, orquestados con Docker Compose.
+Servicios de aplicación, workers, PostgreSQL y un gateway Caddy, orquestados con Docker Compose. Marketing y documentación son aplicaciones separadas.
 
 | App | Stack | Rol |
 | --- | --- | --- |
@@ -98,7 +107,7 @@ Tres servicios más PostgreSQL, orquestados con Docker Compose.
 | `apps/web` | Next.js · React · TypeScript · Tailwind | Dashboard de agencia, portal de cliente, playground, widget |
 | `apps/whatsapp` | Node.js · Baileys | Puente de WhatsApp Web (sesiones con estado) |
 
-Todos los datos residen en PostgreSQL; las claves de proveedores y las sesiones de WhatsApp están encriptadas en reposo. Cada consulta está acotada por `agency_id` para aislamiento de tenants, y los endpoints públicos tienen rate limiting por IP de cliente. Un gateway de Caddy sirve la app y la API desde un mismo origen (`/api/*` → backend).
+Los registros de aplicación residen en PostgreSQL y los archivos cargados usan almacenamiento persistente; las claves de proveedores y las sesiones de WhatsApp están encriptadas en reposo. Cada consulta está acotada por `agency_id` para aislamiento de tenants, y los endpoints públicos tienen rate limiting por IP de cliente. Un gateway de Caddy sirve la app y la API desde un mismo origen (`/api/*` → backend).
 
 [Lee la guía de arquitectura](https://docs.voysse.cl/docs/architecture)
 
@@ -109,6 +118,8 @@ apps/
   api/         Backend FastAPI (app/, migrations/, tests/)
   web/         Frontend Next.js (app/, components/, lib/, types/)
   whatsapp/    Puente de WhatsApp Baileys (src/)
+  marketing/   Sitio público y reservas de reuniones
+  docs/        Sitio de documentación
 docs/          Guía de self-hosting y operaciones
 scripts/       Scripts auxiliares (generate-docker-env.sh)
 Makefile       Comandos comunes (make help)
@@ -137,5 +148,6 @@ Voysse está licenciado bajo la [Functional Source License, Version 1.1, MIT Fut
 
 ## Comunidad
 
-- [Discusiones](https://github.com/kanazawa-dev/voysse/discussions) para preguntas e ideas
+- [Habla con Alex](https://cal.com/voysse/hablemos-de-tu-proyecto) sobre tu proyecto
+- [Escribe a Alex](mailto:alex@voysse.cl) para consultas privadas; no publiques credenciales en issues
 - [Issues](https://github.com/kanazawa-dev/voysse/issues) para reportar errores y solicitar funciones
