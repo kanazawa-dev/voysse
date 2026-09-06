@@ -15,6 +15,7 @@ from ..services.providers import resolve_agent_credentials
 from ..services.usage import record_usage
 from .studio_handoffs import _client, view
 
+quota = RateLimiter(5, 60, name="studio-routing-simulation")
 router = APIRouter(prefix="/studio/{client_id}/handoffs", tags=["Studio simulation"])
 
 
@@ -43,7 +44,7 @@ def snapshot(db, user, client_id, payload):
     return draft, agent
 
 
-@router.post("/simulate", dependencies=[Depends(RateLimiter(5, 60, name="studio-routing-simulation"))])
+@router.post("/simulate", dependencies=[Depends(quota)])
 async def simulate(client_id: uuid.UUID, payload: Simulation, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     draft, agent = snapshot(db, user, client_id, payload)
     candidates = {i: rule for i, rule in enumerate(draft["rules"]) if rule["source_agent_id"] == str(agent.id)}
@@ -88,3 +89,37 @@ async def simulate(client_id: uuid.UUID, payload: Simulation, db: Session = Depe
     rule = candidates[choice.rule_index]
     return {**result, "outcome": "matched", "rule_index": choice.rule_index,
             "target_agent_id": rule["target_agent_id"], "condition": rule["condition"], "reason": choice.reason}
+
+
+@router.post("/simulate-chain", dependencies=[Depends(quota)])
+async def simulate_chain(client_id: uuid.UUID, payload: Simulation, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    draft, _ = snapshot(db, user, client_id, payload)
+    principal = (user.id, user.agency_id, user.session_version)
+    steps, visited = [], {}
+    current = payload.source_agent_id
+    outcome = "hop_limit"
+    for _ in range(draft["max_hops"]):
+        db.expire_all()
+        user = db.get(User, principal[0])
+        if not user or (user.agency_id, user.session_version) != principal[1:] or user.role != "admin" or not user.agency.is_active:
+            raise HTTPException(403, "Simulation access changed")
+        step_payload = payload.model_copy(update={"source_agent_id": current})
+        _, agent = snapshot(db, user, client_id, step_payload)
+        if current in visited:
+            outcome = "cycle_guard"
+            break
+        visited[current] = agent.updated_at
+        # Reuse the classifier directly, not its HTTP endpoint; one shared quota per run.
+        step = await simulate(client_id, step_payload, db, user)
+        db.expire_all()
+        for agent_id, version in visited.items():
+            previous = db.get(Agent, agent_id)
+            if not previous or previous.updated_at != version or not previous.is_active or previous.client_id != client_id or previous.agency_id != principal[1]:
+                raise HTTPException(409, "An earlier agent changed; rerun the simulation")
+        steps.append(step)
+        if step["target_agent_id"] is None:
+            outcome = "human_rule" if step["outcome"] == "matched" else step["outcome"]
+            break
+        current = uuid.UUID(step["target_agent_id"])
+    return {"simulation_only": True, "revision": draft["revision"], "steps": steps,
+            "outcome": outcome, "target_agent_id": None, "max_hops": draft["max_hops"]}
