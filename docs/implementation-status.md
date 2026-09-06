@@ -87,6 +87,13 @@ evaluation are available with per-call usage accounting; durable channel-aware e
 versioned publication remain pending. No saved draft changes a live channel or
 conversation owner.
 
+### Execution-state foundation — not activated
+
+Migration 0032 and an internal transaction service add separate responder identity,
+idempotent turn claims and a bounded transition journal. [Protocol and limits](decisions/execution-state.md).
+No live producer invokes it yet: policy activation, transport adapters, uncertain
+recovery and UI remain pending. Existing channel behavior is unchanged.
+
 ### Remaining development and validation
 
 - QR delivery/session-history reconciliation and real-account validation (Q05); Cloud, social
