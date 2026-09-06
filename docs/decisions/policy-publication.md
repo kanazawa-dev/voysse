@@ -1,6 +1,6 @@
 # Publicar versiones sin activar derivaciones
 
-Estado: API implementada; interfaz y ejecución real pendientes. Publicar guarda una
+Estado: API e interfaz implementadas; ejecución real pendiente. Publicar guarda una
 instantánea de reglas, no habilita transportes. `runtime_enabled` siempre es `false`.
 
 ## Contrato
@@ -52,9 +52,40 @@ Verificado: 14 pruebas enfocadas y 259 pruebas API completas aprobadas en
 PostgreSQL desechable; round-trip base → 0033 → base → 0033 aprobado. Casos:
 snapshot independiente del borrador, restauración/anulación,
 historial paginado, UUID/CAS, concurrencia, locks y sesión revocada; no cuentas reales.
-Esta entrega no modifica UI (browser N/A); la interfaz de publicación es el siguiente
-paso. Migración `0033_policy_versions` parte de `0032_execution_state`; no aplicar
+La verificación anterior corresponde a la entrega API. Ver abajo la interfaz. Migración `0033_policy_versions` parte de `0032_execution_state`; no aplicar
 junto a otra rama Alembic con el mismo padre sin reconciliar primero sus heads.
 Rollback: retirar router y modelo, exportar auditoría antes de downgrade; la migración
 elimina solo `policy_revisions`. No altera borradores, ledger ni canales. El borrado
 de un cliente sí elimina su historial por cascada. No se migró producción.
+
+
+## Controles en Studio
+
+Dentro de **Derivaciones entre agentes → Versiones publicadas**, cargar el historial
+explícitamente. Se compara el borrador **guardado** con la publicación actual:
+reglas y orden, condiciones, máximo de saltos y salida humana. Las páginas anteriores
+no cambian la revisión actual usada por CAS. Se muestran autor, fecha y motivo.
+
+Publicar/restaurar/retirar exige motivo y confirmación. Restaurar crea otra revisión,
+no modifica el borrador. No se ofrece publicar una copia idéntica, un borrador no
+válido ni publicar/restaurar para clientes inactivos. Retirar sigue permitido.
+Con cambios locales sin guardar o mientras se guarda, se ocultan los controles;
+al cambiar la revisión guardada se descarta el historial anterior.
+
+Cualquier resultado de escritura, incluido timeout/conflicto, descarta las acciones
+locales. Cargar historial para conciliar y recargar el borrador si cambió: nunca
+repetir automáticamente el POST. Cerrar o editar el panel no cancela una solicitud
+que ya haya llegado al servidor. No se activan agentes, herramientas ni envíos.
+
+Rollback UI: retirar `policies.tsx`, su entrada en `handoffs.tsx`, estilos de comparación
+y `studio-policies-smoke.cjs`; conservar API, versiones y auditoría. La siguiente
+etapa es fijar la versión por turno y preparar los adaptadores, todavía desactivados.
+
+
+Verificación UI: ESLint/build webpack y los seis smokes de Studio aprobados en ES/EN,
+1440/390/320, claro/oscuro; captura móvil oscura inspeccionada. El nuevo smoke cubre
+comparación, historial sin perder la revisión actual, las tres acciones, cancelar,
+respuesta perdida después del commit, conflictos, errores de lectura y borrador sucio.
+Las keys de publicación y simulación llevan prefijos distintos: compartir la key de
+revisión entre hermanos dejaba un panel DOM obsoleto al editar. La regresión exige
+que desaparezcan los controles al quedar cambios sin guardar. Solo fixtures, no cuentas reales.

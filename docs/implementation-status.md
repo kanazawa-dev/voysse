@@ -5,7 +5,8 @@
 Ver [estado consolidado y pendientes ordenados de Studio](studio-progress.md) antes
 de retomar. Incluye unidades en main, alcance dormante, pruebas, próximos pasos y
 rollback. Ya existe API de versiones publicadas (publicar/restaurar/retirar),
-siempre sin activar transportes; su interfaz es el siguiente paso. Las entregas históricas de abajo no reemplazan ese checkpoint.
+y controles visuales de historial/comparación/confirmación, siempre sin activar
+transportes; fijar la versión por turno es el siguiente paso. Las entregas históricas de abajo no reemplazan ese checkpoint.
 
 ## Current snapshot (supersedes historical delivery notes below)
 

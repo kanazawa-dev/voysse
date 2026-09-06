@@ -14,10 +14,11 @@ históricas. Describe código y verificación, no un despliegue en producción.
 | Estado durable | Responsable separado del agente de entrada, turnos/contexto idempotentes, transiciones, revisión y salida humana | PR #58, main `af3cdb3` |
 | Revisión administrativa API | Listado acotado y cierre auditado de turnos en curso/inciertos hacia humano; sin reintentos | PR #60, main `1c54f73` |
 | Panel de revisión | Carga explícita, páginas, registro, estados vacíos/errores, motivo/aceptación/confirmación; ES/EN, claro/oscuro y móvil | PR #62, main `71749be` |
-| Publicación API | Instantáneas auditadas, CAS/UUID, restaurar y retirar sin activar runtime | Unidad de issue #63 |
+| Publicación API | Instantáneas auditadas, CAS/UUID, restaurar y retirar sin activar runtime | PR #64, main `e624efc` |
+| Publicación UI | Historial, comparación del borrador guardado, publicar/restaurar/retirar con motivo y confirmación | Unidad de issue #65 |
 
 **No confundir:** el canvas sí cambia la asignación canal → agente al confirmarla.
-Las reglas editadas siguen siendo borradores hasta publicar explícitamente por API.
+Las reglas editadas siguen siendo borradores hasta publicar explícitamente por API o desde Studio.
 Una versión publicada todavía NO activa derivaciones. La simulación no las publica
 ni genera turnos reales. El protocolo durable y su revisión todavía no son usados
 por los productores actuales de mensajes; un registro vacío es esperable.
@@ -36,9 +37,9 @@ las acciones locales: cargar otra vez para conciliar, nunca reenviar automática
 
 ## Pendientes, en orden recomendado
 
-1. **Interfaz de publicación versionada.** La API de publicar/restaurar/retirar está
-   implementada ([contrato](decisions/policy-publication.md)); falta exponer historial,
-   comparación con borrador, confirmaciones y conflictos en Studio. No activar runtime.
+1. **Fijar la versión de política por turno.** La API y controles de publicación
+   ya existen ([contrato](decisions/policy-publication.md)); falta persistir qué versión
+   usa un turno, validar su alcance y definir cuándo elegir otra. Mantenerlo desactivado.
 2. **Adoptar el protocolo en todos los productores.** Inventariar `/messages`, `/media`,
    `/mode`, widget y workers QR/Cloud/social; comenzar con una ruta controlada. Confirmar
    claim antes de I/O, una respuesta por propietario, contexto compartido y límites;
@@ -64,7 +65,7 @@ que libere turnos inciertos ni activación de transporte está aprobado implíci
 - Publicación: 14 pruebas enfocadas y 259 API completas aprobadas; migración
   base → 0033 → base → 0033 aprobada en DB desechable.
   Ver [contrato, migración y rollback](decisions/policy-publication.md);
-  UI, pinning de versión por turno y adopción por productores aún pendientes.
+  Pinning de versión por turno y adopción por productores aún pendientes; UI implementada.
 - Migración 0032: base → 0032 → base → 0032 verificada; no ejecutada en producción.
 - Panel: ESLint y build webpack pasaron. `studio-execution-smoke.cjs` pasó en ES/EN,
   1440/390/320 y claro/oscuro: vacío, paginación, auditoría, teclado, aceptación,
@@ -75,6 +76,13 @@ que libere turnos inciertos ni activación de transporte está aprobado implíci
   (requiere Playwright o `PLAYWRIGHT_MODULE` apuntando a su instalación).
 - Los otros cuatro smokes de Studio también pasaron: canvas, edición, borradores
   y simulación. Repetir `scripts/ui/studio-*-smoke.cjs` al cambiar estas rutas.
+- Publicación UI: ESLint/build webpack y los seis smokes de Studio aprobados
+  ES/EN, 1440/390/320, claro/oscuro. Incluye CAS con páginas antiguas, publicar/restaurar/
+  retirar, respuesta perdida sin reintento y retiro de controles ante borrador sucio.
+  Script: `scripts/ui/studio-policies-smoke.cjs`; captura móvil inspeccionada.
+- La copia principal local conserva cambios paralelos de adquisición. Su actualización
+  desde main se detuvo para no sobrescribirlos; usar un worktree desde `origin/main`.
+  La migración de adquisición pendiente debe reconciliarse con `0033_policy_versions`.
 - Antes de retomar: `git status`, revisar PR/CI y comparar `main` con `origin/main`.
   No incluir cambios concurrentes de marketing ni carpetas privadas en commits de Studio.
 - No hay despliegue ni aceptación externa demostrados por estas pruebas.

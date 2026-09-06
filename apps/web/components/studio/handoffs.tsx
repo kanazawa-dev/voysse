@@ -4,6 +4,7 @@ import { api, messageFrom } from '@/lib/api';
 import { useLanguage } from '@/lib/i18n';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { PolicyPanel } from './policies';
 import { RoutingSimulation } from './simulation';
 import type { StudioGraph } from './types';
 import styles from './studio.module.css';
@@ -113,7 +114,8 @@ export function HandoffEditor({ data }: { data: StudioGraph }) {
           </>}
         </fieldset>
       </div>
-      {!dirty && !busy && draft.valid && !invalid && <RoutingSimulation key={String(draft.revision) + data.agents.map(a => a.updated_at).join()} data={data} revision={draft.revision} maxHops={draft.max_hops} />}
+      {!dirty && !busy ? <PolicyPanel key={'policy:' + String(draft.revision) + data.agents.map(a => a.updated_at).join()} data={data} draft={{ ...draft, valid: draft.valid && !invalid }} /> : <p>{es ? 'Guarda o recarga el borrador para administrar versiones publicadas.' : 'Save or reload the draft to manage published versions.'}</p>}
+      {!dirty && !busy && draft.valid && !invalid && <RoutingSimulation key={'simulation:' + String(draft.revision) + data.agents.map(a => a.updated_at).join()} data={data} revision={draft.revision} maxHops={draft.max_hops} />}
     </>}
   </section>;
 }
