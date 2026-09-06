@@ -56,7 +56,7 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
       await page.getByRole('button', { name: es ? 'Revisar y guardar' : 'Review and save' }).click();
       await page.waitForFunction(() => !document.querySelector('fieldset').disabled);
       assert.equal(graph.agents[1].instructions, 'Be concise');
-      await page.getByLabel(es ? 'Mensaje de prueba' : 'Test message', { exact: true }).fill('Hello');
+      await page.locator('[data-studio-inspector]').getByLabel(es ? 'Mensaje de prueba' : 'Test message', { exact: true }).fill('Hello');
       await page.getByRole('button', { name: es ? 'Enviar prueba' : 'Send test' }).click();
       await page.getByRole('log').getByText('Sandbox response', { exact: false }).waitFor();
       assert(writes.at(-1).path.endsWith('/preview')); assert.deepEqual(writes.at(-1).body.history, []);

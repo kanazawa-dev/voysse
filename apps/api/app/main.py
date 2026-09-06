@@ -25,6 +25,7 @@ from .routers import (
     social,
     studio,
     studio_handoffs,
+    studio_simulation,
     team,
     whatsapp,
     whatsapp_cloud,
@@ -100,3 +101,5 @@ app.include_router(team.router, prefix="/api")
 app.include_router(studio.router, prefix="/api")
 
 app.include_router(studio_handoffs.router, prefix="/api")
+
+app.include_router(studio_simulation.router, prefix="/api")
