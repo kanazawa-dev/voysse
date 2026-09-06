@@ -50,3 +50,24 @@ accessible mobile card layout. Empty clients and failed loads do not expose a
 previous client's graph. This stage is read-only; inline writes follow separately.
 Local web lint/webpack build and ES/EN browser smoke at 1440/390/320px passed,
 including edges, keyboard selection, zoom, empty/error cases and zero write requests.
+
+## Inline controls delivery
+
+Studio now supports new agents and inline name/description/instructions/widget
+settings. Select a channel and choose its agent, or drag its card onto an agent;
+confirm the old → new assignment before applying. Drawing a connection never
+implicitly enables a channel. Refresh after a conflict or uncertain network error;
+there is no automatic retry or optimistic success. Background refresh responses
+cannot replace a newer confirmed write.
+
+The test panel uses saved settings; unsaved appearance is a labeled local mock.
+Model/provider setup, knowledge/tools and credential enrollment link to the existing
+scoped screens. Temporary test history resets on agent/version change or leaving
+Studio. These controls do not implement arbitrary tools/documents as canvas nodes,
+shared layout persistence, infinite pan, agent handoffs or a publish/version runtime.
+
+Verification: isolated web lint/webpack build; read-only and edit browser smokes
+in ES/EN at 1440/390/320px, including real drag/drop, cancel/confirm, stale-write
+conflicts, settings, preview-only requests, creation, keyboard, overflow and errors.
+Backend verification: 189 tests passed with a disposable PostgreSQL database.
+No real provider send, production deploy or account certification was performed.

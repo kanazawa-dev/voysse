@@ -66,6 +66,17 @@ cases and a backup-missing alert delivered to a disposable local HTTPS receiver.
 The existing disposable restic backup/restore round trip also passed. This does
 not validate the hosting scheduler or a production receiver.
 
+### Client Studio — operational canvas
+
+The approved first phase adds a client-scoped channel → agent map, web widget
+appearance preview, inline agent creation/settings, confirmed version-checked
+channel assignment and tool-free saved-agent testing. Model calls consume provider
+tokens; preview does not execute tools or create/send production conversations.
+Credential enrollment and advanced agent setup remain in their existing screens.
+[Accepted decisions and verification](decisions/client-studio.md) record the staged
+scope. Agent → agent handoffs, persistent layouts and publication/rollback remain
+future work, not implied by visual connections.
+
 ### Remaining development and validation
 
 - QR delivery/session-history reconciliation and real-account validation (Q05); Cloud, social
