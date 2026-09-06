@@ -21,12 +21,15 @@ import {
 import { BloubAvatar } from "@/components/bloub-avatar";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { OpenvoissBrand } from "@/components/openvoiss-brand";
-import { CloudInterestDialog } from "@/components/cloud-interest-dialog";
 import { useLanguage, useT } from "@/lib/i18n";
 import "./cypon.css";
 
 const docs = "https://docs.voysse.cl/docs";
 const github = "https://github.com/kanazawa-dev/voysse";
+const bookingLinks = {
+  cloud: "https://cal.com/voysse/voysse-cloud",
+  enterprise: "https://cal.com/voysse/hablemos-de-tu-proyecto",
+};
 
 function Action({
   href,
@@ -790,19 +793,17 @@ export default function WelcomePage() {
                 <strong className="cy-price">
                   {t(`welcome.plans.${plan}.price`)}
                 </strong>
-                {plan === "cloud" ? (
-                  <CloudInterestDialog triggerClassName="cy-action cy-cloud-trigger" />
-                ) : (
-                  <Action
-                    href={
-                      plan === "selfhost"
-                        ? `${docs}/getting-started`
-                        : "mailto:ventas@voysse.cl"
-                    }
-                    secondary
-                  >
-                    {t(`welcome.plans.${plan}.cta`)}
-                  </Action>
+                <Action
+                  href={plan === "selfhost" ? `${docs}/getting-started` : bookingLinks[plan]}
+                  secondary={plan !== "cloud"}
+                >
+                  {t(`welcome.plans.${plan}.cta`)}
+                </Action>
+                {plan !== "selfhost" && (
+                  <div className="cy-booking-note">
+                    <span>{t(`welcome.plans.${plan}.bookingNote`)}</span>
+                    <a href="mailto:alex@voysse.cl">{t("welcome.plans.emailAlex")}</a>
+                  </div>
                 )}
                 <ul>
                   {([1, 2, 3, 4] as const).map((i) => (

@@ -959,10 +959,16 @@
   font-size: 10px;
   min-height: 46px;
 }
-.cy-plans .cy-cloud-trigger {
-  background: var(--brand-violet);
-  color: #fff;
-  border-radius: 0;
+.cy-booking-note {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.cy-booking-note a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 .cy-plans ul {
   list-style: none;
