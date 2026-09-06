@@ -16,7 +16,7 @@ históricas. Describe código y verificación, no un despliegue en producción.
 | Panel de revisión | Carga explícita, páginas, registro, estados vacíos/errores, motivo/aceptación/confirmación; ES/EN, claro/oscuro y móvil | PR #62, main `71749be` |
 | Publicación API | Instantáneas auditadas, CAS/UUID, restaurar y retirar sin activar runtime | PR #64, main `e624efc` |
 | Publicación UI | Historial, comparación del borrador guardado, publicar/restaurar/retirar con motivo y confirmación | PR #66, main `ae0f1a5` |
-| Política por turno | Pin histórico, selección actual bajo bloqueo, replay estable y transferencias dentro del grafo fijado | Unidad de issue #67 |
+| Política por turno | Pin histórico, selección actual bajo bloqueo, replay estable y transferencias dentro del grafo fijado | PR #68, main `8d46f23` |
 
 **No confundir:** el canvas sí cambia la asignación canal → agente al confirmarla.
 Las reglas editadas siguen siendo borradores hasta publicar explícitamente por API o desde Studio.
@@ -46,8 +46,9 @@ las acciones locales: cargar otra vez para conciliar, nunca reenviar automática
 2. **Clasificación y entrega reales con política publicada.** Usar el responsable
    actual, journal acotado y outbox durable; no repetir tools/envíos inciertos. Pruebas
    de concurrencia, caída, duplicados, revisión humana y cambios de configuración.
-3. **Persistencia del canvas y experiencia completa.** Posiciones, restauración de vista
-   y feedback de ejecución real; solo mostrar estados que el backend pueda demostrar.
+3. **Controles de organización del canvas.** La API de posiciones/zoom con revisión
+   ya existe; falta mover/guardar/restaurar desde la UI y luego feedback de ejecución
+   real. Solo mostrar estados que el backend pueda demostrar.
 4. **Aceptación operativa controlada.** Migraciones/backup/rollback en entorno acordado,
    credenciales y canales de prueba, límites de gasto/concurrencia, monitoreo y recorrido
    completo con cuenta real. Verificar revisión desplegada antes de anunciar activación.
@@ -66,6 +67,8 @@ que libere turnos inciertos ni activación de transporte está aprobado implíci
   Pinning interno e interfaz implementados; adopción por productores aún pendiente.
 - Pin por turno: 8 casos nuevos, 21 enfocados y 267 API completas aprobadas;
   migración base → 0034 → base → 0034 validada solo en PostgreSQL desechable.
+- Layout API: 10 pruebas enfocadas y 277 API completas aprobadas;
+  base → 0035 → base → 0035 validada en PostgreSQL desechable.
 - Migración 0032: base → 0032 → base → 0032 verificada; no ejecutada en producción.
 - Panel: ESLint y build webpack pasaron. `studio-execution-smoke.cjs` pasó en ES/EN,
   1440/390/320 y claro/oscuro: vacío, paginación, auditoría, teclado, aceptación,

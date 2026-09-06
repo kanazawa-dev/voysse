@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from .studio_layout import layout_view
 from ..database import get_db
 from ..deps import get_current_user
 from ..models import Agent, Client, SocialChannel, User, WhatsAppChannel, WhatsAppCloudChannel, now_utc
@@ -60,6 +61,7 @@ def graph(db, user, client_id):
                          "is_enabled": row.is_enabled if row else False,
                          "updated_at": row.updated_at if row else None})
     return {"client": {"id": client.id, "name": client.name, "is_active": client.is_active},
+            "layout": layout_view(client, [a.id for a in agents]),
             "agents": [{key: getattr(a, key) for key in AGENT_FIELDS} for a in agents], "channels": channels}
 
 
