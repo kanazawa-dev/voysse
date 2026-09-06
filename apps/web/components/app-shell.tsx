@@ -4,6 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { ReactNode, useEffect, useState } from "react";
 import { ApiError, api } from "@/lib/api";
 import { useT } from "@/lib/i18n";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { AlertsBell } from "@/components/alerts-bell";
 import { AppSidebar } from "@/components/app-sidebar";
 import { BloubAvatar } from "@/components/bloub-avatar";
@@ -68,7 +69,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       .finally(() => setLoading(false));
   }, [isBare, pathname, router]);
 
-  if (isBare) return <>{children}</>;
+  if (isBare) return <>{children}{!isWidget && <div className="fixed bottom-4 right-4 z-40"><ThemeToggle /></div>}</>;
   if (loading || !user || sidebarOpen === null) return <div className="flex min-h-screen items-center justify-center gap-3 bg-background text-sm text-muted-foreground"><BloubAvatar size={64} mood="thinking" /><span>{t("shell.loading")}</span></div>;
 
   if (user.role === "operator" && pathname !== "/inbox") return null;
@@ -95,7 +96,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               </BreadcrumbList>
             </Breadcrumb>
           </div>
-          <div className="ml-auto flex items-center gap-3 px-4">{user.role === "admin" && <AlertsBell />}</div>
+          <div className="ml-auto flex items-center gap-3 px-4"><ThemeToggle />{user.role === "admin" && <AlertsBell />}</div>
         </header>
         <main className="cy-workspace-content flex min-w-0 flex-1 flex-col gap-6 p-4 sm:p-8">{children}</main>
       </SidebarInset>

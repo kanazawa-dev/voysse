@@ -519,3 +519,15 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .cy-sidebar-action, .cy-sidebar-action:before, .cy-sidebar-brand, .cy-sidebar-user { transition: none; }
 }
+
+/* Visible, keyboard-accessible appearance control on every first-party shell. */
+:root { color-scheme: light; }
+:root.dark { color-scheme: dark; }
+.cy-theme-toggle {
+  display: inline-flex; align-items: center; justify-content: center;
+  flex-shrink: 0; width: 44px; height: 44px; padding: 0;
+  border: 1px solid var(--border); border-radius: 6px;
+  background: var(--card); color: var(--foreground); cursor: pointer;
+}
+.cy-theme-toggle:hover { background: var(--accent); color: var(--accent-foreground); }
+.cy-theme-toggle:focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; }

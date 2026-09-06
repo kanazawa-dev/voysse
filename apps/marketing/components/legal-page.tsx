@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ArrowLeft, TriangleAlert } from "lucide-react";
 import { useLanguage } from "@/lib/i18n";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { OpenvoissBrand } from "@/components/openvoiss-brand";
 import type { LegalDoc } from "@/lib/legal/privacy";
@@ -17,6 +18,7 @@ export function LegalPage({ title, doc }: { title: string; doc: { es: LegalDoc; 
         <div className="mx-auto flex h-[74px] w-full max-w-3xl items-center justify-between gap-4 px-5 sm:px-8">
           <Link href="/" aria-label="Voysse"><OpenvoissBrand effect="benday" showName size={32} state="thinking" /></Link>
           <div className="flex items-center gap-2">
+            <ThemeToggle />
             <LanguageSwitcher />
             <Link href="/" className="hidden items-center gap-1.5 text-sm font-medium text-foreground/80 hover:text-foreground sm:flex"><ArrowLeft size={15} /> {lang === "en" ? "Back home" : "Volver al inicio"}</Link>
           </div>
