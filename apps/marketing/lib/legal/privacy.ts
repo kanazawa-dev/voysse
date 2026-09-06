@@ -9,7 +9,7 @@ const CONTACT_PHONE = "+56 9 4095 6827";
 
 export const privacy: { es: LegalDoc; en: LegalDoc } = {
   es: {
-    updated: "31 de agosto de 2026",
+    updated: "5 de septiembre de 2026",
     notice:
       "Este documento es un borrador redactado como punto de partida y no constituye asesoría legal. Chile está en transición entre la Ley N.º 19.628 y la nueva Ley N.º 21.719 de Protección de Datos Personales -- recomendamos revisión de un abogado antes de considerarlo definitivo.",
     sections: [
@@ -34,7 +34,8 @@ export const privacy: { es: LegalDoc; en: LegalDoc } = {
           "Datos de tus clientes: la información que cargas sobre cada cliente (nombre, industria, descripción, contexto de negocio) para configurar sus agentes de IA.",
           "Conversaciones: los mensajes que los usuarios finales de tus clientes intercambian con tus agentes por WhatsApp o chat web, incluyendo audio o imágenes si activas esas funciones.",
           "Claves de proveedores de IA: si conectas tu propia clave de OpenAI o Anthropic, la guardamos encriptada. Nunca se muestra completa ni se usa para otro fin que ejecutar tus propios agentes.",
-          "Leads de Voysse Cloud: si dejas tus datos en el formulario \"Elegir Cloud\" del sitio, guardamos tu nombre, correo y el nombre de tu agencia para poder contactarte.",
+          "Consultas sobre Voysse: usamos los datos que nos proporcionas por correo o que enviaste mediante el formulario anterior de interés en Cloud para responder a tu solicitud.",
+          "Reservas de reuniones: los botones para conversar con Alex te llevan a Cal.com. Allí se recopilan tu nombre, correo y las respuestas que incluyas al reservar para organizar la reunión. La landing no carga un calendario integrado ni envía un formulario previo al abrir el enlace.",
           "Cookies técnicas: usamos cookies de sesión (httpOnly) estrictamente necesarias para mantener tu sesión iniciada. No usamos cookies de publicidad ni de rastreo de terceros.",
           "Datos técnicos: dirección IP y metadatos de solicitudes, usados solo por seguridad y para limitar abuso.",
         ],
@@ -54,6 +55,7 @@ export const privacy: { es: LegalDoc; en: LegalDoc } = {
         paragraphs: [
           "Proveedores de IA (OpenAI, Anthropic): las conversaciones se envían a estos proveedores usando tu propia clave, no una compartida por Voysse -- su tratamiento de esos datos se rige por las políticas propias de cada proveedor.",
           "Meta / WhatsApp: si activas el canal de WhatsApp Cloud API, los mensajes pasan por la infraestructura de Meta bajo sus propios términos.",
+          "Cal.com: usamos este proveedor para gestionar las reservas de reuniones con Alex. Puedes consultar su política en https://cal.com/privacy. No compartas contraseñas, claves API ni datos sensibles en las preguntas de reserva.",
           "Proveedores de infraestructura: alojamos la plataforma en servidores de terceros (actualmente Railway), que pueden estar ubicados fuera de Chile.",
           "Nunca vendemos tus datos ni los de tus clientes a terceros con fines publicitarios.",
         ],
@@ -102,7 +104,7 @@ export const privacy: { es: LegalDoc; en: LegalDoc } = {
     ],
   },
   en: {
-    updated: "August 31, 2026",
+    updated: "September 5, 2026",
     notice:
       "This document is an AI-drafted starting point, not legal advice. Chile is transitioning from Law 19.628 to the new Law 21.719 on Personal Data Protection -- have it reviewed by a lawyer before treating it as final. In case of any conflict between this English version and the Spanish version, the Spanish version governs.",
     sections: [
@@ -127,7 +129,8 @@ export const privacy: { es: LegalDoc; en: LegalDoc } = {
           "Your clients' data: whatever you enter about each client (name, industry, description, business context) to configure their AI agents.",
           "Conversations: the messages your clients' end users exchange with your agents over WhatsApp or web chat, including audio or images if you enable those capabilities.",
           "AI provider keys: if you connect your own OpenAI or Anthropic key, we store it encrypted. It's never shown in full and is never used for anything other than running your own agents.",
-          "Voysse Cloud leads: if you leave your details in the \"Choose Cloud\" form on the site, we store your name, email and agency name so we can reach out.",
+          "Voysse inquiries: we use the details you provide by email or previously submitted through the Cloud interest form to respond to your request.",
+          "Meeting bookings: the buttons to speak with Alex take you to Cal.com. Your name, email and answers provided when booking are collected there to organize the meeting. The landing page does not load an embedded calendar or submit a preliminary form when opening the link.",
           "Technical cookies: we use strictly necessary, httpOnly session cookies to keep you signed in. We do not use advertising or third-party tracking cookies.",
           "Technical data: IP address and request metadata, used only for security and abuse prevention.",
         ],
@@ -147,6 +150,7 @@ export const privacy: { es: LegalDoc; en: LegalDoc } = {
         paragraphs: [
           "AI providers (OpenAI, Anthropic): conversations are sent to these providers using your own key, never a key shared by Voysse -- their handling of that data is governed by their own policies.",
           "Meta / WhatsApp: if you enable the WhatsApp Cloud API channel, messages pass through Meta's infrastructure under their own terms.",
+          "Cal.com: we use this provider to manage meeting bookings with Alex. Its privacy policy is available at https://cal.com/privacy. Do not share passwords, API keys or sensitive data in booking questions.",
           "Infrastructure providers: we host the platform on third-party servers (currently Railway), which may be located outside Chile.",
           "We never sell your data or your clients' data to third parties for advertising purposes.",
         ],
