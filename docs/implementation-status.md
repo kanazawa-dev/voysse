@@ -82,8 +82,8 @@ future work, not implied by visual connections.
 Client-scoped draft configuration now has revision-checked atomic persistence,
 same-client agent validation, cycle/duplicate rejection, bounded hop settings and
 mandatory human fallback. [Design and rollout](decisions/agent-handoffs.md).
-The ES/EN draft editor and manual saved-rule walkthrough are implemented. Automatic
-condition evaluation, durable channel-aware execution, saved canvas layouts and
+The ES/EN draft editor and manual saved-rule walkthrough are implemented. One-step AI condition
+evaluation is available separately with usage accounting; durable channel-aware execution, saved canvas layouts and
 versioned publication remain pending. No saved draft changes a live channel or
 conversation owner.
 

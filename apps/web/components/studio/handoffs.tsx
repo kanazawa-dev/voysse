@@ -4,6 +4,7 @@ import { api, messageFrom } from '@/lib/api';
 import { useLanguage } from '@/lib/i18n';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { RoutingSimulation } from './simulation';
 import type { StudioGraph } from './types';
 import styles from './studio.module.css';
 
@@ -112,6 +113,7 @@ export function HandoffEditor({ data }: { data: StudioGraph }) {
           </>}
         </fieldset>
       </div>
+      {!dirty && !busy && draft.valid && !invalid && <RoutingSimulation key={String(draft.revision) + data.agents.map(a => a.updated_at).join()} data={data} revision={draft.revision} />}
     </>}
   </section>;
 }

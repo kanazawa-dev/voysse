@@ -38,8 +38,8 @@ clients. This is deliberately a draft schema, not an event journal or runtime lo
 
 ## Subsequent deliveries — still pending
 
-1. Automatic condition evaluation and safe routing simulation with explained
-   matches. The draft editor and manual rehearsal below are already implemented.
+1. Full-chain AI simulation. One-step classification, the draft editor and manual
+   rehearsal below are implemented; no automatic multi-step traversal yet.
 2. Durable handoff journal and a separate current responder, preserving entry
    channel identity, context, operator takeover and interrupted/uncertain work.
 3. Integrate each transport with bounded hops and revalidated permissions, then
@@ -67,7 +67,7 @@ remain visible until the user explicitly reloads. No activation control exists.
 The separate rehearsal walks the saved rules: the user chooses a rule explicitly,
 then sees the path and human exit. It makes no model calls, evaluates no natural-
 language conditions and sends no messages. Editing resets the rehearsal; invalid
-or unsaved drafts cannot be rehearsed. Full AI routing simulation, durable runtime,
+or unsaved drafts cannot be rehearsed. Full-chain AI routing simulation, durable runtime,
 layout persistence and versioned publication remain pending.
 
 Verification: `scripts/ui/studio-handoffs-smoke.cjs` covers ES/EN, light/dark,
@@ -75,3 +75,31 @@ Verification: `scripts/ui/studio-handoffs-smoke.cjs` covers ES/EN, light/dark,
 confirmation, late-load protection and zero rehearsal writes. Web lint/build and
 all three Studio browser smokes passed. Rollback removes this editor component,
 its page entry and styles; persisted drafts and channel assignments stay intact.
+
+## One-step AI simulation
+
+`POST /api/studio/<client-id>/handoffs/simulate` evaluates a test message against
+only the saved outgoing rules of the chosen source agent. Requires administrator
+access, an active client/agent and the expected draft revision. The UI warns about
+provider tokens and uses that agent's configured model/credentials. Input is at
+most 4000 characters; one classification call requests at most 256 output tokens.
+The shared limiter allows five requests/minute/IP (trusted ingress required); this
+is not a tenant spending cap or global provider concurrency limit.
+
+The model returns a strict candidate index and short explanation. Non-candidate or
+malformed output proposes human attention with an explicit invalid-response status;
+uncertainty/no match also proposes human attention. No outgoing rules means no model
+call. Provider failures remain errors, not invented successful evaluations. After a
+completion, usage is recorded and access, agent version, draft revision and active
+references are rechecked; stale results are rejected. No instructions/tools/RAG,
+production history, conversation, channel sends or draft mutations are involved.
+The proposal is advisory, one step only, and is not an evaluation of a whole chain.
+Runtime handoffs, durable context, layout persistence and publication remain pending.
+Rollback removes the simulation router/component; drafts and channels stay intact.
+
+Verification for one-step simulation: 10 focused API tests and the full 212-test
+API suite passed on disposable PostgreSQL with mocked providers. Web ESLint,
+isolated webpack build and all four Studio browser smokes passed (ES/EN,
+1440/390/320, light/dark). No real provider credentials or messages were used.
+Closing the UI discards its result but cannot guarantee cancellation of provider
+work already admitted; consumed tokens can still be recorded.
