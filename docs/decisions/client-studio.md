@@ -73,3 +73,21 @@ in ES/EN at 1440/390/320px, including real drag/drop, cancel/confirm, stale-writ
 conflicts, settings, preview-only requests, creation, keyboard, overflow and errors.
 Backend verification: 189 tests passed with a disposable PostgreSQL database.
 No real provider send, production deploy or account certification was performed.
+
+## Persistencia visual — API
+
+`GET/PUT /api/studio/{client}/layout` guarda distribución por cliente, separada de
+reglas y asignaciones. Solo administrador de la agencia. PUT exige `expected_revision`
+y reemplaza el documento: hasta 200 `positions` por ID visible (`agent:<uuid>`,
+`widget:<uuid>`, `channel:<kind>`), puntos enteros x 0–4096/y 70–32768 y `zoom` de
+75/100/125/150. Omitir posiciones/zoom restaura la distribución por defecto (100%).
+
+CAS y bloqueo NOWAIT del cliente devuelven 409 ante cambios concurrentes. IDs ajenos
+se rechazan; posiciones de agentes borrados/movidos se omiten al leer sin mutar las
+reglas. El GET del grafo incluye `layout`. No modifica canales, mensajes ni políticas.
+Migración 0035 agrega `Client.studio_layout`; downgrade elimina solo esa preferencia.
+La interfaz de organizar/mover/guardar es una entrega siguiente. No se migró producción.
+
+Verificación API de layout: 10 pruebas enfocadas y 277 API completas aprobadas;
+migración base → 0035 → base → 0035 aprobada en PostgreSQL desechable. Browser
+N/A en esta unidad backend. La interfaz de organización se valida por separado.

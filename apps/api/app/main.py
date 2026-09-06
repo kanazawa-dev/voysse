@@ -26,6 +26,7 @@ from .routers import (
     studio,
     studio_execution,
     studio_policies,
+    studio_layout,
     studio_handoffs,
     studio_simulation,
     team,
@@ -109,3 +110,5 @@ app.include_router(studio_simulation.router, prefix="/api")
 app.include_router(studio_execution.router, prefix="/api")
 
 app.include_router(studio_policies.router, prefix="/api")
+
+app.include_router(studio_layout.router, prefix="/api")
