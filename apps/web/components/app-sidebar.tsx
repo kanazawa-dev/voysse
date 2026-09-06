@@ -106,7 +106,7 @@ export function AppSidebar({ user, ...props }: React.ComponentProps<typeof Sideb
       </SidebarContent>
       <SidebarFooter className="cy-sidebar-footer">
         <div className="cy-sidebar-companion" data-compact={compact || undefined}>
-          <BloubAvatar size={compact ? 32 : 44} seed="voysse" animated={!compact} label={compact ? "Voxy" : undefined} />
+          <BloubAvatar size={compact ? 32 : 44} seed="voysse" animated cycleShapes cycleExpressions followPointer label={compact ? "Voxy" : undefined} />
           {!compact && <div className="min-w-0"><strong>Voxy</strong><span>{language === "es" ? "Tu compañero en Voysse" : "Your Voysse companion"}</span></div>}
         </div>
         <NavUser user={user} />

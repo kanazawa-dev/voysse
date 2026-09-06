@@ -172,18 +172,19 @@ const assert = require("node:assert/strict");
           background: getComputedStyle(e).backgroundColor,
           marker: getComputedStyle(e).boxShadow,
         }));
-        assert.notEqual(selectedStyle.marker, "none");
+        assert.equal(selectedStyle.marker, "none");
+        assert.equal(selectedStyle.background, "rgba(0, 0, 0, 0)");
         await active.hover();
         await p.mouse.move(1400, 0);
         assert.deepEqual(await active.evaluate((e) => ({
           background: getComputedStyle(e).backgroundColor,
           marker: getComputedStyle(e).boxShadow,
         })), selectedStyle);
-        assert.equal(await active.evaluate((e) => getComputedStyle(e, "::before").opacity), "0");
+        assert.equal(await active.evaluate((e) => getComputedStyle(e, "::before").opacity), "1");
         await nav.hover();
         assert.equal(await nav.evaluate((e) => getComputedStyle(e, "::before").opacity), "1");
         assert.equal(await nav.evaluate((e) => getComputedStyle(e, "::before").top), "0px");
-        assert.equal(await nav.evaluate((e) => getComputedStyle(e).borderRadius), "6px");
+        assert.equal(await nav.evaluate((e) => getComputedStyle(e).borderRadius), "0px");
         await p.mouse.move(1400, 0);
         await nav.focus();
         assert.equal(
@@ -192,10 +193,12 @@ const assert = require("node:assert/strict");
         );
         await nav.evaluate((e) => e.blur());
         await nav.hover();
-        assert.notEqual(
+        assert.equal(
           await nav.evaluate((e) => getComputedStyle(e).backgroundColor),
           navBefore,
         );
+        assert.equal(navBefore, "rgba(0, 0, 0, 0)");
+        assert.equal(await nav.evaluate((e) => getComputedStyle(e).borderTopWidth), "0px");
         await p.mouse.move(1400, 0);
         await p.evaluate(() => document.documentElement.classList.add("dark"));
         assert.equal(

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { EXPRESSION_BY_ID, type ExpressionId } from "@/lib/bloub/vendor/expressions";
 import { BotEngine, type BotFrame } from "@/lib/bloub/vendor/engine";
 import { SHAPE_BY_ID, type ShapeId } from "@/lib/bloub/vendor/skins";
 import type { StateId } from "@/lib/bloub/vendor/states";
@@ -15,6 +16,7 @@ const STATES: Record<BloubMood, StateId> = {
   sleep: "sleep",
   listening: "wide",
 };
+const COMPANION_EXPRESSIONS: ExpressionId[] = ["neutre", "curieux", "heureux", "surpris", "attentif"];
 const SHAPES: ShapeId[] = ["galet", "squircle", "nuage", "capsule", "hexagone"];
 
 /** Stable identity across SSR, reloads and lists. Never randomise during render. */
@@ -35,6 +37,10 @@ export interface BloubAvatarProps {
   label?: string;
   /** Small list avatars are static by default. Prominent companions can animate. */
   animated?: boolean;
+  /** Opt-in silhouette cycling for the sidebar companion, not identity avatars. */
+  cycleShapes?: boolean;
+  cycleExpressions?: boolean;
+  followPointer?: boolean;
 }
 
 /** React adapter for Bloub's MIT SVG engine; upstream attribution is in lib/bloub/vendor. */
@@ -47,6 +53,9 @@ export function BloubAvatar({
   className,
   label,
   animated = size >= 48,
+  cycleShapes = false,
+  cycleExpressions = false,
+  followPointer = false,
 }: BloubAvatarProps) {
   const uid = `bloub-${useId().replace(/:/g, "")}`;
   const svg = useRef<SVGSVGElement>(null);
@@ -60,6 +69,11 @@ export function BloubAvatar({
     [seed],
   );
   const clock = useRef(1.2);
+  const pointer = useRef<{ x: number; y: number } | null>(null);
+  const shape = useRef(shapeFor(seed));
+  const [shapeId, setShapeId] = useState(() => shapeFor(seed));
+  const expression = useRef<ExpressionId>("neutre");
+  const [expressionId, setExpressionId] = useState<ExpressionId>("neutre");
   const [frame, setFrame] = useState<BotFrame>(() => engine.sample(1.2));
   const [running, setRunning] = useState(false);
 
@@ -70,7 +84,7 @@ export function BloubAvatar({
       clock.current += 1.2;
       setFrame({ ...engine.sample(clock.current) });
     }
-  }, [engine, mood, running]);
+  }, [engine, mood, running, cycleExpressions]);
 
   useEffect(() => {
     const element = svg.current;
@@ -99,6 +113,24 @@ export function BloubAvatar({
   }, [animated]);
 
   useEffect(() => {
+    if (!running || !followPointer) return;
+    const move = (event: PointerEvent) => {
+      if (event.pointerType === "mouse") pointer.current = { x: event.clientX, y: event.clientY };
+    };
+    const reset = () => { pointer.current = null; engine.setLook(null, clock.current); };
+    const leave = (event: PointerEvent) => { if (!event.relatedTarget) reset(); };
+    window.addEventListener("pointermove", move, { passive: true });
+    window.addEventListener("pointerout", leave);
+    window.addEventListener("blur", reset);
+    return () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerout", leave);
+      window.removeEventListener("blur", reset);
+      reset();
+    };
+  }, [engine, running, followPointer]);
+
+  useEffect(() => {
     if (!running) return;
     let raf = 0;
     let previous = 0;
@@ -106,8 +138,36 @@ export function BloubAvatar({
     const tick = (now: number) => {
       if (previous) clock.current += Math.min((now - previous) / 1000, 0.1);
       previous = now;
+      if (cycleShapes) {
+        const next = SHAPES[(SHAPES.indexOf(shapeFor(seed)) + Math.floor((clock.current - 1.2) / 5)) % SHAPES.length];
+        if (next !== shape.current) {
+          engine.setShape(SHAPE_BY_ID.get(next)?.radii ?? null, clock.current);
+          shape.current = next;
+          setShapeId(next);
+        }
+      }
+      if (cycleExpressions) {
+        const next = COMPANION_EXPRESSIONS[Math.floor((clock.current - 1.2) / 7) % COMPANION_EXPRESSIONS.length];
+        if (next !== expression.current) {
+          engine.setExpression(EXPRESSION_BY_ID.get(next) ?? null, clock.current);
+          expression.current = next;
+          setExpressionId(next);
+        }
+      }
       // 30fps is sufficient for this small UI companion; don't rerender at 120Hz.
       if (now - lastPaint >= 1000 / 30) {
+        const target = pointer.current;
+        if (followPointer && target && svg.current) {
+          const box = svg.current.getBoundingClientRect();
+          if (box.width && box.height) {
+            engine.setLook({
+              yaw: Math.max(-35, Math.min(35, (target.x - box.x - box.width / 2) * 35 / 300)),
+              pitch: Math.max(-25, Math.min(25, -(target.y - box.y - box.height / 2) * 25 / 300)),
+              mix: 1, spin: 0, wander: 0,
+            }, clock.current);
+          }
+          pointer.current = null;
+        }
         setFrame({ ...engine.sample(clock.current) });
         lastPaint = now;
       }
@@ -115,7 +175,7 @@ export function BloubAvatar({
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [engine, running]);
+  }, [engine, running, cycleShapes, cycleExpressions, followPointer, seed]);
 
   const dots = (
     <g>
@@ -155,6 +215,8 @@ export function BloubAvatar({
       ref={svg}
       data-bloub=""
       data-mood={mood}
+      data-expression={cycleExpressions ? expressionId : undefined}
+      data-shape={shapeId}
       data-animated={running ? "true" : "false"}
       className={className}
       width={size}
