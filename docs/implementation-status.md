@@ -64,8 +64,7 @@ No production deployment or real-account acceptance is implied.
 - Guided activation, versioned agent publication/rollback, evaluated AI/RAG,
   comprehensive accessibility and data-lifecycle tests (Q10, Q12–14, Q16–17).
 - Capacity measurements, operating guides and real usage observations (Q18–19).
-- Authorized Meta accounts, real SMTP delivery, hosting notifications, repository
-  protection and buyer interviews/pilots require separate evidence. CI execution
+- Authorized Meta accounts, real SMTP delivery, hosting notifications and buyer interviews/pilots require separate evidence. CI execution
   and merged code must not be confused with these external acceptance criteria.
 
 Preserve the existing commercial offer and avoid building roadmap ideas outside
