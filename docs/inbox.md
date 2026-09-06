@@ -131,6 +131,30 @@ agency's own dashboard: the client portal's header and login screen
 widget, whose own color falls back to the agency's `brand_color` when an agent
 hasn't set its own.
 
+### Portal design
+
+The client portal uses the dashboard's Geist typography, semantic light/dark
+colors, compact corners, navigation corner markers, and shared button/input
+components. Language and appearance controls sit together in the header, with
+the same 36px height; they remain available on login and unavailable states.
+Agency name, logo, and title remain personalized. Agency color is a decorative
+identity accent and companion color, not a text/background contrast pair.
+
+Portal styles are scoped to `.cy-portal` in
+`apps/web/app/portal/[slug]/portal.css`. Keep the separate portal session/API;
+do not wrap it in the agency-authenticated dashboard shell or change widget
+styles to achieve visual consistency.
+
+Verification: `node scripts/ui/portal-design-smoke.cjs` checks login, inbox,
+empty/unavailable states, both themes, keyboard focus, language persistence,
+and 1440/768/390/320px layouts using API fixtures.
+Run `node scripts/ui/portal-delivery-smoke.cjs` alongside it for human-delivery
+and duplicate-attempt protection. Set `WEB_URL` and `PLAYWRIGHT_MODULE` if needed.
+
+Rollback boundary: revert the portal page/CSS, the portal-only floating-toggle
+exclusion in `app-shell.tsx`, this section, and the design smoke together.
+No API or data migrations are involved.
+
 ---
 
 See also: [WhatsApp](./whatsapp.md) · [Architecture](./architecture.md)
