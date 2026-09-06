@@ -166,13 +166,29 @@ const assert = require("node:assert/strict");
         assert.equal(await nav.evaluate((e) => e.getBoundingClientRect().height), 44);
         assert.equal(await p.locator('.cy-page-head [data-bloub]').count(), 0);
         assert.equal(await p.locator('.cy-sidebar-companion [data-bloub]').count(), 1);
+        assert.equal(await nav.evaluate((e) => getComputedStyle(e, "::before").opacity), "0");
+        const active = p.locator(".cy-sidebar-action[data-active]").first();
+        const selectedStyle = await active.evaluate((e) => ({
+          background: getComputedStyle(e).backgroundColor,
+          marker: getComputedStyle(e).boxShadow,
+        }));
+        assert.notEqual(selectedStyle.marker, "none");
+        await active.hover();
+        await p.mouse.move(1400, 0);
+        assert.deepEqual(await active.evaluate((e) => ({
+          background: getComputedStyle(e).backgroundColor,
+          marker: getComputedStyle(e).boxShadow,
+        })), selectedStyle);
+        assert.equal(await active.evaluate((e) => getComputedStyle(e, "::before").opacity), "0");
         await nav.hover();
+        assert.equal(await nav.evaluate((e) => getComputedStyle(e, "::before").opacity), "1");
+        assert.equal(await nav.evaluate((e) => getComputedStyle(e, "::before").top), "0px");
         assert.equal(await nav.evaluate((e) => getComputedStyle(e).borderRadius), "6px");
         await p.mouse.move(1400, 0);
         await nav.focus();
         assert.equal(
-          await nav.evaluate((e) => getComputedStyle(e, "::before").content),
-          "none",
+          await nav.evaluate((e) => getComputedStyle(e, "::before").opacity),
+          "1",
         );
         await nav.evaluate((e) => e.blur());
         await nav.hover();
@@ -191,8 +207,8 @@ const assert = require("node:assert/strict");
         );
         await nav.hover();
         assert.equal(
-          await nav.evaluate((e) => getComputedStyle(e, "::before").content),
-          "none",
+          await nav.evaluate((e) => getComputedStyle(e, "::before").opacity),
+          "1",
         );
         await p.screenshot({ path: "/tmp/cypon-web-dark.png", fullPage: true });
         await p.locator('[data-slot="sidebar-trigger"]').click();
@@ -205,8 +221,8 @@ const assert = require("node:assert/strict");
         );
         await nav.hover();
         assert.equal(
-          await nav.evaluate((e) => getComputedStyle(e, "::before").content),
-          "none",
+          await nav.evaluate((e) => getComputedStyle(e, "::before").opacity),
+          "1",
         );
         assert.equal(await nav.evaluate((e) => e.getBoundingClientRect().width), 44);
         assert.equal(await p.locator('[data-slot="sidebar-container"]').evaluate((e) => e.getBoundingClientRect().width), 72);
