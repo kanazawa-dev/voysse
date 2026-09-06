@@ -586,3 +586,16 @@ class ExecutionTurn(Base):
     transitions: Mapped[list] = mapped_column(JSON, default=list)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc, onupdate=now_utc)
+
+
+class PolicyRevision(Base):
+    """Immutable publication journal; latest revision is not runtime activation."""
+    __tablename__ = "policy_revisions"
+    __table_args__ = (UniqueConstraint("client_id", "revision", name="uq_policy_client_revision"),)
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True)
+    client_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("clients.id", ondelete="CASCADE"))
+    revision: Mapped[int] = mapped_column(Integer)
+    actor_id: Mapped[uuid.UUID] = mapped_column()  # Historical actor, survives user deletion.
+    request: Mapped[dict] = mapped_column(JSON)
+    policy: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)

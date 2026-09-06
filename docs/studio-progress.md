@@ -13,10 +13,12 @@ históricas. Describe código y verificación, no un despliegue en producción.
 | Simulación IA | Un paso o cadena acotada; muestra condiciones y razones; consume tokens, sin herramientas/historial/envíos reales | PR #54, #56 |
 | Estado durable | Responsable separado del agente de entrada, turnos/contexto idempotentes, transiciones, revisión y salida humana | PR #58, main `af3cdb3` |
 | Revisión administrativa API | Listado acotado y cierre auditado de turnos en curso/inciertos hacia humano; sin reintentos | PR #60, main `1c54f73` |
-| Panel de revisión | Carga explícita, páginas, registro, estados vacíos/errores, motivo/aceptación/confirmación; ES/EN, claro/oscuro y móvil | Unidad de issue #61; consultar PR/CI de esta revisión |
+| Panel de revisión | Carga explícita, páginas, registro, estados vacíos/errores, motivo/aceptación/confirmación; ES/EN, claro/oscuro y móvil | PR #62, main `71749be` |
+| Publicación API | Instantáneas auditadas, CAS/UUID, restaurar y retirar sin activar runtime | Unidad de issue #63 |
 
 **No confundir:** el canvas sí cambia la asignación canal → agente al confirmarla.
-Las reglas agente → agente siguen siendo borradores. La simulación no las publica
+Las reglas editadas siguen siendo borradores hasta publicar explícitamente por API.
+Una versión publicada todavía NO activa derivaciones. La simulación no las publica
 ni genera turnos reales. El protocolo durable y su revisión todavía no son usados
 por los productores actuales de mensajes; un registro vacío es esperable.
 
@@ -34,9 +36,9 @@ las acciones locales: cargar otra vez para conciliar, nunca reenviar automática
 
 ## Pendientes, en orden recomendado
 
-1. **Publicación versionada de políticas, desactivada por defecto.** Separar borrador
-   de versión publicada; validación, permisos, revisión atómica, rollback y reglas
-   para conversaciones ya iniciadas. No habilitar ejecución por el solo hecho de guardar.
+1. **Interfaz de publicación versionada.** La API de publicar/restaurar/retirar está
+   implementada ([contrato](decisions/policy-publication.md)); falta exponer historial,
+   comparación con borrador, confirmaciones y conflictos en Studio. No activar runtime.
 2. **Adoptar el protocolo en todos los productores.** Inventariar `/messages`, `/media`,
    `/mode`, widget y workers QR/Cloud/social; comenzar con una ruta controlada. Confirmar
    claim antes de I/O, una respuesta por propietario, contexto compartido y límites;
@@ -59,6 +61,10 @@ que libere turnos inciertos ni activación de transporte está aprobado implíci
 - Backend: 26 pruebas enfocadas (13 de revisión) pasaron; suite local de 244 antes
   de agregar el último caso de paginación/bloqueo, luego enfocadas nuevamente verdes.
   PR #60: seis checks verdes, CI `34043065444`. Solo PostgreSQL desechable.
+- Publicación: 14 pruebas enfocadas y 259 API completas aprobadas; migración
+  base → 0033 → base → 0033 aprobada en DB desechable.
+  Ver [contrato, migración y rollback](decisions/policy-publication.md);
+  UI, pinning de versión por turno y adopción por productores aún pendientes.
 - Migración 0032: base → 0032 → base → 0032 verificada; no ejecutada en producción.
 - Panel: ESLint y build webpack pasaron. `studio-execution-smoke.cjs` pasó en ES/EN,
   1440/390/320 y claro/oscuro: vacío, paginación, auditoría, teclado, aceptación,
