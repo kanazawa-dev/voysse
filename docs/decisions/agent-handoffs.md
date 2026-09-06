@@ -133,3 +133,9 @@ Chain verification: 7 new tests (17 combined classifier/chain tests) and the ful
 webpack build and four Studio browser smokes passed ES/EN at 1440/390/320 in
 light/dark, including mode changes, step traces and hop-limit feedback. No real
 provider credentials or production messages were used.
+
+## Current continuation checkpoint
+
+[Studio progress](../studio-progress.md) consolidates the delivered draft/simulation,
+dormant durable protocol and administrative review panel, verification and ordered
+remaining publication/runtime work. Earlier per-stage pending notes are historical.

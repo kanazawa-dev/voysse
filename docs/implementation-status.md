@@ -1,5 +1,11 @@
 # Implementation status — 6 September 2026
 
+## Studio: checkpoint actual
+
+Ver [estado consolidado y pendientes ordenados de Studio](studio-progress.md) antes
+de retomar. Incluye unidades en main, alcance dormante, pruebas, próximos pasos y
+rollback. Las entregas históricas de abajo no reemplazan ese checkpoint.
+
 ## Current snapshot (supersedes historical delivery notes below)
 
 The product-quality backlog is **not complete**. At the previous integration
@@ -294,6 +300,7 @@ el primer progreso, cubierto por start_period; no indica un fallo de migración.
 - Administrators can inspect client-scoped execution turns and explicitly quarantine
   running/uncertain claims toward human attention, with revision checks and an
   idempotent actor/reason/timestamp audit. No provider calls, retries or message copies.
-- UI review panel, runtime adapter adoption and controlled policy activation remain
-  pending. Review cannot cancel external effects already underway; legacy producers
+- The ES/EN review panel now exposes bounded listing, audit and confirmed human
+  review. Runtime adapter adoption and controlled policy activation remain pending.
+  Review cannot cancel external effects already underway; legacy producers
   still ignore the dormant ledger. See [contract](decisions/execution-state.md).
