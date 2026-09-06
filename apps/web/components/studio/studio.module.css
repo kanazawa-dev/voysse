@@ -50,3 +50,6 @@
 .execution summary { cursor: pointer; font-size: 13px; }
 .execution li { border-top: 1px solid var(--border); padding-block: 12px; }
 .execution summary:focus-visible, .execution form:focus-visible { outline: 2px solid var(--ring); outline-offset: 4px; }
+.policyCompare { display: grid; gap: 16px; min-width: 0; }
+.policyCompare > div { border: 1px solid var(--border); border-radius: 8px; padding: 12px; min-width: 0; }
+@media (min-width: 800px) { .policyCompare { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
