@@ -39,6 +39,45 @@ accepted, not that a human read it. Startup counts as not healthy; allow deploym
 maintenance windows in the scheduler/receiver. `proxy` has no Docker health probe,
 so only its running state is checked. This does not test public DNS/TLS or delivery.
 
+## Enable backup freshness monitoring
+
+After configuring [full backups](full-backup.md), set these in the monitor's
+private scheduler environment (not only in the backup job):
+
+```sh
+VOYSSE_MONITOR_BACKUP=true
+VOYSSE_BACKUP_ID=your-deployment-id
+VOYSSE_BACKUP_MAX_AGE_HOURS=26
+```
+
+Use the same deployment ID as the backup job. The default is disabled; when enabled,
+max age defaults to 26 hours (daily backup plus two hours of margin). Choose an
+integer from 1 to 8760 for your approved cadence. Invalid configuration exits 2
+before checking services and must be observed by the scheduler.
+
+The monitor reads only `backups/full-backup-success.json` under this checkout,
+limited to 4 KiB. It requires a matching deployment, a valid snapshot ID and a
+timezone-aware completion timestamp. Exactly the maximum age still passes;
+anything older fails. A future timestamp fails rather than extending freshness.
+
+| Problem code | Meaning |
+| --- | --- |
+| `backup:missing` | No completion marker exists |
+| `backup:stale` | Last recorded completion exceeds the configured age |
+| `backup:deployment_mismatch` | Marker belongs to another deployment |
+| `backup:future_timestamp` | Check the host clock and completion evidence |
+| `backup:invalid_marker` | Unreadable, malformed or oversized evidence |
+
+Backup and service problems share one redacted HTTPS alert per invocation, even
+when Docker inventory fails. No snapshot ID, deployment name, path or file content
+is included. Exit codes remain unchanged; exit 0 covers all enabled checks.
+
+This is **local completion evidence**, not a remote repository check or restore
+test. Keep the checkout/marker operator-controlled. The monitor does not read
+restic credentials, schedule a backup, stop writers, delete snapshots or repair
+the marker. Run it from the same checkout as the backup job. Independently monitor
+scheduler failures and host outages. No scheduler or receiver is installed here.
+
 ## Remaining external monitoring
 
 A host-local script cannot report its own host or scheduler disappearing. Configure
@@ -54,5 +93,8 @@ JSON formats, missing replicas, unhealthy states, inventory errors, redaction an
 the HTTPS receiver contract, including actual delivery to a temporary TLS receiver
 and rejected redirects. No database, paid service, or external notification needed.
 
-Rollback: remove the scheduled invocation, script, tests and operations CI job.
+To roll back only backup freshness checks, unset `VOYSSE_MONITOR_BACKUP` or set it
+to `false`; service checks and stored backups remain unchanged.
+
+Full monitor rollback: remove the scheduled invocation, script, tests and operations CI job.
 Worker healthchecks and message queues remain unchanged.

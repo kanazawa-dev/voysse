@@ -2,8 +2,10 @@
 """Read-only Compose watchdog. Run on the host, not inside an application worker."""
 import json
 import os
+import re
 import subprocess
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import urlsplit
 from urllib.request import HTTPRedirectHandler, Request, build_opener
@@ -11,6 +13,35 @@ from urllib.request import HTTPRedirectHandler, Request, build_opener
 ROOT = Path(__file__).resolve().parents[1]
 REQUIRED = {"db", "api", "web", "whatsapp", "whatsapp-cloud-worker", "whatsapp-qr-worker", "proxy"}
 PROBED = REQUIRED - {"proxy"} | {"social-worker"}
+
+
+def backup_failures(deployment, max_hours, now=None):
+    """Check local completion evidence, not remote integrity or restorability."""
+    marker = ROOT / "backups/full-backup-success.json"
+    try:
+        with marker.open("rb") as source:
+            raw = source.read(4097)
+        if len(raw) > 4096:
+            return ["backup:invalid_marker"]
+        data = json.loads(raw)
+        if not isinstance(data, dict):
+            return ["backup:invalid_marker"]
+        if data.get("deployment") != deployment:
+            return ["backup:deployment_mismatch"]
+        snapshot = data.get("snapshot_id")
+        if not isinstance(snapshot, str) or not re.fullmatch(r"[0-9a-f]{8,64}", snapshot):
+            return ["backup:invalid_marker"]
+        completed = datetime.fromisoformat(data["completed_at"])
+        if completed.tzinfo is None:
+            return ["backup:invalid_marker"]
+        age = ((now or datetime.now(timezone.utc)) - completed).total_seconds()
+        if age < 0:
+            return ["backup:future_timestamp"]
+        return ["backup:stale"] if age > max_hours * 3600 else []
+    except FileNotFoundError:
+        return ["backup:missing"]
+    except (OSError, ValueError, TypeError, KeyError, OverflowError, RecursionError):
+        return ["backup:invalid_marker"]
 
 
 def parse_services(raw):
@@ -62,6 +93,17 @@ def main():
     if social not in ("true", "false"):
         print("Invalid VOYSSE_MONITOR_SOCIAL; use true or false", file=sys.stderr)
         return 2
+    backup_enabled = os.getenv("VOYSSE_MONITOR_BACKUP", "false")
+    if backup_enabled not in ("true", "false"):
+        print("Invalid VOYSSE_MONITOR_BACKUP; use true or false", file=sys.stderr)
+        return 2
+    if backup_enabled == "true":
+        deployment = os.getenv("VOYSSE_BACKUP_ID", "")
+        hours = os.getenv("VOYSSE_BACKUP_MAX_AGE_HOURS", "26")
+        if (not re.fullmatch(r"[a-zA-Z0-9][a-zA-Z0-9_-]{0,63}", deployment)
+                or not re.fullmatch(r"[0-9]{1,4}", hours) or not 1 <= int(hours) <= 8760):
+            print("Invalid backup monitor ID or max age (1–8760 integer hours)", file=sys.stderr)
+            return 2
     try:
         result = subprocess.run(
             ["docker", "compose", "--env-file", ".env.docker", "--profile", "social",
@@ -71,8 +113,10 @@ def main():
         problems = failures(parse_services(result.stdout), social == "true")
     except (OSError, ValueError, subprocess.SubprocessError):
         problems = ["inventory:unavailable"]
+    if backup_enabled == "true":
+        problems.extend(backup_failures(deployment, int(hours)))
     if not problems:
-        print("Expected services are running; configured probes are healthy")
+        print("Expected services and enabled backup freshness checks are healthy")
         return 0
     print("Service check failed: " + ", ".join(problems), file=sys.stderr)
     webhook = os.getenv("VOYSSE_ALERT_WEBHOOK_URL")

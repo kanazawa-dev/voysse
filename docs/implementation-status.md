@@ -1,4 +1,4 @@
-# Implementation status — 5 September 2026
+# Implementation status — 6 September 2026
 
 ## Current snapshot (supersedes historical delivery notes below)
 
@@ -17,8 +17,8 @@ Verify the running revision and external configuration separately.
 | Unit | Implemented | Remaining scope |
 | --- | --- | --- |
 | Q05 durable QR | Persist-before-ACK admission, dedicated worker, account binding and visible review states; migration 0030; [guide](whatsapp-qr-recovery.md) | Deployment, receipts/session-history reconciliation and real-account validation |
-| Q06 full recovery snapshots | Operator-invoked DB/storage/runtime-key restic backups, scoped retention and guarded restore; [guide](full-backup.md) | Remote repository, scheduling/backup-age alerts and real hosting/database restore drill |
-| Q07 service monitor | Missing/stopped/unhealthy Compose detection and optional HTTPS alerts; [guide](service-monitor.md) | Configure scheduler/receiver and independently detect host outages; real hosting notification drill |
+| Q06 full recovery snapshots | Operator-invoked DB/storage/runtime-key restic backups, scoped retention and guarded restore; [guide](full-backup.md) | Remote repository, backup scheduling, enabling/validating freshness alerts and real hosting/database restore drill |
+| Q07 service monitor | Missing/stopped/unhealthy Compose detection, opt-in full-backup freshness checks and optional HTTPS alerts; [guide](service-monitor.md) | Configure scheduler/receiver and independently detect host outages; real hosting notification drill |
 | Q08 shared quotas | Atomic PostgreSQL public-IP quotas, HMAC keys, bounded cleanup, fail-closed DB errors; migration 0029; [guide](request-limits.md) | Tenant spending caps, provider concurrency limits and trusted-ingress enforcement |
 
 The local monitor detected `proxy:not_running`; other expected services passed,
@@ -52,6 +52,19 @@ vulnerabilities). Theme browser smoke passed on landing, legal, dashboard and bo
 login routes at 1440/390/320px, including equal height, header alignment, persistence
 and keyboard focus. The qs hostile-key regression passed in both frontend installs.
 No production deployment or real-account acceptance is implied.
+
+### Backup freshness follow-up
+
+The read-only service monitor can now validate the full-backup completion marker:
+deployment binding, snapshot ID, timezone-aware completion, maximum age and future
+clock detection. Missing, malformed or stale evidence produces fixed redacted
+problem codes through the existing HTTPS receiver. Checks are opt-in; no backup
+schedule, service restart, remote repository access or live notification is installed.
+See [configuration and limits](service-monitor.md#enable-backup-freshness-monitoring).
+Verification: 26 operations tests passed, including six focused backup-monitor
+cases and a backup-missing alert delivered to a disposable local HTTPS receiver.
+The existing disposable restic backup/restore round trip also passed. This does
+not validate the hosting scheduler or a production receiver.
 
 ### Remaining development and validation
 

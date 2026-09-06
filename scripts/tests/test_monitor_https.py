@@ -1,5 +1,7 @@
 """Exercise the real HTTPS transport against an isolated local receiver."""
 import json
+import contextlib
+import io
 import os
 from pathlib import Path
 import ssl
@@ -8,10 +10,10 @@ import tempfile
 import threading
 import unittest
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 from urllib.error import HTTPError
 
-from test_check_services import monitor
+from test_check_services import healthy, monitor
 
 
 class MonitorTransportTests(unittest.TestCase):
@@ -48,9 +50,18 @@ class MonitorTransportTests(unittest.TestCase):
                     with self.assertRaises(HTTPError) as redirect:
                         monitor.notify(base + "/redirect", ["api:missing"])
                     self.assertEqual(redirect.exception.code, 302)
+                    with patch.dict(os.environ, {
+                        "VOYSSE_MONITOR_BACKUP": "true", "VOYSSE_BACKUP_ID": "fixture",
+                        "VOYSSE_MONITOR_SOCIAL": "false", "VOYSSE_BACKUP_MAX_AGE_HOURS": "26",
+                        "VOYSSE_ALERT_WEBHOOK_URL": base + "/backup",
+                    }), patch.object(monitor, "ROOT", Path(directory)), \
+                         patch.object(monitor.subprocess, "run", return_value=Mock(stdout=json.dumps(healthy()))), \
+                         contextlib.redirect_stderr(io.StringIO()):
+                        self.assertEqual(monitor.main(), 1)
                 self.assertEqual(received, [
                     ("/alert", {"status": "unhealthy", "problems": ["proxy:not_running"]}),
                     ("/redirect", {"status": "unhealthy", "problems": ["api:missing"]}),
+                    ("/backup", {"status": "unhealthy", "problems": ["backup:missing"]}),
                 ])
             finally:
                 server.shutdown()

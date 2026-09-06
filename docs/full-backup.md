@@ -34,7 +34,7 @@ rejected. Forced shutdown can interrupt AI/tools or sends; inspect uncertain
 channel events after maintenance. Container restart does not prove readiness.
 
 Upload happens after writers restart. Only a complete restic upload writes
-`backups/full-backup-success.json`; monitor its age independently. Add `--retention`
+`backups/full-backup-success.json`; enable the [backup freshness monitor](service-monitor.md#enable-backup-freshness-monitoring). Add `--retention`
 only after approving deletion: keep 7 daily, 4 weekly and 12 monthly snapshots,
 filtered by deployment host and `voysse-full` tag. Shared-repository prune also
 reclaims already-unreferenced data. Never use this option without a reviewed policy.
@@ -60,8 +60,9 @@ workers/bridge to real accounts during a drill; they could send queued messages.
 partial-stop/capture failure recovery, scoped retention, restore guards and a real
 restic backup/verified restore/data-check round trip using disposable fixtures.
 The round trip does not exercise a real PostgreSQL/Compose restore. Remote storage,
-scheduler, backup-age notifications and hosting disaster recovery remain operator
-acceptance work. No production backup or outage is implied by local tests.
+scheduler, enabling/testing backup-age notifications and hosting disaster recovery
+remain operator acceptance work. Backup-age detection is implemented in the
+read-only service monitor but is opt-in. No production backup or outage is implied by local tests.
 
 Rollback: remove the invocation and this script; preserve existing snapshots and
 recovery passwords. `scripts/backup-db.sh` remains available for DB-only snapshots.
