@@ -77,6 +77,14 @@ Credential enrollment and advanced agent setup remain in their existing screens.
 scope. Agent → agent handoffs, persistent layouts and publication/rollback remain
 future work, not implied by visual connections.
 
+### Handoff drafts — first phase-two delivery
+
+Client-scoped draft configuration now has revision-checked atomic persistence,
+same-client agent validation, cycle/duplicate rejection, bounded hop settings and
+mandatory human fallback. [Design and rollout](decisions/agent-handoffs.md).
+The draft editor, routing simulation and durable channel-aware execution are still
+pending. No saved draft changes a live channel or conversation owner.
+
 ### Remaining development and validation
 
 - QR delivery/session-history reconciliation and real-account validation (Q05); Cloud, social

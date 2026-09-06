@@ -98,6 +98,8 @@ class Client(Base):
     industry: Mapped[str] = mapped_column(String(160), default="")
     description: Mapped[str] = mapped_column(Text, default="")
     general_context: Mapped[str] = mapped_column(Text, default="")
+    # Draft-only routing configuration; never consumed by message workers.
+    handoff_draft: Mapped[dict] = mapped_column(JSON, default=dict, server_default="{}")
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     portal_slug: Mapped[str] = mapped_column(String(180), unique=True, index=True)
     portal_enabled: Mapped[bool] = mapped_column(Boolean, default=False)

@@ -33,11 +33,13 @@ Deliver: (1) scoped API + safety tests; (2) readable canvas + navigation/browser
 checks; (3) inline settings, connection confirmation and safe preview + tests.
 Each PR carries its docs/tests and remains under 400 changed lines.
 
-## Phase two — not implemented here
+## Phase two — draft foundation only
 
 Agent → agent handoff with explicit routing rules, transferred context, one clear
 conversation owner, a human exit and bounded hops/cycle detection. Do not show
 working handoff connectors before a durable, audited runtime exists.
+The [draft foundation](agent-handoffs.md) now persists validated configuration;
+it does not execute handoffs or expose an activation switch.
 
 Rollback: remove Studio entry points and routes; existing channel setup, agents,
 queues and conversations continue to work. No queued messages are replayed.
