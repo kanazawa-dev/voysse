@@ -3,17 +3,17 @@ import binascii
 import hmac
 import json
 import uuid
-from dataclasses import asdict
 
 from fastapi import APIRouter, Depends, Header, HTTPException, status
 from sqlalchemy import select
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session, joinedload
 
 from ..alerts import raise_alert, resolve_alerts
 from ..config import get_settings
 from ..database import get_db
 from ..deps import get_current_user
-from ..models import Agent, Client, Conversation, Message, User, WhatsAppChannel, now_utc
+from ..models import Agency, Agent, Client, Conversation, Message, User, WhatsAppChannel, WhatsAppQREvent, now_utc
 from ..schemas import (
     WhatsAppChannelOut,
     WhatsAppChannelUpdate,
@@ -25,7 +25,6 @@ from ..schemas import (
 )
 from ..security import decrypt_secret, encrypt_secret
 from ..services.whatsapp import bridge_command
-from ..services.whatsapp_inbound import InboundMessage, process_inbound
 
 
 router = APIRouter(prefix="/whatsapp", tags=["WhatsApp"])
@@ -226,33 +225,32 @@ def update_status(channel_id: uuid.UUID, payload: WhatsAppInternalStatus, db: Se
     response_model=WhatsAppInboundResult,
     dependencies=[Depends(_require_bridge)],
 )
-async def inbound_message(channel_id: uuid.UUID, payload: WhatsAppInbound, db: Session = Depends(get_db)):
+def inbound_message(channel_id: uuid.UUID, payload: WhatsAppInbound, db: Session = Depends(get_db)):
     channel = _internal_channel(db, channel_id)
-    if not channel.is_enabled:
+    if not channel.is_enabled or not channel.client.is_active or not db.get(Agency, channel.agency_id).is_active:
         raise HTTPException(status_code=409, detail="The channel is disconnected")
-
-    media_bytes = None
     if payload.media_base64:
         try:
-            media_bytes = base64.b64decode(payload.media_base64)
+            base64.b64decode(payload.media_base64, validate=True)
         except (binascii.Error, ValueError):
-            media_bytes = None
-    result = await process_inbound(
-        db,
-        channel,
-        InboundMessage(
-            external_message_id=payload.external_message_id,
-            external_chat_id=payload.remote_jid,
-            sender_name=payload.sender_name,
-            text=payload.text,
-            media_kind=payload.media_kind,
-            media_bytes=media_bytes,
-            media_mime=payload.media_mime,
-        ),
-        conversation_channel="whatsapp",
-        channel_fk_field="whatsapp_channel_id",
-    )
-    return asdict(result)
+            raise HTTPException(422, "Invalid media encoding") from None
+    normalized = {**payload.model_dump(), "agent_id": str(channel.agent_id)}
+    inserted = db.scalar(insert(WhatsAppQREvent).values(
+        id=uuid.uuid4(), channel_id=channel.id, external_id=payload.external_message_id,
+        payload=normalized, status="queued", reply_metadata={}, received_at=now_utc(), updated_at=now_utc(),
+    ).on_conflict_do_nothing(constraint="uq_qr_event_external").returning(WhatsAppQREvent.id))
+    db.commit()  # Never acknowledge before durable storage succeeds.
+    return {"accepted": inserted is not None}
+
+
+@router.get("/channels/{client_id}/events")
+def channel_events(client_id: uuid.UUID, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    channel = _channel_for_user(db, user, client_id)
+    return [{"id": event.id, "status": event.status, "error_code": event.error_code,
+             "conversation_id": event.conversation_id, "received_at": event.received_at,
+             "updated_at": event.updated_at, "preview": event.payload.get("text", "")[:160]}
+            for event in db.scalars(select(WhatsAppQREvent).where(WhatsAppQREvent.channel_id == channel.id)
+                                   .order_by(WhatsAppQREvent.updated_at.desc()).limit(50))]
 
 
 @internal_router.post("/channels/{channel_id}/outbound-confirm", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(_require_bridge)])

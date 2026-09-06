@@ -581,13 +581,14 @@ class WidgetReply(BaseModel):
 
 class WhatsAppInbound(BaseModel):
     external_message_id: str = Field(min_length=1, max_length=255)
-    remote_jid: str = Field(min_length=1, max_length=255)
+    remote_jid: str = Field(max_length=255, pattern=r"^[0-9]+(?::[0-9]+)?@(s\.whatsapp\.net|lid)$")
+    source_phone_number: str = Field(min_length=1, max_length=80, pattern=r"^[0-9]+$")
     sender_name: str | None = Field(default=None, max_length=180)
     text: str = Field(default="", max_length=50000)
     # Optional media (base64) for voice notes / images, processed by the agent's
     # audio/image capabilities before reaching the model.
     media_kind: str | None = Field(default=None, pattern=r"^(image|audio)$")
-    media_base64: str | None = None
+    media_base64: str | None = Field(default=None, max_length=24 * 1024 * 1024)
     media_mime: str | None = Field(default=None, max_length=100)
 
 

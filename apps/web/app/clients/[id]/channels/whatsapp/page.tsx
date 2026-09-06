@@ -1,5 +1,6 @@
 "use client";
 
+import { CloudEvents } from "@/components/cloud-events";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
@@ -92,5 +93,6 @@ export default function WhatsAppChannelPage() {
         <div className="flex flex-wrap gap-2">{channel?.status === "connected" ? <Button type="button" variant="destructive" onClick={disconnect} disabled={busy}><Power size={17} /> {t("clients.whatsapp.disconnectAccount")}</Button> : <Button type="button" onClick={saveAndConnect} disabled={!canConnect}>{busy || ["connecting", "reconnecting"].includes(channel?.status || "") ? <LoaderCircle className="animate-spin" size={17} /> : <QrCode size={17} />} {channel?.has_session ? t("clients.whatsapp.recoverConnection") : t("clients.whatsapp.connectWithQr")}</Button>}</div>
       </Card>
     </main><aside className="space-y-4"><ShieldCheck size={22} /><h3 className="font-heading">{t("clients.whatsapp.separationTitle")}</h3><p>{t("clients.whatsapp.separationCopy")}<strong>{client.name}</strong>.</p><hr /><h3 className="font-heading">{t("clients.whatsapp.humanControlTitle")}</h3><p>{t("clients.whatsapp.humanControlCopy")}</p></aside></div>
+    {channel && <CloudEvents clientId={id} channel="whatsapp" />}
   </div>;
 }

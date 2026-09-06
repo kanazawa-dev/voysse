@@ -7,11 +7,12 @@ import makeWASocket, {
 } from "@whiskeysockets/baileys";
 import pino from "pino";
 import QRCode from "qrcode";
+import { sendBoundMessage } from "./send.js";
 import { backend, setStatus } from "./api.js";
 import { createDatabaseAuth } from "./auth.js";
 import { incomingMedia, incomingText, isDirectIncoming } from "./messages.js";
 
-// Skip forwarding media larger than this; the backend also caps at 20 MB.
+// The backend caps base64 at 24 MiB (18 MiB decoded).
 const MAX_MEDIA_BYTES = 18 * 1024 * 1024;
 
 type ChannelConfig = {
@@ -46,7 +47,7 @@ function cleanNumber(jid?: string | null): string | null {
   return jid.split(":")[0]?.split("@")[0] || null;
 }
 
-async function processIncoming(channelId: string, socket: WASocket, message: WAMessage): Promise<void> {
+export async function processIncoming(channelId: string, socket: WASocket, message: WAMessage): Promise<void> {
   if (!isDirectIncoming(message)) return;
   const text = incomingText(message);
   const media = incomingMedia(message);
@@ -55,12 +56,16 @@ async function processIncoming(channelId: string, socket: WASocket, message: WAM
   if ((!text && !media) || !remoteJid || !externalMessageId) return;
 
   const body: Record<string, unknown> = {
+    source_phone_number: cleanNumber(socket.user?.id),
     external_message_id: externalMessageId,
     remote_jid: remoteJid,
     sender_name: message.pushName || null,
     text: text || "",
   };
   if (media) {
+    // Preserve the attachment marker even when download fails.
+    body.media_kind = media.kind;
+    body.media_mime = media.mimetype;
     try {
       const buffer = (await downloadMediaMessage(
         message,
@@ -69,8 +74,6 @@ async function processIncoming(channelId: string, socket: WASocket, message: WAM
         { logger, reuploadRequest: socket.updateMediaMessage },
       )) as Buffer;
       if (buffer.length <= MAX_MEDIA_BYTES) {
-        body.media_kind = media.kind;
-        body.media_mime = media.mimetype;
         body.media_base64 = buffer.toString("base64");
       }
     } catch (error) {
@@ -183,12 +186,10 @@ export async function disconnectChannel(channelId: string): Promise<void> {
   await backend(`/channels/${channelId}/auth`, { method: "DELETE" });
 }
 
-export async function sendMessage(channelId: string, remoteJid: string, text: string): Promise<string> {
+export async function sendMessage(channelId: string, remoteJid: string, text: string, expectedPhoneNumber?: string): Promise<string> {
   const runtime = runtimes.get(channelId);
   if (!runtime || runtime.stopRequested) throw new Error("WhatsApp is not connected")
-  const sent = await runtime.socket.sendMessage(remoteJid, { text });
-  if (!sent?.key.id) throw new Error("WhatsApp did not confirm the send")
-  return sent.key.id;
+  return sendBoundMessage(runtime.socket, remoteJid, text, expectedPhoneNumber);
 }
 
 export async function restoreChannels(): Promise<void> {

@@ -7,7 +7,7 @@ restart containers or replay messages. Python 3 and Docker Compose are required.
 ## Configure alerts
 
 1. Set `VOYSSE_MONITOR_SOCIAL=true` if Instagram/Messenger are deployed. The default
-   is `false`; the Cloud worker is always required.
+   is `false`; the Cloud and QR workers are always required.
 2. Set `VOYSSE_ALERT_WEBHOOK_URL` in the scheduler's private environment to an
    operator-controlled HTTPS receiver. Do not put the URL in source control or
    command arguments. Redirects are rejected.
