@@ -13,9 +13,12 @@ Have an opinion or a use case for any of these? Open a
 
 ## Channels
 
-- **Instagram DM** — Planned. Already has icons/copy in the Channels page and
-  is documented as upcoming; no connection flow or router behind it yet.
-- **Facebook Messenger** — Planned. Same status as Instagram DM.
+- **Instagram DM** — Manual connection, signed webhooks and durable processing
+  are implemented. Guided OAuth, supported media coverage and authorized-account
+  validation remain planned. See [setup and limitations](social-channels-setup.md).
+- **Facebook Messenger** — Manual connection and durable processing are
+  implemented, with the same remaining validation boundaries. Neither channel
+  should be described as production-certified without a real account test.
 - **Telegram** — Idea.
 - **SMS / RCS** — Idea. Useful for agencies whose clients' customers don't use
   WhatsApp or Messenger.
@@ -33,10 +36,9 @@ Have an opinion or a use case for any of these? Open a
 
 ## Agency operations
 
-- **Team roles & invites** — Idea. Today an agency has the admin account
-  created at registration; inviting teammates with scoped permissions
-  (e.g. an operator role that can't touch billing or provider keys) isn't
-  there yet.
+- **Team roles & invites** — Admin/operator roles and revocable, expiring manual
+  invitation links are implemented. Automated invitation email and finer-grained
+  per-client permissions remain future work. See [team setup](auth-team-setup.md).
 - **Proactive / scheduled messaging** — Idea. Reminders, appointment
   confirmations, broadcast campaigns — sending the first message instead of
   only replying.

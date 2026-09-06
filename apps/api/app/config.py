@@ -1,5 +1,6 @@
 from functools import lru_cache
 from pathlib import Path
+from typing import Literal
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -41,6 +42,8 @@ class Settings(BaseSettings):
     # Rate limiting on public/unauthenticated endpoints (per client IP). Disable
     # only for tests or when a proxy in front already enforces limits.
     rate_limit_enabled: bool = True
+    # PostgreSQL shares quotas across API processes; memory is single-process only.
+    rate_limit_backend: Literal["postgres", "memory"] = "postgres"
     # SSRF guard for agent HTTP tools: URLs resolving to private/loopback
     # addresses are rejected. Enable only on self-hosted deployments that need
     # tools to reach internal services.

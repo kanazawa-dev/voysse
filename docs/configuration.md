@@ -83,6 +83,7 @@ root `.env` — `env_file` checks the repo root first, then `apps/api/.env`).
 | `COOKIE_SECURE` | `false` | `true` behind HTTPS so the session cookie is TLS-only. |
 | `COOKIE_SAMESITE` | `lax` | `none` when frontend and API are on different sites (needs `COOKIE_SECURE=true`). |
 | `RATE_LIMIT_ENABLED` | `true` | Per-client-IP throttling on public/unauthenticated endpoints (auth, portal login, widget messages). Disable only for tests or when a proxy in front already rate-limits. |
+| `RATE_LIMIT_BACKEND` | `postgres` | Shared atomic quotas across API processes, requires migration 0029. DB failures return 503 rather than bypass protection. `memory` is an explicit single-process fallback only. See [limits](request-limits.md). |
 | `TOOLS_ALLOW_PRIVATE_URLS` | `false` | SSRF guard for agent HTTP tools: by default a tool URL resolving to a private/loopback address is rejected. Enable only if your deployment needs tools to reach internal services. |
 | `STORAGE_DIR` | `apps/api/storage` | Defined in `Settings` (Docker points it at `/app/backend/storage`, a mounted volume) but not currently read elsewhere in the codebase — uploads (agency logos) and knowledge PDFs are stored in PostgreSQL, not on disk. |
 | `BACKEND_URL` | `http://localhost:8000` | Defined in `Settings` (Docker sets it to `http://api:8000`) but not currently read elsewhere in the codebase. |

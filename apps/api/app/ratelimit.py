@@ -1,16 +1,17 @@
-"""Lightweight per-IP rate limiting for public, unauthenticated endpoints.
+"""Public request quotas, shared through PostgreSQL by default."""
 
-Uses an in-memory fixed window, which is enough for a single-instance
-deployment. A horizontally scaled setup would need shared storage (e.g. Redis)
-or rate limiting at the reverse proxy in front of the gateway.
-"""
-
+import hashlib
+import hmac
+import math
 import time
 from threading import Lock
 
 from fastapi import HTTPException, Request, status
+from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
 
 from .config import get_settings
+from .database import engine
 
 
 def client_ip(request: Request) -> str:
@@ -49,12 +50,49 @@ class RateLimiter:
                 self._hits = {k: v for k, v in self._hits.items() if now - v[1] < self.seconds}
         return count, window_start
 
+    def _register_shared(self, identifier: str) -> tuple[int, int]:
+        # Never retain raw IP addresses. Include quota settings in the namespace
+        # so changing a window cannot reuse incompatible counters.
+        key = hmac.new(get_settings().secret_key.encode(),
+            f"{identifier}:{self.times}:{self.seconds}".encode(), hashlib.sha256).hexdigest()
+        with engine.begin() as connection:
+            connection.execute(text("SET LOCAL lock_timeout = '2s'"))
+            connection.execute(text("SET LOCAL statement_timeout = '3s'"))
+            # Bounded cleanup; skip rows another request is updating.
+            connection.execute(text("""
+                DELETE FROM rate_limit_buckets WHERE key IN (
+                    SELECT key FROM rate_limit_buckets WHERE expires_at <= now()
+                    ORDER BY expires_at LIMIT 100 FOR UPDATE SKIP LOCKED
+                )
+            """))
+            row = connection.execute(text("""
+                INSERT INTO rate_limit_buckets (key, hits, expires_at)
+                VALUES (:key, 1, now() + :seconds * interval '1 second')
+                ON CONFLICT (key) DO UPDATE SET
+                    hits = CASE WHEN rate_limit_buckets.expires_at <= now() THEN 1
+                           ELSE least(rate_limit_buckets.hits + 1, :cap) END,
+                    expires_at = CASE WHEN rate_limit_buckets.expires_at <= now()
+                        THEN now() + :seconds * interval '1 second'
+                        ELSE rate_limit_buckets.expires_at END
+                RETURNING hits, extract(epoch FROM (expires_at - now())) AS remaining
+            """), {"key": key, "seconds": self.seconds, "cap": self.times + 1}).one()
+            return row.hits, max(1, math.ceil(row.remaining))
+
     def __call__(self, request: Request) -> None:
         if not get_settings().rate_limit_enabled:
             return
-        count, window_start = self._register(f"{self.name}:{client_ip(request)}")
+        identifier = f"{self.name}:{client_ip(request)}"
+        if get_settings().rate_limit_backend == "postgres":
+            try:
+                count, retry_after = self._register_shared(identifier)
+            except SQLAlchemyError:
+                # Never silently fall back to process-local limits during outage.
+                raise HTTPException(503, "Request protection is temporarily unavailable.",
+                                    headers={"Retry-After": "5"}) from None
+        else:
+            count, window_start = self._register(identifier)
+            retry_after = max(1, math.ceil(self.seconds - (time.monotonic() - window_start)))
         if count > self.times:
-            retry_after = max(1, int(self.seconds - (time.monotonic() - window_start)))
             raise HTTPException(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
                 detail="Too many requests. Please slow down and try again.",

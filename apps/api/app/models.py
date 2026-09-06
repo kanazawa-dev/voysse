@@ -23,6 +23,14 @@ def now_utc() -> datetime:
     return datetime.now(timezone.utc)
 
 
+class RateLimitBucket(Base):
+    __tablename__ = "rate_limit_buckets"
+
+    key: Mapped[str] = mapped_column(String(64), primary_key=True)
+    hits: Mapped[int] = mapped_column(Integer)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+
+
 class Agency(Base):
     __tablename__ = "agencies"
 

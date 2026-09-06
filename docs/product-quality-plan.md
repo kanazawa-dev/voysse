@@ -214,3 +214,11 @@ Actualización: envíos humanos del portal implementados en0028; ver implementat
 Q07, avance posterior al PR #2: healthcheck local de progreso para workers social
  y Cloud implementado en rama separada; no sustituye alertas externas ni comprueba
 que todos los workers esperados estén desplegados. Ver worker-health.md.
+
+Latest technical follow-up: worker probes are now in main. The local service
+monitor detects absent containers and supports HTTPS alerts; the shared request
+limiter uses PostgreSQL across API processes (migration 0029). See
+[current status](implementation-status.md), [monitor](service-monitor.md) and
+[request limits](request-limits.md). Q07/Q08 remain partial for the explicit
+external alert, spending-budget and concurrency criteria; do not close them on
+the strength of these narrower implementations alone.

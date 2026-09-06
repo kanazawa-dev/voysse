@@ -1,4 +1,54 @@
-# Estado de ejecución — 5 septiembre 2026
+# Implementation status — 5 September 2026
+
+## Current snapshot (supersedes historical delivery notes below)
+
+The product-quality backlog is **not complete**. GitHub had no open issues or PRs
+when checked in this review. Main at `8689a3a` includes the five delivery batches,
+worker healthchecks, dashboard/landing identity, simpler authentication, visible
+form fields and links to existing social channel configuration. Historical notes
+below about uncommitted work, unmerged PR #2 and separate worker branches describe
+earlier checkpoints, not the current integration state.
+
+### Operational follow-up implementation
+
+This section describes the source implementation, not a production deployment.
+Verify the running revision and external configuration separately.
+
+| Unit | Implemented | Remaining scope |
+| --- | --- | --- |
+| Q07 service monitor | Missing/stopped/unhealthy Compose detection and optional HTTPS alerts; [guide](service-monitor.md) | Configure scheduler/receiver and independently detect host outages; real hosting notification drill |
+| Q08 shared quotas | Atomic PostgreSQL public-IP quotas, HMAC keys, bounded cleanup, fail-closed DB errors; migration 0029; [guide](request-limits.md) | Tenant spending caps, provider concurrency limits and trusted-ingress enforcement |
+
+The local monitor detected `proxy:not_running`; other expected services passed,
+including both workers. No restart or live alert was attempted. This is a local
+environment observation, not a production outage claim.
+
+Verification for the new units: 11 operations tests passed, including delivery to
+a temporary local HTTPS receiver and redirect rejection. The API suite passed
+151 tests in 67.93 seconds, including quota-cleanup cases; migration base → 0029 → base
+→ 0029 passed in a separate disposable database. No application database was
+migrated and no production credentials were used. Frontend files are unchanged.
+
+### Remaining development and validation
+
+- Durable QR inbound processing and delivery reconciliation (Q05); Cloud, social
+  and human Inbox/portal attempts already have durable records.
+- Guided Meta OAuth, remote revocation, supported media/event handling and real
+  account certification (CH01–CH11; manual social configuration already exists).
+- Complete storage/key-aware backup automation, off-site encrypted retention and
+  hosting restore/rollback drill (Q06).
+- Guided activation, versioned agent publication/rollback, evaluated AI/RAG,
+  comprehensive accessibility and data-lifecycle tests (Q10, Q12–14, Q16–17).
+- Capacity measurements, operating guides and real usage observations (Q18–19).
+- Authorized Meta accounts, real SMTP delivery, hosting notifications, repository
+  protection and buyer interviews/pilots require separate evidence. CI execution
+  and merged code must not be confused with these external acceptance criteria.
+
+Preserve the existing commercial offer and avoid building roadmap ideas outside
+the approved quality/channel scope. No buyer evidence, paid pilots, seven-day
+operating history or account verification is implied by automated tests.
+
+## Historical delivery notes
 
 **Cinco entregas técnicas implementadas; el plan completo NO está terminado.**
 Sin despliegue público. Push a rama de trabajo solicitado al finalizar. Conservar el diseño Rivr/Voxy existente.
