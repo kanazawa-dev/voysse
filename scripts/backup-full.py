@@ -40,8 +40,8 @@ def configuration():
         raise ValueError('Set a unique VOYSSE_BACKUP_ID (letters, numbers, underscore, hyphen)')
     if not os.environ.get('RESTIC_REPOSITORY') or not os.environ.get('RESTIC_PASSWORD_FILE'):
         raise ValueError('RESTIC_REPOSITORY and RESTIC_PASSWORD_FILE are required')
-    password = Path(os.environ['RESTIC_PASSWORD_FILE'])
-    if not password.is_file() or password.stat().st_mode & 0o077:
+    credential_path = Path(os.environ['RESTIC_PASSWORD_FILE'])
+    if not credential_path.is_file() or credential_path.stat().st_mode & 0o077:
         raise ValueError('The restic password file must be private (0600)')
     if not shutil.which('restic') or not shutil.which('docker'):
         raise ValueError('Install restic and Docker Compose on the backup host')
