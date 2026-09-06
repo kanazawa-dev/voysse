@@ -41,7 +41,8 @@ clients. This is deliberately a draft schema, not an event journal or runtime lo
 The draft editor, manual rehearsal and bounded AI chain simulation below are
 implemented; none activates live handoffs. Remaining:
 
-1. Durable handoff journal and a separate current responder, preserving entry
+1. Adopt the [dormant execution foundation](execution-state.md) in transport
+   adapters with published policies and audited recovery, preserving entry
    channel identity, context, operator takeover and interrupted/uncertain work.
 2. Integrate each transport with bounded hops and revalidated permissions, then
    expose explicit activation. Never draw active execution edges before this exists.

@@ -560,3 +560,29 @@ class Alert(Base):
     resource_id: Mapped[uuid.UUID | None] = mapped_column(nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc, index=True)
     resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class ConversationRuntime(Base):
+    """Separate responder identity; entry/channel identity stays on Conversation."""
+    __tablename__ = "conversation_runtimes"
+    conversation_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("conversations.id", ondelete="CASCADE"), primary_key=True)
+    responder_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("agents.id", ondelete="SET NULL"), nullable=True)
+    revision: Mapped[int] = mapped_column(Integer, default=0)
+    active_turn_id: Mapped[uuid.UUID | None] = mapped_column(nullable=True)
+
+
+class ExecutionTurn(Base):
+    """Durable claims and bounded transition journal, not customer messages."""
+    __tablename__ = "execution_turns"
+    __table_args__ = (UniqueConstraint("conversation_id", "context_message_id", name="uq_execution_turn_context"),)
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True)
+    conversation_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("conversations.id", ondelete="CASCADE"), index=True)
+    context_message_id: Mapped[uuid.UUID] = mapped_column()
+    request_revision: Mapped[int] = mapped_column(Integer)
+    max_hops: Mapped[int] = mapped_column(Integer)
+    source_agent_id: Mapped[uuid.UUID] = mapped_column()
+    responder_version: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    status: Mapped[str] = mapped_column(String(24), default="running")
+    transitions: Mapped[list] = mapped_column(JSON, default=list)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc, onupdate=now_utc)
