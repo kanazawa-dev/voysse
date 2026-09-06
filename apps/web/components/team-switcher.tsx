@@ -10,15 +10,16 @@ import {
 import { OpenvoissBrand } from "@/components/openvoiss-brand"
 import type { Agency } from "@/types"
 
-export function TeamSwitcher({ agency }: { agency: Agency }) {
-  const { state } = useSidebar()
+export function TeamSwitcher({ agency, homeHref = "/" }: { agency: Agency; homeHref?: string }) {
+  const { state, isMobile, setOpenMobile } = useSidebar()
 
   return (
     <SidebarMenu>
       <SidebarMenuItem>
         <SidebarMenuButton
-          className="h-12 px-2 font-semibold hover:bg-white hover:text-sidebar-foreground hover:shadow-sm"
-          render={<Link href="/" />}
+          className="cy-sidebar-brand"
+          aria-label={agency.name}
+          render={<Link href={homeHref} onClick={() => setOpenMobile(false)} />}
           size="lg"
           tooltip={agency.name}
         >
@@ -26,9 +27,9 @@ export function TeamSwitcher({ agency }: { agency: Agency }) {
             className="w-full"
             effect="benday"
             name={agency.name}
-            showName={state === "expanded"}
+            showName={isMobile || state === "expanded"}
             size={32}
-            state="thinking"
+            state="idle"
             subtitle={agency.slug}
           />
         </SidebarMenuButton>

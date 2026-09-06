@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { OpenvoissBrand } from "@/components/openvoiss-brand";
 import { LanguageSwitcher } from "@/components/language-switcher";
+import styles from "./login.module.css";
 
 
 const PENDING_CONTACT_EMAIL = "alex@voysse.cl";
@@ -85,9 +86,9 @@ export default function LoginPage() {
           <p className="mt-1 text-sm text-muted-foreground">{mode === "register" ? t("auth.cardSubtitleRegister") : t("auth.cardSubtitleLogin")}</p>
 
           <Tabs value={mode} onValueChange={(value) => { setMode(value as typeof mode); setError(""); }} className="mt-5">
-            <TabsList className="w-full rounded-none border bg-background p-1">
-              <TabsTrigger className="rounded-none font-mono text-xs" value="login">{t("auth.tabLogin")}</TabsTrigger>
-              <TabsTrigger className="rounded-none font-mono text-xs" value="register">{t("auth.tabRegister2")}</TabsTrigger>
+            <TabsList aria-label={t("auth.cardLabel")} className={styles.modeList}>
+              <TabsTrigger className={styles.modeOption} value="login" disabled={busy}>{t("auth.tabLogin")}</TabsTrigger>
+              <TabsTrigger className={styles.modeOption} value="register" disabled={busy}>{t("auth.tabRegister2")}</TabsTrigger>
             </TabsList>
           </Tabs>
 
