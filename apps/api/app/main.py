@@ -24,6 +24,7 @@ from .routers import (
     providers,
     social,
     studio,
+    studio_execution,
     studio_handoffs,
     studio_simulation,
     team,
@@ -103,3 +104,5 @@ app.include_router(studio.router, prefix="/api")
 app.include_router(studio_handoffs.router, prefix="/api")
 
 app.include_router(studio_simulation.router, prefix="/api")
+
+app.include_router(studio_execution.router, prefix="/api")
