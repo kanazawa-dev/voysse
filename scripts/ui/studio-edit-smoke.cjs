@@ -31,6 +31,7 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
           }
           return route.fulfill({ json: graph });
         }
+        if (path.endsWith('/handoffs')) return route.fulfill({ json: { rules: [], max_hops: 3, human_fallback: true, revision: 0, valid: true, problems: [] } });
         return route.fulfill({ json: path.endsWith('/auth/me') ? { id: 'u', name: 'Alex', role: 'admin', agency: { id: 'agency', name: 'Agency' } } : path.includes('/studio/') ? graph : [] });
       });
       await page.goto((process.env.WEB_URL || 'http://127.0.0.1:3114') + '/clients/client-a/studio');

@@ -38,8 +38,8 @@ clients. This is deliberately a draft schema, not an event journal or runtime lo
 
 ## Subsequent deliveries — still pending
 
-1. Draft editor in Studio and safe routing simulation, with explicit explanations
-   of which rule matched and when the human fallback is selected.
+1. Automatic condition evaluation and safe routing simulation with explained
+   matches. The draft editor and manual rehearsal below are already implemented.
 2. Durable handoff journal and a separate current responder, preserving entry
    channel identity, context, operator takeover and interrupted/uncertain work.
 3. Integrate each transport with bounded hops and revalidated permissions, then
@@ -58,3 +58,20 @@ No draft is consumed by current message workers; rollback must not replay messag
 tenant/role isolation, unsafe graphs and later agent deactivation. Full API suite:
 202 passed. Alembic upgrade → downgrade to base → upgrade passed on disposable
 PostgreSQL 17; no real accounts, providers or production database were used.
+
+## Studio draft editor and manual rehearsal
+
+Studio now offers named source/target selectors, descriptive conditions, rule
+removal and hop settings. Save uses the draft revision; rejected/conflicting edits
+remain visible until the user explicitly reloads. No activation control exists.
+The separate rehearsal walks the saved rules: the user chooses a rule explicitly,
+then sees the path and human exit. It makes no model calls, evaluates no natural-
+language conditions and sends no messages. Editing resets the rehearsal; invalid
+or unsaved drafts cannot be rehearsed. Full AI routing simulation, durable runtime,
+layout persistence and versioned publication remain pending.
+
+Verification: `scripts/ui/studio-handoffs-smoke.cjs` covers ES/EN, light/dark,
+1440/390/320 widths, save/clear, conflict and validation-error preservation, reload
+confirmation, late-load protection and zero rehearsal writes. Web lint/build and
+all three Studio browser smokes passed. Rollback removes this editor component,
+its page entry and styles; persisted drafts and channel assignments stay intact.
