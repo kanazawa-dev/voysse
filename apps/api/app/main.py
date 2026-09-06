@@ -23,6 +23,7 @@ from .routers import (
     portal,
     providers,
     social,
+    studio,
     team,
     whatsapp,
     whatsapp_cloud,
@@ -94,3 +95,5 @@ app.include_router(social.router, prefix="/api")
 app.include_router(social.public_router, prefix="/api")
 
 app.include_router(team.router, prefix="/api")
+
+app.include_router(studio.router, prefix="/api")
