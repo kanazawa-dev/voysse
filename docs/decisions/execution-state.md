@@ -83,4 +83,7 @@ review, replay/conflict/concurrency,
 late completion rejection, unchanged history, authorization/scope and bounded listing
 on disposable PostgreSQL. Browser N/A: this unit adds no UI. Rollback: remove the
 `studio_execution` router registration/module and its tests; retain the audit rows and
-0032 schema. The Studio review panel and producer adoption remain separate stages.
+0032 schema. Producer adoption remains pending. The ES/EN Studio review panel now
+provides explicit loading, paginated audit and acknowledged/confirmed human review.
+Errors discard stale actions and require fresh inspection, never automatic retries.
+See [current checkpoint and remaining work](../studio-progress.md).
