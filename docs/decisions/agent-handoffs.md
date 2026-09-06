@@ -38,12 +38,14 @@ clients. This is deliberately a draft schema, not an event journal or runtime lo
 
 ## Subsequent deliveries — still pending
 
-1. Full-chain AI simulation. One-step classification, the draft editor and manual
-   rehearsal below are implemented; no automatic multi-step traversal yet.
-2. Durable handoff journal and a separate current responder, preserving entry
+The draft editor, manual rehearsal and bounded AI chain simulation below are
+implemented; none activates live handoffs. Remaining:
+
+1. Durable handoff journal and a separate current responder, preserving entry
    channel identity, context, operator takeover and interrupted/uncertain work.
-3. Integrate each transport with bounded hops and revalidated permissions, then
+2. Integrate each transport with bounded hops and revalidated permissions, then
    expose explicit activation. Never draw active execution edges before this exists.
+3. Persistent canvas layouts and versioned publication/rollback.
 
 ## Deploy and rollback
 
@@ -67,8 +69,7 @@ remain visible until the user explicitly reloads. No activation control exists.
 The separate rehearsal walks the saved rules: the user chooses a rule explicitly,
 then sees the path and human exit. It makes no model calls, evaluates no natural-
 language conditions and sends no messages. Editing resets the rehearsal; invalid
-or unsaved drafts cannot be rehearsed. Full-chain AI routing simulation, durable runtime,
-layout persistence and versioned publication remain pending.
+or unsaved drafts cannot be rehearsed. Durable runtime, layout persistence and versioned publication remain pending.
 
 Verification: `scripts/ui/studio-handoffs-smoke.cjs` covers ES/EN, light/dark,
 1440/390/320 widths, save/clear, conflict and validation-error preservation, reload
@@ -103,3 +104,31 @@ isolated webpack build and all four Studio browser smokes passed (ES/EN,
 1440/390/320, light/dark). No real provider credentials or messages were used.
 Closing the UI discards its result but cannot guarantee cancellation of provider
 work already admitted; consumed tokens can still be recorded.
+
+
+## Bounded AI chain simulation
+
+Select **Full chain** to call `/handoffs/simulate-chain`. It follows saved outgoing
+rules automatically, using the same original test message and each source agent's
+model. It does not simulate agent replies, tools, RAG or evolving conversation
+context. The result lists each chosen condition/explanation and the final human
+exit. Uncertain/invalid responses and missing rules stop immediately.
+
+The saved `max_hops` (1–5) bounds evaluations; after the last allowed agent step,
+human attention is proposed without calling the next model. Visited-agent checks
+provide a second cycle guard. Both modes share the same five-runs/minute/IP quota;
+a chain can request up to five classifications (256 output tokens requested each).
+This is not a tenant spending cap. Each completed call records usage separately.
+Every step rechecks permissions and draft revision; changes to earlier agents also
+invalidate the whole trace. Errors return no partial successful proposal, but
+already incurred usage remains. No production messages or draft mutations occur.
+
+Rollback removes the chain endpoint and mode selector; one-step simulation and all
+saved drafts continue to work. Actual handoffs, saved layouts and versioned
+publication remain pending.
+
+Chain verification: 7 new tests (17 combined classifier/chain tests) and the full
+219-test API suite passed on disposable PostgreSQL with mocked providers. Web lint,
+webpack build and four Studio browser smokes passed ES/EN at 1440/390/320 in
+light/dark, including mode changes, step traces and hop-limit feedback. No real
+provider credentials or production messages were used.

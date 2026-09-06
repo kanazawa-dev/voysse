@@ -113,7 +113,7 @@ export function HandoffEditor({ data }: { data: StudioGraph }) {
           </>}
         </fieldset>
       </div>
-      {!dirty && !busy && draft.valid && !invalid && <RoutingSimulation key={String(draft.revision) + data.agents.map(a => a.updated_at).join()} data={data} revision={draft.revision} />}
+      {!dirty && !busy && draft.valid && !invalid && <RoutingSimulation key={String(draft.revision) + data.agents.map(a => a.updated_at).join()} data={data} revision={draft.revision} maxHops={draft.max_hops} />}
     </>}
   </section>;
 }
