@@ -47,7 +47,8 @@ export function NavUser({ user }: { user: User }) {
                 <SidebarMenuButton
                   size="lg"
                   tooltip={user.name}
-                  className="h-14 rounded-none border border-sidebar-border bg-sidebar px-2.5 font-medium shadow-none hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-open:bg-sidebar-accent data-open:text-sidebar-accent-foreground"
+                  className="cy-sidebar-user"
+                  aria-label={user.name}
                 />
               }
             >
@@ -55,11 +56,11 @@ export function NavUser({ user }: { user: User }) {
                 <AvatarImage src="" alt={user.name} />
                 <AvatarFallback>{initials}</AvatarFallback>
               </Avatar>
-              <div className="grid flex-1 text-left text-sm leading-tight">
+              <div className="cy-sidebar-user-copy grid min-w-0 flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">{user.name}</span>
                 <span className="truncate text-xs">{user.email}</span>
               </div>
-              <ChevronsUpDownIcon className="ml-auto size-4" />
+              <ChevronsUpDownIcon className="cy-sidebar-user-chevron ml-auto size-4" />
             </DropdownMenuTrigger>
             <DropdownMenuContent
               className="min-w-56"

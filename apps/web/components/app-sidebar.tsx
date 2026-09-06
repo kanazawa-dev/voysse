@@ -14,9 +14,12 @@ import {
   Sparkles,
   Wallet,
   Users,
+  X,
 } from "lucide-react"
 import { useT, useLanguage } from "@/lib/i18n"
+import { BloubAvatar } from "@/components/bloub-avatar"
 import { NavMain } from "@/components/nav-main"
+import { Button } from "@/components/ui/button"
 import { NavUser } from "@/components/nav-user"
 import { TeamSwitcher } from "@/components/team-switcher"
 import {
@@ -54,7 +57,8 @@ export function AppSidebar({ user, ...props }: React.ComponentProps<typeof Sideb
   const t = useT()
   const { lang: language } = useLanguage()
   const pathname = usePathname()
-  const { setOpenMobile } = useSidebar()
+  const { setOpenMobile, state, isMobile } = useSidebar()
+  const compact = state === "collapsed" && !isMobile
 
   const mainNav: { title: string; url: string; icon: React.ComponentType<{ className?: string }>; isActive?: boolean }[] = [
     { title: t("nav.home"), url: "/", icon: LayoutDashboard, isActive: pathname === "/" },
@@ -69,24 +73,26 @@ export function AppSidebar({ user, ...props }: React.ComponentProps<typeof Sideb
 
   return (
     <Sidebar collapsible="icon" {...props}>
-      <SidebarHeader className="px-3 pt-3 pb-1">
-        <TeamSwitcher agency={user.agency} />
+      <SidebarHeader className="cy-sidebar-header">
+        <TeamSwitcher agency={user.agency} homeHref={user.role === "operator" ? "/inbox" : "/"} />
+        {isMobile && <Button variant="ghost" size="icon" className="size-11 shrink-0" aria-label={t("shell.closeMenu")} onClick={() => setOpenMobile(false)}><X /></Button>}
       </SidebarHeader>
-      <SidebarContent>
+      <SidebarContent className="cy-sidebar-content">
         <NavMain items={user.role === "operator" ? mainNav.filter((item) => item.url === "/inbox") : mainNav} />
         {user.role === "admin" && EXTRA_NAV.length > 0 && (
-          <SidebarGroup className="px-3 py-2">
-            <SidebarMenu className="gap-2">
+          <SidebarGroup className="cy-sidebar-group">
+            <SidebarMenu className="gap-1.5">
               {EXTRA_NAV.map((item) => {
                 const Icon = item.icon
                 const active = pathname === item.href || pathname.startsWith(`${item.href}/`)
                 return (
                   <SidebarMenuItem key={item.href}>
                     <SidebarMenuButton
-                      render={<Link href={item.href} onClick={() => setOpenMobile(false)} />}
+                      aria-label={item.label}
+                      render={<Link href={item.href} aria-current={active ? "page" : undefined} onClick={() => setOpenMobile(false)} />}
                       isActive={active}
                       tooltip={item.label}
-                      className="cy-sidebar-action h-11 rounded-none px-3 font-medium tracking-[0.03em] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-active:bg-sidebar-accent data-active:text-sidebar-accent-foreground"
+                      className="cy-sidebar-action"
                     >
                       <Icon />
                       <span>{item.label}</span>
@@ -98,7 +104,11 @@ export function AppSidebar({ user, ...props }: React.ComponentProps<typeof Sideb
           </SidebarGroup>
         )}
       </SidebarContent>
-      <SidebarFooter className="px-3 pb-3 pt-2">
+      <SidebarFooter className="cy-sidebar-footer">
+        <div className="cy-sidebar-companion" data-compact={compact || undefined}>
+          <BloubAvatar size={compact ? 32 : 44} seed="voysse" animated={!compact} label={compact ? "Voxy" : undefined} />
+          {!compact && <div className="min-w-0"><strong>Voxy</strong><span>{language === "es" ? "Tu compañero en Voysse" : "Your Voysse companion"}</span></div>}
+        </div>
         <NavUser user={user} />
       </SidebarFooter>
       <SidebarRail />
