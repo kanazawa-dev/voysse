@@ -38,8 +38,8 @@ clients. This is deliberately a draft schema, not an event journal or runtime lo
 
 ## Subsequent deliveries — still pending
 
-1. Draft editor in Studio and safe routing simulation, with explicit explanations
-   of which rule matched and when the human fallback is selected.
+1. Automatic condition evaluation and safe routing simulation with explained
+   matches. The draft editor and manual rehearsal below are already implemented.
 2. Durable handoff journal and a separate current responder, preserving entry
    channel identity, context, operator takeover and interrupted/uncertain work.
 3. Integrate each transport with bounded hops and revalidated permissions, then
