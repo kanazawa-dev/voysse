@@ -1,59 +1,63 @@
-/* Local to authentication: do not change tabs throughout the dashboard. */
+/* Authentication uses the same line-only feedback as sidebar navigation. */
 .modeList {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   width: 100%;
   height: auto;
-  gap: 4px;
+  gap: 8px;
   padding: 4px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--muted);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
 }
-
 .modeOption {
+  position: relative;
+  overflow: visible;
   min-width: 0;
   min-height: 44px;
   height: auto;
   padding: 10px 8px;
-  border-radius: 3px;
-  color: var(--muted-foreground);
+  border: 0;
+  border-radius: 0;
   font-family: var(--font-sans);
   font-size: 13px;
   font-weight: 500;
   line-height: 20px;
-  transition: background-color 160ms, color 160ms, box-shadow 160ms;
 }
-
-.modeOption[data-active] {
-  background: var(--card);
-  color: var(--primary);
-  font-weight: 600;
-  box-shadow: 0 1px 3px #18181b14, inset 0 0 0 1px var(--border);
-}
-
-.modeOption[data-active]::after {
-  inset: auto 24px 4px;
-  height: 2px;
-  background: var(--primary);
-  opacity: 1;
-}
-
+.modeOption,
+.modeOption[data-active],
+.modeOption:hover,
 .modeOption:focus-visible {
-  z-index: 1;
-  outline: 2px solid var(--ring);
-  outline-offset: 2px;
+  background: transparent;
+  color: var(--foreground);
+  box-shadow: none;
+  outline: none;
 }
-
-@media (hover: hover) {
-  .modeOption:not([data-active]):not(:disabled):hover {
-    background: var(--accent);
-    color: var(--foreground);
-  }
+.modeOption::after { display: none; }
+.modeOption::before {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  pointer-events: none;
+  opacity: 0;
+  color: var(--primary);
+  background:
+    linear-gradient(currentColor, currentColor) left top/7px var(--corner-stroke, 1px) no-repeat,
+    linear-gradient(currentColor, currentColor) left top/var(--corner-stroke, 1px) 7px no-repeat,
+    linear-gradient(currentColor, currentColor) right top/7px var(--corner-stroke, 1px) no-repeat,
+    linear-gradient(currentColor, currentColor) right top/var(--corner-stroke, 1px) 7px no-repeat,
+    linear-gradient(currentColor, currentColor) left bottom/7px var(--corner-stroke, 1px) no-repeat,
+    linear-gradient(currentColor, currentColor) left bottom/var(--corner-stroke, 1px) 7px no-repeat,
+    linear-gradient(currentColor, currentColor) right bottom/7px var(--corner-stroke, 1px) no-repeat,
+    linear-gradient(currentColor, currentColor) right bottom/var(--corner-stroke, 1px) 7px no-repeat;
+  transition: inset 200ms cubic-bezier(0.4, 0, 0.2, 1), opacity 200ms;
 }
-
+.modeOption[data-active]::before,
+.modeOption:focus-visible::before { inset: 0; opacity: 1; }
+.modeOption:focus-visible::before { --corner-stroke: 2px; }
+@media (hover: hover) and (pointer: fine) {
+  .modeOption:not(:disabled):hover::before { inset: 0; opacity: 1; }
+}
 @media (prefers-reduced-motion: reduce) {
-  .modeOption {
-    transition: none;
-  }
+  .modeOption, .modeOption::before { transition: none; }
 }

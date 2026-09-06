@@ -414,7 +414,7 @@ body {
   }
 }
 
-/* Quiet at rest, registration corners on interaction; generous geometry. */
+/* Navigation uses only corner lines for hover, focus and selection. */
 .cy-sidebar-header[data-slot="sidebar-header"] { flex-direction: row; align-items: center; padding: 16px 12px; }
 .cy-sidebar-header > [data-slot="sidebar-menu"] { min-width: 0; flex: 1; }
 .cy-sidebar-content { padding-block: 10px; overflow-x: hidden; }
@@ -437,7 +437,9 @@ body {
   position: relative;
   overflow: visible;
   height: 44px;
-  border: 1px solid transparent;
+  border: 0;
+  border-radius: 0;
+  outline: none;
   background: transparent;
   color: var(--sidebar-foreground);
   box-shadow: none;
@@ -450,30 +452,30 @@ body {
   opacity: 0;
   color: var(--primary);
   background:
-    linear-gradient(currentColor, currentColor) left top/7px 1px no-repeat,
-    linear-gradient(currentColor, currentColor) left top/1px 7px no-repeat,
-    linear-gradient(currentColor, currentColor) right top/7px 1px no-repeat,
-    linear-gradient(currentColor, currentColor) right top/1px 7px no-repeat,
-    linear-gradient(currentColor, currentColor) left bottom/7px 1px no-repeat,
-    linear-gradient(currentColor, currentColor) left bottom/1px 7px no-repeat,
-    linear-gradient(currentColor, currentColor) right bottom/7px 1px no-repeat,
-    linear-gradient(currentColor, currentColor) right bottom/1px 7px no-repeat;
+    linear-gradient(currentColor, currentColor) left top/7px var(--corner-stroke, 1px) no-repeat,
+    linear-gradient(currentColor, currentColor) left top/var(--corner-stroke, 1px) 7px no-repeat,
+    linear-gradient(currentColor, currentColor) right top/7px var(--corner-stroke, 1px) no-repeat,
+    linear-gradient(currentColor, currentColor) right top/var(--corner-stroke, 1px) 7px no-repeat,
+    linear-gradient(currentColor, currentColor) left bottom/7px var(--corner-stroke, 1px) no-repeat,
+    linear-gradient(currentColor, currentColor) left bottom/var(--corner-stroke, 1px) 7px no-repeat,
+    linear-gradient(currentColor, currentColor) right bottom/7px var(--corner-stroke, 1px) no-repeat,
+    linear-gradient(currentColor, currentColor) right bottom/var(--corner-stroke, 1px) 7px no-repeat;
   transition:
     inset 200ms cubic-bezier(0.4, 0, 0.2, 1),
     opacity 200ms;
 }
+.cy-sidebar-action[data-active]:before,
 .cy-sidebar-action:focus-visible:before {
   inset: 0;
   opacity: 1;
 }
+.cy-sidebar-action:focus-visible:before { --corner-stroke: 2px; }
 .cy-sidebar-action[aria-disabled="true"]:before { display: none; }
 [data-slot="sidebar-menu-button"].cy-sidebar-action > svg { width: 18px; height: 18px; }
 [data-slot="sidebar-menu-button"].cy-sidebar-action[data-active] {
-  background: var(--sidebar-accent);
-  color: var(--sidebar-accent-foreground);
-  border-color: color-mix(in srgb, var(--primary) 20%, var(--sidebar-border));
-  box-shadow: inset 3px 0 var(--primary);
-  font-weight: 600;
+  background: transparent;
+  color: var(--sidebar-foreground);
+  box-shadow: none;
 }
 [data-slot="sidebar-menu-button"].cy-sidebar-brand { height: 52px; padding-inline: 6px; }
 .cy-sidebar-footer .cy-sidebar-user {
@@ -501,9 +503,9 @@ body {
 [data-collapsible="icon"] .cy-sidebar-user { min-height: 44px; justify-content: center; margin-inline: auto; }
 @media (hover: hover) and (pointer: fine) {
   [data-slot="sidebar-menu-button"].cy-sidebar-action:not([aria-disabled="true"]):hover {
-    background: var(--primary);
-    color: var(--primary-foreground);
-    border-color: var(--primary);
+    background: transparent;
+    color: var(--sidebar-foreground);
+    box-shadow: none;
   }
   .cy-sidebar-action:not([aria-disabled="true"]):hover:before {
     inset: 0;

@@ -156,3 +156,23 @@ dialog stays white regardless of the visitor's site theme. Closing restores
 trigger focus. Direct Cal.com and email links remain available if the third-party
 service is blocked. No API key or booking data is sent through Voysse.
 The SDK integration follows [Cal.com's embed guidance](https://cal.com/help/embedding/adding-embed).
+
+### Line-only navigation and auth selection
+
+The latest refinement replaces both filled hover states and inset selection bars:
+sidebar links and login/register options stay transparent, without rectangular
+borders or shadows. Only registration-corner lines appear on hover; the selected
+item keeps those same lines. Keyboard focus thickens the corner strokes without
+adding a surrounding ring. Preserve 44px targets, generous spacing and both themes.
+Rollback is scoped to sidebar/auth CSS and their smoke assertions.
+
+The sidebar Voxy stays in place and morphs through its existing silhouettes every
+five seconds and cycles friendly expressions every seven seconds, in both
+expanded and collapsed modes. This is opt-in so other
+identity avatars remain stable. The existing animation clock pauses when hidden,
+offscreen or under reduced motion; no extra timer or vendor engine changes.
+
+Voxy also follows mouse position with its eyes, not its layout box. Pointer input
+is consumed at the existing 30fps paint rate with bounded gaze angles and the
+engine's smooth interpolation. Leaving the window restores its expression gaze;
+touch input and reduced motion do not activate mouse tracking.

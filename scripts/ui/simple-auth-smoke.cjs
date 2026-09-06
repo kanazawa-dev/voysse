@@ -3,7 +3,7 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 (async () => {
  const browser = await chromium.launch({ headless: true });
  try {
-  const p = await browser.newPage();
+  const p = await browser.newPage({ reducedMotion: "reduce" });
   const errors = [], calls = [];
   p.on('pageerror', e => errors.push(e.message));
   p.on('console', m => { if (/hydration|didn't match|Base UI:/i.test(m.text())) errors.push(m.text()); });
@@ -19,6 +19,24 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
   });
   await p.goto((process.env.WEB_URL || 'http://localhost:3101') + '/login');
   const card = p.locator('.cy-auth-card');
+  for (const dark of [false, true]) {
+   await p.evaluate(d => document.documentElement.classList.toggle('dark', d), dark);
+   const selected = p.getByRole('tab', {selected:true});
+   const other = p.getByRole('tab', {selected:false});
+   const surface = tab => tab.evaluate(e => ({bg:getComputedStyle(e).backgroundColor, shadow:getComputedStyle(e).boxShadow, border:getComputedStyle(e).borderTopWidth}));
+   assert.deepEqual(await surface(selected), {bg:'rgba(0, 0, 0, 0)',shadow:'none',border:'0px'});
+   assert.equal(await selected.evaluate(e => getComputedStyle(e,'::before').opacity), '1');
+   await other.hover();
+   assert.deepEqual(await surface(other), await surface(selected));
+   assert.equal(await other.evaluate(e => getComputedStyle(e,'::before').opacity), '1');
+   await p.mouse.move(0,0);
+   assert.equal(await other.evaluate(e => getComputedStyle(e,'::before').opacity), '0');
+   await other.focus();
+   assert.equal(await other.evaluate(e => getComputedStyle(e,'::before').opacity), '1');
+   await other.evaluate(e => e.blur());
+  }
+  await p.evaluate(() => document.documentElement.classList.remove('dark'));
+
   await card.waitFor();
   assert.equal(await p.locator('h1').count(), 1);
   assert.equal(await p.locator('.rivr-soft-backdrop').count(), 0);
