@@ -28,3 +28,13 @@
   .node { position: relative; left: auto !important; top: auto !important; width: 100%; }
   .panel { padding: 16px; }
 }
+.editor { display: grid; gap: 20px; min-width: 0; align-items: start; }
+.form { display: grid; gap: 14px; min-width: 0; } .form label { display: grid; gap: 7px; font-size: 12px; }
+.form select { width: 100%; min-width: 0; height: 40px; padding: 8px; border: 1px solid var(--border); background: var(--card); color: var(--foreground); }
+.form .check { display: flex; align-items: center; gap: 8px; } .form input[type="color"] { width: 64px; height: 36px; }
+.widget { border: 1px solid var(--border); border-radius: 12px; overflow: hidden; padding: 16px; background: var(--background); }
+.widget strong { display: block; border-bottom: 3px solid; padding-bottom: 12px; overflow-wrap: anywhere; }
+.widget p { background: var(--muted); border-radius: 12px; padding: 12px; margin: 12px 0; overflow-wrap: anywhere; }
+.preview { margin-top: 28px; padding-top: 24px; border-top: 1px solid var(--border); }
+.transcript { max-height: 280px; overflow-y: auto; margin: 16px 0; } .transcript p { white-space: pre-wrap; overflow-wrap: anywhere; padding-block: 8px; }
+@media (min-width: 1200px) { .editor { grid-template-columns: minmax(0, 1fr) 340px; } .editor .panel { max-height: 760px; overflow: auto; } }
