@@ -17,6 +17,7 @@ Verify the running revision and external configuration separately.
 | Unit | Implemented | Remaining scope |
 | --- | --- | --- |
 | Q05 durable QR | Persist-before-ACK admission, dedicated worker, account binding and visible review states; migration 0030; [guide](whatsapp-qr-recovery.md) | Deployment, receipts/session-history reconciliation and real-account validation |
+| Q06 full recovery snapshots | Operator-invoked DB/storage/runtime-key restic backups, scoped retention and guarded restore; [guide](full-backup.md) | Remote repository, scheduling/backup-age alerts and real hosting/database restore drill |
 | Q07 service monitor | Missing/stopped/unhealthy Compose detection and optional HTTPS alerts; [guide](service-monitor.md) | Configure scheduler/receiver and independently detect host outages; real hosting notification drill |
 | Q08 shared quotas | Atomic PostgreSQL public-IP quotas, HMAC keys, bounded cleanup, fail-closed DB errors; migration 0029; [guide](request-limits.md) | Tenant spending caps, provider concurrency limits and trusted-ingress enforcement |
 
