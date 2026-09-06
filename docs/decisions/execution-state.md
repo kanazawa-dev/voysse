@@ -87,3 +87,33 @@ on disposable PostgreSQL. Browser N/A: this unit adds no UI. Rollback: remove th
 provides explicit loading, paginated audit and acknowledged/confirmed human review.
 Errors discard stale actions and require fresh inspection, never automatic retries.
 See [current checkpoint and remaining work](../studio-progress.md).
+
+## Política fijada por turno (0034, todavía interno)
+
+`claim_published` elige la publicación actual del cliente únicamente para un turno
+nuevo. Bloquea cliente con NOWAIT, revalida referencias y persiste `policy_revision_id`
+y el máximo de saltos junto al claim. Publicar/restaurar después no altera ese turno.
+Retirar la publicación impide nuevos claims publicados; no cancela uno ya iniciado.
+Un replay conserva el pin original y nunca habilita repetir trabajo externo.
+
+Las transferencias a agentes deben pertenecer al grafo fijado, además de respetar
+responsable/revisión/ciclos/límite. Política perdida, de otro cliente o con referencias
+inválidas falla cerrada; la salida humana sigue disponible. El UUID histórico no usa
+`SET NULL`: borrar la versión no debe convertir el turno en uno sin restricciones.
+Las versiones son inmutables por API, no a prueba de modificaciones manuales en DB.
+La inspección administrativa expone el UUID de política, sin nuevas cargas sensibles.
+
+Los turnos antiguos conservan pin nulo: no se migran ni se convierten implícitamente.
+`claim` sin política mantiene el protocolo anterior solo para compatibilidad interna;
+un adaptador de derivaciones deberá usar `claim_published`, no ese camino legado.
+Los productores actuales aún no llaman ninguno: esto NO activa canales ni clasifica
+condiciones. Falta conectar el runner, la entrega durable y la revalidación antes de I/O.
+
+Rollback: exportar pins antes de downgrade 0034 → 0033; retirar el campo y helpers.
+No hacerlo mientras existan adaptadores dependientes o turnos que deban conservar
+su política. Pruebas: pin estable, retiro/restauración, replay, grafo/límites, bloqueo
+del cliente, versión ausente/ajena, agentes inactivos y salida humana segura.
+
+Verificación 0034: 8 casos nuevos/21 enfocados y 267 pruebas API completas aprobadas;
+base → 0034 → base → 0034 pasó en PostgreSQL desechable. Sin cambios de UI (browser
+N/A) ni uso de proveedores. La adopción en transportes sigue pendiente.

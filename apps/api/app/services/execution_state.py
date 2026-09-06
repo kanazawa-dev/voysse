@@ -4,9 +4,11 @@ Callers own commit/rollback. Commit a NEW claim before external work; never repl
 provider/tools for an existing claim. No lease expiry or uncertain-work retry.
 """
 from fastapi import HTTPException
+from pydantic import ValidationError
 from sqlalchemy import select
 from sqlalchemy.exc import OperationalError
-from ..models import Agency, Agent, Client, Conversation, ConversationRuntime, ExecutionTurn, Message
+from ..models import Agency, Agent, Client, Conversation, ConversationRuntime, ExecutionTurn, Message, PolicyRevision
+from ..routers.studio_handoffs import Draft, problems
 
 
 def locked(db, agency_id, conversation_id):
@@ -37,11 +39,51 @@ def agent_for(db, conversation, agent_id):
     return agent
 
 
-def claim(db, agency_id, conversation_id, turn_id, message_id, expected_revision, max_hops=3):
+def pinned_policy(db, conversation, policy_id, *, current=False):
+    if current:
+        try:
+            client = db.scalar(select(Client).where(Client.id == conversation.client_id).execution_options(populate_existing=True).with_for_update(nowait=True))
+            if not client or not client.is_active or client.agency_id != conversation.agency_id:
+                raise HTTPException(409, "Policy client unavailable")
+        except OperationalError as exc:
+            if getattr(exc.orig, "sqlstate", None) == "55P03":
+                raise HTTPException(409, "Policy publication busy") from exc
+            raise
+        latest = db.scalar(select(PolicyRevision).where(PolicyRevision.client_id == conversation.client_id).order_by(PolicyRevision.revision.desc()).limit(1))
+        if not latest or latest.id != policy_id:
+            raise HTTPException(409, "Published policy changed")
+    row = db.get(PolicyRevision, policy_id, populate_existing=True)
+    if not row or row.client_id != conversation.client_id or row.policy is None:
+        raise HTTPException(409, "Pinned policy unavailable")
+    try: draft = Draft.model_validate(row.policy)
+    except ValidationError as exc: raise HTTPException(409, "Pinned policy invalid") from exc
+    if problems(db, conversation, db.get(Client, conversation.client_id), draft):
+        raise HTTPException(409, "Pinned policy references unavailable")
+    return draft
+
+
+def claim_published(db, agency_id, conversation_id, turn_id, message_id, expected_revision):
+    """Dormant adapter entry: replay keeps its pin; only a NEW claim selects latest."""
+    conversation, _ = locked(db, agency_id, conversation_id)
+    previous = db.get(ExecutionTurn, turn_id, populate_existing=True)
+    if previous:
+        if previous.policy_revision_id is None:
+            raise HTTPException(409, "Existing turn has no published policy")
+        return claim(db, agency_id, conversation_id, turn_id, message_id, expected_revision,
+                     previous.max_hops, policy_id=previous.policy_revision_id)
+    latest = db.scalar(select(PolicyRevision).where(PolicyRevision.client_id == conversation.client_id).order_by(PolicyRevision.revision.desc()).limit(1))
+    if not latest or latest.policy is None:
+        raise HTTPException(409, "No published policy")
+    policy = pinned_policy(db, conversation, latest.id, current=True)
+    return claim(db, agency_id, conversation_id, turn_id, message_id, expected_revision,
+                 policy.max_hops, policy_id=latest.id)
+
+
+def claim(db, agency_id, conversation_id, turn_id, message_id, expected_revision, max_hops=3, *, policy_id=None):
     conversation, runtime = locked(db, agency_id, conversation_id)
     previous = db.get(ExecutionTurn, turn_id, populate_existing=True)
     if previous:
-        if (previous.conversation_id, previous.context_message_id, previous.request_revision, previous.max_hops) != (conversation_id, message_id, expected_revision, max_hops):
+        if (previous.conversation_id, previous.context_message_id, previous.request_revision, previous.max_hops, previous.policy_revision_id) != (conversation_id, message_id, expected_revision, max_hops, policy_id):
             raise HTTPException(409, "Turn key reused with different input")
         return previous, False
     if type(max_hops) is not int or not 1 <= max_hops <= 5 or type(expected_revision) is not int or expected_revision < 0:
@@ -56,9 +98,11 @@ def claim(db, agency_id, conversation_id, turn_id, message_id, expected_revision
         db.add(runtime)
     if conversation.mode != "ai" or runtime.active_turn_id is not None or runtime.revision != expected_revision:
         raise HTTPException(409, "Conversation is busy, human-controlled or changed")
+    if policy_id is not None and pinned_policy(db, conversation, policy_id, current=True).max_hops != max_hops:
+        raise HTTPException(409, "Pinned policy hop limit differs")
     agent = agent_for(db, conversation, runtime.responder_id)
     turn = ExecutionTurn(id=turn_id, conversation_id=conversation_id, context_message_id=message_id,
-        request_revision=expected_revision, max_hops=max_hops, source_agent_id=runtime.responder_id, responder_version=agent.updated_at, status="running", transitions=[])
+        request_revision=expected_revision, max_hops=max_hops, policy_revision_id=policy_id, source_agent_id=runtime.responder_id, responder_version=agent.updated_at, status="running", transitions=[])
     runtime.active_turn_id = turn_id
     db.add(turn)
     db.flush()
@@ -87,6 +131,10 @@ def transfer(db, agency_id, conversation_id, turn_id, transition_id, target_id, 
         raise HTTPException(409, "Execution owner changed")
     target = None
     if target_id:
+        if turn.policy_revision_id:
+            policy = pinned_policy(db, conversation, turn.policy_revision_id)
+            if policy.max_hops != turn.max_hops or not any(r.source_agent_id == runtime.responder_id and r.target_agent_id == target_id for r in policy.rules):
+                raise HTTPException(409, "Transition outside pinned policy")
         if agent_for(db, conversation, runtime.responder_id).updated_at != turn.responder_version:
             raise HTTPException(409, "Responder configuration changed")
         target = agent_for(db, conversation, target_id)
@@ -110,6 +158,8 @@ def settle(db, agency_id, conversation_id, turn_id, expected_revision, *, uncert
         return False
     if runtime.active_turn_id != turn_id or runtime.revision != expected_revision:
         raise HTTPException(409, "Execution owner changed")
+    if not uncertain and conversation.mode == "ai" and turn.policy_revision_id:
+        pinned_policy(db, conversation, turn.policy_revision_id)
     if not uncertain and conversation.mode == "ai" and agent_for(db, conversation, runtime.responder_id).updated_at != turn.responder_version:
         raise HTTPException(409, "Responder configuration changed")
     turn.status = "uncertain" if uncertain else ("human" if conversation.mode == "human" else "completed")

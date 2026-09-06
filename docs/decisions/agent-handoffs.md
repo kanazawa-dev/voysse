@@ -46,7 +46,8 @@ implemented; none activates live handoffs. Remaining:
    channel identity, context, operator takeover and interrupted/uncertain work.
 2. Integrate each transport with bounded hops and revalidated permissions, then
    expose explicit activation. Never draw active execution edges before this exists.
-3. Persistent canvas layouts and versioned publication/rollback.
+3. Persistent canvas layouts. Versioned publication/rollback and per-turn policy
+   pinning are implemented, but live adapter adoption remains pending.
 
 ## Deploy and rollback
 

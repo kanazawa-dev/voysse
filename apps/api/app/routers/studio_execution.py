@@ -37,6 +37,7 @@ def inspect(client_id: uuid.UUID, limit: int = Query(25, ge=1, le=50),
         .order_by(ExecutionTurn.created_at.desc(), ExecutionTurn.id.desc()).offset(offset).limit(limit + 1)).all()
     return {"runtime_enabled": False, "has_more": len(rows) > limit, "items": [
         {"turn_id": turn.id, "conversation_id": turn.conversation_id, "status": turn.status,
+         "policy_revision_id": turn.policy_revision_id,
          "created_at": turn.created_at, "updated_at": turn.updated_at,
          "transitions": turn.transitions, "current_revision": runtime.revision,
          "current_responder_id": runtime.responder_id, "active_turn_id": runtime.active_turn_id}

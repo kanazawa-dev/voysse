@@ -40,11 +40,12 @@ agentes borrados/inactivos, configuraciones ni credenciales antiguas.
 
 Ninguna operación cambia conversaciones, mensajes, responsables o turnos. Tampoco
 se ejecutan proveedores/herramientas/envíos. Los adaptadores actuales ignoran estas
-versiones. Antes de activarlos se debe persistir la versión elegida para cada turno:
+versiones. El helper interno `claim_published` ya fija la versión de cada turno nuevo:
 un turno en curso no cambia de política a mitad de ejecución; revisiones posteriores
 se eligen únicamente en límites explícitos de turno y con revalidación de permisos.
 La anulación de publicación deberá impedir nuevos turnos con política; no cancelar
-por sí sola efectos externos iniciados. Ese pinning y la activación aún NO existen.
+por sí sola efectos externos iniciados. El pinning existe en el protocolo interno
+([contrato](execution-state.md)); la adopción por transportes y activación aún NO existen.
 
 ## Verificación, migración y rollback
 
@@ -79,7 +80,7 @@ que ya haya llegado al servidor. No se activan agentes, herramientas ni envíos.
 
 Rollback UI: retirar `policies.tsx`, su entrada en `handoffs.tsx`, estilos de comparación
 y `studio-policies-smoke.cjs`; conservar API, versiones y auditoría. La siguiente
-etapa es fijar la versión por turno y preparar los adaptadores, todavía desactivados.
+etapa es preparar los adaptadores usando el pin de versión, todavía desactivados.
 
 
 Verificación UI: ESLint/build webpack y los seis smokes de Studio aprobados en ES/EN,
