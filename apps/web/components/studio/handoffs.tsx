@@ -20,14 +20,16 @@ export function HandoffEditor({ data }: { data: StudioGraph }) {
   const [path, setPath] = useState<string[]>([]);
   const [finished, setFinished] = useState(false);
   const lock = useRef(false);
+  const loadVersion = useRef(0);
   const endpoint = `/studio/${data.client.id}/handoffs`;
   const agents = data.agents.filter(a => a.is_active);
   const name = (id: string | null) => id === null ? (es ? 'Atención humana' : 'Human attention') : data.agents.find(a => a.id === id)?.name || (es ? 'Agente no disponible' : 'Unavailable agent');
   useEffect(() => {
     const controller = new AbortController();
+    const version = ++loadVersion.current;
     api<Draft>(endpoint, { signal: controller.signal }).then(value => {
-      if (!controller.signal.aborted) setDraft(value);
-    }).catch(err => { if (!controller.signal.aborted) setError(messageFrom(err)); });
+      if (!controller.signal.aborted && version === loadVersion.current) setDraft(value);
+    }).catch(err => { if (!controller.signal.aborted && version === loadVersion.current) setError(messageFrom(err)); });
     return () => controller.abort();
   }, [endpoint]);
   useEffect(() => {
@@ -42,7 +44,7 @@ export function HandoffEditor({ data }: { data: StudioGraph }) {
   async function sync(save: boolean) {
     if (lock.current || (save && !draft)) return;
     if (!save && dirty && !window.confirm(es ? '¿Descartar los cambios locales y cargar el borrador guardado?' : 'Discard local changes and load the saved draft?')) return;
-    lock.current = true; setBusy(true); setError(''); setNotice('');
+    lock.current = true; loadVersion.current++; setBusy(true); setError(''); setNotice('');
     try {
       const value = await api<Draft>(endpoint, save ? { method: 'PUT', body: JSON.stringify({
         expected_revision: draft!.revision, rules: draft!.rules, max_hops: draft!.max_hops, human_fallback: true,

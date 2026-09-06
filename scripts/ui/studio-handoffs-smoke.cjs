@@ -67,6 +67,20 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
       await button('Reload draft', 'Recargar borrador').click();
       await panel.getByRole('alert').filter({ hasText: es ? 'Revisa el borrador' : 'Review the draft' }).waitFor();
       assert(await panel.getByLabel(es ? 'Comenzar con' : 'Start with', { exact: true }).isDisabled());
+      let release, seen, first = true;
+      const held = new Promise(resolve => { release = resolve; });
+      const requested = new Promise(resolve => { seen = resolve; });
+      await page.route('**/api/studio/c/handoffs', async route => {
+        if (first) { first = false; seen(); await held; return route.fulfill({ json: { ...draft, rules: [] } }); }
+        return route.fulfill({ json: { ...draft, valid: true, rules: [{ source_agent_id: '0', target_agent_id: '1', condition: 'Fresh' }] } });
+      });
+      await page.reload(); await requested;
+      await button('Load draft', 'Cargar borrador').click();
+      await panel.getByRole('textbox').fill('Newer local edit');
+      const late = page.waitForResponse(r => r.url().endsWith('/handoffs'));
+      release(); await late;
+      await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+      assert.equal(await panel.getByRole('textbox').inputValue(), 'Newer local edit', 'late initial GET cannot replace newer edits');
       assert.deepEqual(errors, []); await page.close();
     }
     console.log('PASS handoff editor ES/EN 1440/390/320 light/dark: save/clear, CAS/422 preservation, reload confirmation, bounded manual rehearsal without writes.');

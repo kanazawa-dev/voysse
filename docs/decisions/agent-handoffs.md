@@ -72,5 +72,6 @@ layout persistence and versioned publication remain pending.
 
 Verification: `scripts/ui/studio-handoffs-smoke.cjs` covers ES/EN, light/dark,
 1440/390/320 widths, save/clear, conflict and validation-error preservation, reload
-confirmation and zero rehearsal writes. Rollback removes this editor component,
+confirmation, late-load protection and zero rehearsal writes. Web lint/build and
+all three Studio browser smokes passed. Rollback removes this editor component,
 its page entry and styles; persisted drafts and channel assignments stay intact.
