@@ -288,3 +288,12 @@ Docker healthy→unhealthy en contenedor desechable. Sin nuevas migraciones.
 Ambos workers locales quedaron healthy tras su primera iteración; API original
 healthy, DB de pruebas detenida. La sonda puede fallar justo al arrancar hasta
 el primer progreso, cubierto por start_period; no indica un fallo de migración.
+
+### Studio execution review API (not live handoffs)
+
+- Administrators can inspect client-scoped execution turns and explicitly quarantine
+  running/uncertain claims toward human attention, with revision checks and an
+  idempotent actor/reason/timestamp audit. No provider calls, retries or message copies.
+- UI review panel, runtime adapter adoption and controlled policy activation remain
+  pending. Review cannot cancel external effects already underway; legacy producers
+  still ignore the dormant ledger. See [contract](decisions/execution-state.md).

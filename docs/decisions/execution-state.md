@@ -52,3 +52,35 @@ Verification: 13 focused protocol tests and the full 232-test API suite passed o
 isolated PostgreSQL, including concurrent claims and responder-lock contention.
 Migration base → 0032 → base → 0032 passed on that disposable database. No UI or
 network behavior changed; live transport acceptance is still pending.
+
+## Administrative review (no activation)
+
+Agency administrators can inspect `GET /studio/{client_id}/execution` (25 rows by
+default, maximum 50, offset capped at 10000). Results expose turn status, timestamps,
+transition journal and **current** runtime ownership/revision, not messages, provider
+credentials or tool results. Pagination is a live view, not a historical snapshot.
+`runtime_enabled: false` remains explicit: current transports still ignore this ledger.
+
+To quarantine a stranded `running` or `uncertain` turn, use
+`POST /studio/{client_id}/execution/{conversation_id}/{turn_id}/review-human` with
+`request_id` UUID, `expected_revision`, a nonblank `reason` (maximum 500 characters),
+and `acknowledge_external_effects: true`. Verify provider/channel logs first.
+
+- Under the conversation NOWAIT lock, validate client/agency, administrator session,
+  active turn and revision. Stale/closed owners return 409; scope mismatches return 404.
+- Record actor, reason, timestamp, previous status and request identity in the journal.
+  Set `reviewed_human`, increment revision, clear responder/active claim and set human mode.
+- Identical request replay returns the original audit entry with `applied: false`;
+  changed input or a second review key returns 409. Entry agent/messages stay untouched.
+- This only fences future commits by **adapted** producers. It cannot cancel a provider
+  call, tool or delivery already in flight; it neither retries nor compensates effects.
+  There is no automatic expiry or AI resume. Existing legacy mode routes/workers do
+  not consume this protocol yet; do not treat this endpoint as their cancellation API.
+
+Verification: 26 focused tests passed (13 new); full suite 244 passed before the final
+pagination/lock test, then focused suite passed again. Tests cover running/uncertain
+review, replay/conflict/concurrency,
+late completion rejection, unchanged history, authorization/scope and bounded listing
+on disposable PostgreSQL. Browser N/A: this unit adds no UI. Rollback: remove the
+`studio_execution` router registration/module and its tests; retain the audit rows and
+0032 schema. The Studio review panel and producer adoption remain separate stages.
