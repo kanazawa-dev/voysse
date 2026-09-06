@@ -9,6 +9,7 @@ export type StudioChannel = {
   status: string; is_enabled: boolean; updated_at: string | null;
 };
 export type StudioGraph = {
+  layout?: import('./layout').CanvasLayout;
   client: { id: string; name: string; is_active: boolean };
   agents: StudioAgent[]; channels: StudioChannel[];
 };
