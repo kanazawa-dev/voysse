@@ -113,7 +113,7 @@ sin verificar su conexión real. Prueba social cubre ambas entradas y móvil.
 
 ## Login and sidebar refinement — 5 September 2026
 
-This follow-up supersedes the compact auth tabs and sidebar corner-frame styling
+This follow-up supersedes the compact auth tabs and always-visible sidebar frames
 above; the landing and primary action buttons retain their existing identity.
 
 - Login mode options use equal columns, 44px touch targets and a distinct selected
@@ -122,7 +122,10 @@ above; the landing and primary action buttons retain their existing identity.
   in the sidebar footer: named when expanded, compact and static when collapsed.
   Contextual empty states, agent avatars, the widget and the Voysse logo remain.
 - Navigation uses Geist 13px, 44px rows, 6px gaps and soft selected borders with
-  an inset indicator. The sidebar is 272px expanded and 72px collapsed; collapsed
+  an inset indicator that remains after hover ends. Resting items stay quiet;
+  hover reveals the violet fill and animated registration corners, and keyboard
+  focus reveals the corners too. Reduced motion disables the transition.
+  The sidebar is 272px expanded and 72px collapsed; collapsed
   icons stay centered, labels are hidden and accessible names/tooltips remain.
 - The account control stays distinct from Voxy. Mobile keeps agency/user labels,
   includes an explicit close button and closes after choosing a navigation link.
