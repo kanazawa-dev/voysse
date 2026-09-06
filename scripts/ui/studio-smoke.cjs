@@ -15,6 +15,7 @@ const graph = { client: { id: 'client-a', name: 'Client Alpha', is_active: true 
       await page.route('**/api/**', route => {
         const request = route.request(), url = new URL(request.url());
         if (request.method() !== 'GET') writes.push(url.pathname);
+        if (url.pathname.endsWith('/handoffs')) return route.fulfill({ json: { rules: [], max_hops: 3, human_fallback: true, revision: 0, valid: true, problems: [] } });
         const json = url.pathname.endsWith('/auth/me') ? { id: 'u', name: 'Alex', role: 'admin', email: 'alex@example.com', agency: { name: 'Studio', id: 'agency' } } : url.pathname.includes('/studio/') ? graph : [];
         return route.fulfill({ json });
       });

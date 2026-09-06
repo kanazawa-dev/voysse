@@ -58,3 +58,19 @@ No draft is consumed by current message workers; rollback must not replay messag
 tenant/role isolation, unsafe graphs and later agent deactivation. Full API suite:
 202 passed. Alembic upgrade → downgrade to base → upgrade passed on disposable
 PostgreSQL 17; no real accounts, providers or production database were used.
+
+## Studio draft editor and manual rehearsal
+
+Studio now offers named source/target selectors, descriptive conditions, rule
+removal and hop settings. Save uses the draft revision; rejected/conflicting edits
+remain visible until the user explicitly reloads. No activation control exists.
+The separate rehearsal walks the saved rules: the user chooses a rule explicitly,
+then sees the path and human exit. It makes no model calls, evaluates no natural-
+language conditions and sends no messages. Editing resets the rehearsal; invalid
+or unsaved drafts cannot be rehearsed. Full AI routing simulation, durable runtime,
+layout persistence and versioned publication remain pending.
+
+Verification: `scripts/ui/studio-handoffs-smoke.cjs` covers ES/EN, light/dark,
+1440/390/320 widths, save/clear, conflict and validation-error preservation, reload
+confirmation and zero rehearsal writes. Rollback removes this editor component,
+its page entry and styles; persisted drafts and channel assignments stay intact.

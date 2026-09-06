@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { ConnectionGraph } from '@/components/studio/graph';
 import { studioCopy } from '@/components/studio/copy';
 import { type StudioGraph, type ChannelKind } from '@/components/studio/types';
+import { HandoffEditor } from '@/components/studio/handoffs';
 import { StudioInspector } from '@/components/studio/inspector';
 import styles from '@/components/studio/studio.module.css';
 
@@ -69,6 +70,7 @@ function ClientStudio({ id }: { id: string }) {
         <ConnectionGraph data={data} selected={selected} onSelect={value => { if (!busy) setSelected(value); }} onConnect={connect} t={t} />
         <StudioInspector key={selected + version} data={data} selected={selected} write={write} connect={connect} busy={busy} />
       </div>
+      <HandoffEditor data={data} />
     </>}
   </div>;
 }

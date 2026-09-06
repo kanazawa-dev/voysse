@@ -38,3 +38,10 @@
 .preview { margin-top: 28px; padding-top: 24px; border-top: 1px solid var(--border); }
 .transcript { max-height: 280px; overflow-y: auto; margin: 16px 0; } .transcript p { white-space: pre-wrap; overflow-wrap: anywhere; padding-block: 8px; }
 @media (min-width: 1200px) { .editor { grid-template-columns: minmax(0, 1fr) 340px; } .editor .panel { max-height: 760px; overflow: auto; } }
+.handoffFields { display: grid; gap: 16px; min-width: 0; margin-top: 16px; }
+.handoffFields label { display: grid; gap: 8px; font-size: 13px; }
+.handoffFields select { width: 100%; min-width: 0; padding: 8px; background: var(--card); color: var(--foreground); border: 1px solid var(--border); }
+.handoffRule { display: grid; gap: 12px; min-width: 0; border: 1px dashed var(--border); border-radius: 8px; padding: 16px; }
+.handoffRule legend { font-size: 12px; padding-inline: 8px; color: var(--muted-foreground); }
+.handoffPath { overflow-wrap: anywhere; }
+.handoffFields button { max-width: 100%; height: auto; min-height: 36px; white-space: normal; overflow-wrap: anywhere; }
