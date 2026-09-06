@@ -6,7 +6,8 @@ Ver [estado consolidado y pendientes ordenados de Studio](studio-progress.md) an
 de retomar. Incluye unidades en main, alcance dormante, pruebas, próximos pasos y
 rollback. Ya existe API de versiones publicadas (publicar/restaurar/retirar),
 y controles visuales de historial/comparación/confirmación, siempre sin activar
-transportes. El protocolo interno ya fija la versión por turno; adoptar el runner
+transportes. La distribución del canvas (posiciones/zoom) ya tiene guardado con CAS
+y modo organizar separado de conectar canales. El protocolo interno fija la versión por turno; adoptar el runner
 y los productores es el siguiente paso. Las entregas históricas de abajo no reemplazan ese checkpoint.
 
 ## Current snapshot (supersedes historical delivery notes below)
@@ -83,8 +84,8 @@ channel assignment and tool-free saved-agent testing. Model calls consume provid
 tokens; preview does not execute tools or create/send production conversations.
 Credential enrollment and advanced agent setup remain in their existing screens.
 [Accepted decisions and verification](decisions/client-studio.md) record the staged
-scope. Agent → agent handoffs, persistent layouts and publication/rollback remain
-future work, not implied by visual connections.
+scope. Persistent layouts and versioned publication are now implemented; live
+agent → agent handoffs remain future work, not implied by visual connections.
 
 ### Handoff drafts — first phase-two delivery
 
@@ -92,8 +93,8 @@ Client-scoped draft configuration now has revision-checked atomic persistence,
 same-client agent validation, cycle/duplicate rejection, bounded hop settings and
 mandatory human fallback. [Design and rollout](decisions/agent-handoffs.md).
 The ES/EN draft editor and manual saved-rule walkthrough are implemented. Single-step and bounded full-chain AI condition
-evaluation are available with per-call usage accounting; durable channel-aware execution, saved canvas layouts and
-versioned publication remain pending. No saved draft changes a live channel or
+evaluation are available with per-call usage accounting. Saved layouts and versioned
+publication are implemented; durable channel-aware execution remains pending. No saved draft changes a live channel or
 conversation owner.
 
 ### Execution-state foundation — not activated

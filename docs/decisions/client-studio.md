@@ -66,7 +66,8 @@ The test panel uses saved settings; unsaved appearance is a labeled local mock.
 Model/provider setup, knowledge/tools and credential enrollment link to the existing
 scoped screens. Temporary test history resets on agent/version change or leaving
 Studio. These controls do not implement arbitrary tools/documents as canvas nodes,
-shared layout persistence, infinite pan, agent handoffs or a publish/version runtime.
+infinite pan or live agent handoffs. Layout persistence and policy publication are
+delivered separately below and in policy-publication.md.
 
 Verification: isolated web lint/webpack build; read-only and edit browser smokes
 in ES/EN at 1440/390/320px, including real drag/drop, cancel/confirm, stale-write
@@ -86,8 +87,25 @@ CAS y bloqueo NOWAIT del cliente devuelven 409 ante cambios concurrentes. IDs aj
 se rechazan; posiciones de agentes borrados/movidos se omiten al leer sin mutar las
 reglas. El GET del grafo incluye `layout`. No modifica canales, mensajes ni políticas.
 Migración 0035 agrega `Client.studio_layout`; downgrade elimina solo esa preferencia.
-La interfaz de organizar/mover/guardar es una entrega siguiente. No se migró producción.
+La interfaz de organizar/mover/guardar se describe a continuación. No se migró producción.
 
 Verificación API de layout: 10 pruebas enfocadas y 277 API completas aprobadas;
 migración base → 0035 → base → 0035 aprobada en PostgreSQL desechable. Browser
 N/A en esta unidad backend. La interfaz de organización se valida por separado.
+
+## Organización visual — interfaz
+
+En escritorio, **Organizar nodos** separa el movimiento de la conexión de canales.
+Arrastrar cualquier tarjeta o usar flechas (10 px; Mayús: 50 px) actualiza sus líneas.
+**Guardar distribución** persiste posiciones y zoom; no cambia agentes ni canales.
+Ante 409 conserva los cambios locales: **Recargar distribución** pide confirmación
+antes de descartarlos. **Restablecer vista** vuelve a columnas/100% localmente;
+hay que guardar para aplicarlo a futuras visitas. No hay guardado ni reintento automático.
+En móvil se conservan tarjetas apiladas y selección del inspector, sin modo organizar.
+
+Validación: ESLint/build webpack y siete smokes Studio con fixtures ES/EN,
+claro/oscuro, escritorio 1440 y móvil 390/320. `studio-layout-smoke.cjs` verifica
+arrastre, teclado, líneas, zoom persistente, recarga, conflicto, reset y ausencia de
+escrituras de canales; captura oscura inspeccionada. No es aceptación con canal real.
+Rollback: revertir layout.tsx, integración de graph/types/CSS y smoke; la API y
+preferencias guardadas pueden permanecer, sin tocar reglas o asignaciones.

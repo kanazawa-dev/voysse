@@ -46,8 +46,8 @@ implemented; none activates live handoffs. Remaining:
    channel identity, context, operator takeover and interrupted/uncertain work.
 2. Integrate each transport with bounded hops and revalidated permissions, then
    expose explicit activation. Never draw active execution edges before this exists.
-3. Persistent canvas layouts. Versioned publication/rollback and per-turn policy
-   pinning are implemented, but live adapter adoption remains pending.
+3. Real execution feedback in the canvas after adapter adoption. Saved visual
+   layouts, versioned publication/rollback and per-turn policy pinning are implemented.
 
 ## Deploy and rollback
 
@@ -71,7 +71,7 @@ remain visible until the user explicitly reloads. No activation control exists.
 The separate rehearsal walks the saved rules: the user chooses a rule explicitly,
 then sees the path and human exit. It makes no model calls, evaluates no natural-
 language conditions and sends no messages. Editing resets the rehearsal; invalid
-or unsaved drafts cannot be rehearsed. Durable runtime, layout persistence and versioned publication remain pending.
+or unsaved drafts cannot be rehearsed. Live runtime remains pending; layout persistence and versioned publication are implemented.
 
 Verification: `scripts/ui/studio-handoffs-smoke.cjs` covers ES/EN, light/dark,
 1440/390/320 widths, save/clear, conflict and validation-error preservation, reload
@@ -97,7 +97,7 @@ completion, usage is recorded and access, agent version, draft revision and acti
 references are rechecked; stale results are rejected. No instructions/tools/RAG,
 production history, conversation, channel sends or draft mutations are involved.
 The proposal is advisory, one step only, and is not an evaluation of a whole chain.
-Runtime handoffs, durable context, layout persistence and publication remain pending.
+Live handoffs remain pending; internal durable state, saved layouts and publication are implemented.
 Rollback removes the simulation router/component; drafts and channels stay intact.
 
 Verification for one-step simulation: 10 focused API tests and the full 212-test
@@ -126,8 +126,8 @@ invalidate the whole trace. Errors return no partial successful proposal, but
 already incurred usage remains. No production messages or draft mutations occur.
 
 Rollback removes the chain endpoint and mode selector; one-step simulation and all
-saved drafts continue to work. Actual handoffs, saved layouts and versioned
-publication remain pending.
+saved drafts continue to work. Actual handoffs remain pending; saved layouts and versioned
+publication are now implemented.
 
 Chain verification: 7 new tests (17 combined classifier/chain tests) and the full
 219-test API suite passed on disposable PostgreSQL with mocked providers. Web lint,
@@ -139,4 +139,4 @@ provider credentials or production messages were used.
 
 [Studio progress](../studio-progress.md) consolidates the delivered draft/simulation,
 dormant durable protocol and administrative review panel, verification and ordered
-remaining publication/runtime work. Earlier per-stage pending notes are historical.
+remaining runtime/adoption work. Earlier per-stage pending notes are historical.
