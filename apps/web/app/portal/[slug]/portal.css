@@ -1,0 +1,93 @@
+/* Portal keeps its own auth boundary, but uses the dashboard's semantic tokens.
+   Agency color decorates identity only: arbitrary brand colors cannot ensure text contrast. */
+.cy-portal.cy-portal {
+  --ink: var(--foreground);
+  --text-muted: var(--muted-foreground);
+  --line: var(--border);
+  --canvas: var(--background);
+  color: var(--foreground);
+  background: var(--background);
+  font-family: Geist, Arial, sans-serif;
+}
+.cy-portal.cy-portal :is(h1, h2, h3) { font-family: inherit; letter-spacing: -.035em; }
+.cy-portal.cy-portal :is(.access-topbar, .access-card, .access-preview, .portal-inbox, .empty-state) {
+  color: var(--foreground); background: var(--card); border-color: var(--border); border-radius: 3px; box-shadow: none;
+}
+.cy-portal.cy-portal :is(.access-brand strong, label) { color: var(--foreground); }
+.cy-portal.cy-portal :is(.access-intro > p, .access-card > p, small, time, .empty-state p, .portal-preview > footer) { color: var(--muted-foreground); }
+.cy-portal.cy-portal .access-security { color: var(--muted-foreground) !important; }
+.cy-portal.cy-portal :is(.access-eyebrow, .access-card-label) { color: var(--primary); font-family: var(--font-mono); }
+.cy-portal.cy-portal :is(.preview-logo, .preview-icon, .portal-client-avatar, .entity-avatar, .empty-icon) {
+  color: var(--accent-foreground); background: var(--accent); border-color: var(--border); border-radius: 3px;
+}
+.cy-portal.cy-portal :is(.access-preview > header, .portal-preview-thread > div, .portal-preview > footer) { border-color: var(--border); }
+.cy-portal.cy-portal .portal-preview-thread > div.active { background: var(--accent); }
+.cy-portal.cy-portal .portal-preview > footer strong { color: var(--primary); border-color: var(--border); border-radius: 2px; }
+.cy-portal.cy-portal .portal-preview-thread em { color: var(--primary); }
+.cy-portal.cy-portal :is(.portal-brand span, .access-brand > span) {
+  background: var(--accent); color: var(--accent-foreground); border-radius: 3px;
+  border-bottom: 3px solid var(--portal-color, var(--primary));
+}
+.cy-portal.cy-portal .portal-brand { min-width: 0; }
+.cy-portal.cy-portal .portal-brand strong { overflow-wrap: anywhere; }
+.cy-portal.cy-portal .portal-nav { background: var(--sidebar); border-color: var(--sidebar-border); }
+.cy-portal.cy-portal .portal-nav .portal-brand { border-color: var(--sidebar-border); }
+.cy-portal.cy-portal .portal-nav nav a,
+.cy-portal.cy-portal .portal-nav-disabled {
+  min-height: 44px; display: flex; align-items: center; gap: 10px; padding: 10px;
+  border-radius: 0; background: transparent; color: var(--sidebar-foreground); font-size: 13px;
+}
+.cy-portal.cy-portal .portal-nav-disabled { opacity: .5; }
+.cy-portal.cy-portal .portal-nav > button { color: var(--sidebar-foreground); font-size: 13px; }
+.cy-portal.cy-portal .portal-main > header { gap: 16px; flex-wrap: wrap; align-items: center; }
+.cy-portal.cy-portal .portal-main > header h1 { overflow-wrap: anywhere; font-weight: 600; }
+.cy-portal.cy-portal .portal-main > header small { font-family: var(--font-mono); text-transform: uppercase; letter-spacing: .08em; }
+.cy-portal.cy-portal .portal-controls,
+.cy-portal.cy-portal .portal-header-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.cy-portal.cy-portal .portal-controls { flex-shrink: 0; }
+.cy-portal.cy-portal .cy-language-trigger { font: 11px/1 "Geist Mono", monospace; }
+.cy-portal.cy-portal .cy-theme-toggle { font-size: 14px; }
+.cy-portal.cy-portal .portal-inbox { height: calc(100dvh - 150px); min-height: 420px; grid-template-columns: minmax(220px, 30%) minmax(0, 1fr); }
+.cy-portal.cy-portal .portal-inbox > aside { background: var(--card); border-color: var(--border); }
+.cy-portal.cy-portal .portal-inbox > aside button { color: var(--foreground); border-color: var(--border); transition: background-color 200ms; }
+.cy-portal.cy-portal .portal-inbox > aside button.active { background: var(--accent); }
+.cy-portal.cy-portal .portal-inbox > aside button > span:last-child { flex: 1; }
+.cy-portal.cy-portal .portal-inbox > section > header { padding: 12px 16px; gap: 12px; flex-wrap: wrap; border-color: var(--border); }
+.cy-portal.cy-portal .portal-inbox > section > header div { min-width: 0; overflow-wrap: anywhere; }
+.cy-portal.cy-portal .portal-messages { background: var(--background); min-height: 0; }
+.cy-portal.cy-portal .portal-messages article { max-width: 88%; overflow-wrap: anywhere; }
+.cy-portal.cy-portal .portal-messages article p { background: var(--muted); color: var(--foreground); border-radius: 3px; white-space: pre-wrap; }
+.cy-portal.cy-portal .portal-messages article.user p { background: var(--accent); color: var(--accent-foreground); }
+.cy-portal.cy-portal .portal-delivery-status { border: 1px solid var(--border); border-left: 3px solid var(--primary); border-radius: 3px; padding: 12px; background: var(--card); font-size: 13px; }
+.cy-portal.cy-portal .portal-delivery-status p { padding: 0; background: transparent; }
+.cy-portal.cy-portal .portal-composer { border-color: var(--border); align-items: center; flex-wrap: wrap; }
+.cy-portal.cy-portal input { min-width: 0; color: var(--foreground); border-color: var(--input); border-radius: 2px; background: var(--card); }
+.cy-portal.cy-portal .portal-composer input { flex: 1 1 140px; }
+.cy-portal.cy-portal .portal-composer button { width: auto; min-width: 42px; min-height: 43px; border-radius: 2px; background: var(--primary); color: var(--primary-foreground); }
+.cy-portal.cy-portal :is(button:disabled, input:disabled) { opacity: .5; cursor: not-allowed; }
+.cy-portal.cy-portal :is(button, a):focus-visible { outline: 2px solid var(--ring); outline-offset: -2px; }
+.cy-portal.cy-portal .alert { color: var(--foreground); border: 1px solid var(--border); border-left: 3px solid var(--destructive); background: var(--card); border-radius: 3px; }
+.cy-portal.portal-loader { min-height: 100dvh; flex-wrap: wrap; padding: 24px; }
+@media (hover: hover) and (pointer: fine) {
+  .cy-portal.cy-portal .portal-inbox > aside button:not(:disabled):hover { background: var(--accent); }
+}
+@media (max-width: 900px) {
+  .cy-portal.portal-app { grid-template-columns: 1fr; }
+  .cy-portal.cy-portal .portal-nav { flex-direction: row; flex-wrap: wrap; gap: 12px; border-right: 0; border-bottom: 1px solid var(--border); padding: 12px; }
+  .cy-portal.cy-portal .portal-nav .portal-brand { padding: 0; border: 0; }
+  .cy-portal.cy-portal .portal-nav strong { font-size: 13px; }
+  .cy-portal.cy-portal .portal-nav nav { padding: 0; flex-direction: row; }
+  .cy-portal.cy-portal .portal-nav nav a span { font-size: 13px; }
+  .cy-portal.cy-portal .portal-nav > button { margin: 0 0 0 auto; }
+}
+@media (max-width: 640px) {
+  .cy-portal.cy-portal .access-topbar { height: auto; min-height: 72px; padding: 16px; gap: 16px; flex-wrap: wrap; }
+  .cy-portal.cy-portal .access-brand { min-width: 0; overflow-wrap: anywhere; }
+  .cy-portal.cy-portal .access-card { padding: 24px; }
+  .cy-portal.cy-portal .portal-inbox { height: 75dvh; min-height: 540px; grid-template-columns: 1fr; grid-template-rows: 150px minmax(0, 1fr); }
+  .cy-portal.cy-portal .portal-main > header .portal-controls span { display: inline; }
+  .cy-portal.cy-portal .portal-messages { padding: 14px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cy-portal.cy-portal *, .cy-portal.cy-portal *:before { transition: none !important; animation: none !important; }
+}

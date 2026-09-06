@@ -69,7 +69,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       .finally(() => setLoading(false));
   }, [isBare, pathname, router]);
 
-  if (isBare) return <>{children}{!isWidget && <div className="fixed bottom-4 right-4 z-40"><ThemeToggle /></div>}</>;
+  if (isBare) return <>{children}{!isWidget && !isPortal && <div className="fixed bottom-4 right-4 z-40"><ThemeToggle /></div>}</>;
   if (loading || !user || sidebarOpen === null) return <div className="flex min-h-screen items-center justify-center gap-3 bg-background text-sm text-muted-foreground"><BloubAvatar size={64} mood="thinking" /><span>{t("shell.loading")}</span></div>;
 
   if (user.role === "operator" && pathname !== "/inbox") return null;
