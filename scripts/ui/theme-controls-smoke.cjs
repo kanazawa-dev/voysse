@@ -24,6 +24,15 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE || "playwright");
           const dark = await page.evaluate(() => document.documentElement.classList.contains("dark"));
           assert.equal(await page.evaluate(() => localStorage.getItem("voysse.theme")), dark ? "dark" : "light");
           assert.equal(await toggle.evaluate(e => e.getBoundingClientRect().width), 44, base + path + " width " + width);
+          assert.equal(await toggle.evaluate(e => e.getBoundingClientRect().height), 36, path + " theme height");
+          for (const language of await page.locator(".cy-language-trigger:visible").all()) {
+            const themeBox = await toggle.boundingBox();
+            const languageBox = await language.boundingBox();
+            assert.equal(themeBox.height, languageBox.height, path + " matching control heights");
+            if (paths.includes("/privacy")) {
+              assert(Math.abs(themeBox.y - languageBox.y) < 1, path + " header alignment");
+            }
+          }
           assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), path + " overflow " + width);
           await page.reload();
           await toggle.waitFor();
