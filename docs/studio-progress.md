@@ -15,7 +15,8 @@ históricas. Describe código y verificación, no un despliegue en producción.
 | Revisión administrativa API | Listado acotado y cierre auditado de turnos en curso/inciertos hacia humano; sin reintentos | PR #60, main `1c54f73` |
 | Panel de revisión | Carga explícita, páginas, registro, estados vacíos/errores, motivo/aceptación/confirmación; ES/EN, claro/oscuro y móvil | PR #62, main `71749be` |
 | Publicación API | Instantáneas auditadas, CAS/UUID, restaurar y retirar sin activar runtime | PR #64, main `e624efc` |
-| Publicación UI | Historial, comparación del borrador guardado, publicar/restaurar/retirar con motivo y confirmación | Unidad de issue #65 |
+| Publicación UI | Historial, comparación del borrador guardado, publicar/restaurar/retirar con motivo y confirmación | PR #66, main `ae0f1a5` |
+| Política por turno | Pin histórico, selección actual bajo bloqueo, replay estable y transferencias dentro del grafo fijado | Unidad de issue #67 |
 
 **No confundir:** el canvas sí cambia la asignación canal → agente al confirmarla.
 Las reglas editadas siguen siendo borradores hasta publicar explícitamente por API o desde Studio.
@@ -37,20 +38,17 @@ las acciones locales: cargar otra vez para conciliar, nunca reenviar automática
 
 ## Pendientes, en orden recomendado
 
-1. **Fijar la versión de política por turno.** La API y controles de publicación
-   ya existen ([contrato](decisions/policy-publication.md)); falta persistir qué versión
-   usa un turno, validar su alcance y definir cuándo elegir otra. Mantenerlo desactivado.
-2. **Adoptar el protocolo en todos los productores.** Inventariar `/messages`, `/media`,
+1. **Adoptar el protocolo en todos los productores.** Inventariar `/messages`, `/media`,
    `/mode`, widget y workers QR/Cloud/social; comenzar con una ruta controlada. Confirmar
    claim antes de I/O, una respuesta por propietario, contexto compartido y límites;
    cercar escrituras tardías y coordinar salida humana/resume explícito. No cambiar
    `Conversation.agent_id`. Cubrir borrar/mover/desactivar agentes y cambios de permisos.
-3. **Clasificación y entrega reales con política publicada.** Usar el responsable
+2. **Clasificación y entrega reales con política publicada.** Usar el responsable
    actual, journal acotado y outbox durable; no repetir tools/envíos inciertos. Pruebas
    de concurrencia, caída, duplicados, revisión humana y cambios de configuración.
-4. **Persistencia del canvas y experiencia completa.** Posiciones, restauración de vista
+3. **Persistencia del canvas y experiencia completa.** Posiciones, restauración de vista
    y feedback de ejecución real; solo mostrar estados que el backend pueda demostrar.
-5. **Aceptación operativa controlada.** Migraciones/backup/rollback en entorno acordado,
+4. **Aceptación operativa controlada.** Migraciones/backup/rollback en entorno acordado,
    credenciales y canales de prueba, límites de gasto/concurrencia, monitoreo y recorrido
    completo con cuenta real. Verificar revisión desplegada antes de anunciar activación.
 
@@ -65,7 +63,9 @@ que libere turnos inciertos ni activación de transporte está aprobado implíci
 - Publicación: 14 pruebas enfocadas y 259 API completas aprobadas; migración
   base → 0033 → base → 0033 aprobada en DB desechable.
   Ver [contrato, migración y rollback](decisions/policy-publication.md);
-  Pinning de versión por turno y adopción por productores aún pendientes; UI implementada.
+  Pinning interno e interfaz implementados; adopción por productores aún pendiente.
+- Pin por turno: 8 casos nuevos, 21 enfocados y 267 API completas aprobadas;
+  migración base → 0034 → base → 0034 validada solo en PostgreSQL desechable.
 - Migración 0032: base → 0032 → base → 0032 verificada; no ejecutada en producción.
 - Panel: ESLint y build webpack pasaron. `studio-execution-smoke.cjs` pasó en ES/EN,
   1440/390/320 y claro/oscuro: vacío, paginación, auditoría, teclado, aceptación,

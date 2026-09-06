@@ -581,6 +581,7 @@ class ExecutionTurn(Base):
     request_revision: Mapped[int] = mapped_column(Integer)
     max_hops: Mapped[int] = mapped_column(Integer)
     source_agent_id: Mapped[uuid.UUID] = mapped_column()
+    policy_revision_id: Mapped[uuid.UUID | None] = mapped_column(nullable=True)  # Historical pin; never SET NULL on deletion.
     responder_version: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     status: Mapped[str] = mapped_column(String(24), default="running")
     transitions: Mapped[list] = mapped_column(JSON, default=list)
