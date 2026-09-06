@@ -36,6 +36,23 @@ passed; web lint/build and QR/Cloud ES/EN browser checks passed. Migration 0030
 round-trip passed in a separate disposable database. Source verification is not
 a deployment. See the [QR guide](whatsapp-qr-recovery.md) for boundaries.
 
+### UI and repository follow-up
+
+Theme and language controls share a 36px height in both frontend builds; the theme
+button retains its 44px width. Responsive theme smoke checks equal heights and
+header alignment alongside persistence and keyboard focus.
+
+Main now requires an up-to-date PR and six app-bound checks, including for admins;
+force pushes/deletion are disabled. Both frontend locks receive the targeted qs
+security fix. See [repository protection](repository-protection.md) for the
+solo-maintainer review tradeoff and live verification.
+
+Validation: both frontend lint/webpack builds and npm audits passed (zero reported
+vulnerabilities). Theme browser smoke passed on landing, legal, dashboard and both
+login routes at 1440/390/320px, including equal height, header alignment, persistence
+and keyboard focus. The qs hostile-key regression passed in both frontend installs.
+No production deployment or real-account acceptance is implied.
+
 ### Remaining development and validation
 
 - QR delivery/session-history reconciliation and real-account validation (Q05); Cloud, social
