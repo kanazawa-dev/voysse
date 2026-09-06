@@ -1,0 +1,30 @@
+.workspace { display: grid; gap: 20px; min-width: 0; }
+.header { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.header h1 { font-size: clamp(1.5rem, 3vw, 2rem); margin: 4px 0; }
+.header p, .toolbar p { color: var(--muted-foreground); font-size: 13px; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.graph { min-width: 0; border: 1px solid var(--border); background: var(--card); border-radius: 12px; overflow: hidden; }
+.toolbar { display: flex; align-items: center; gap: 12px; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid var(--border); }
+.zoom { display: flex; align-items: center; gap: 8px; font: 11px monospace; }
+.viewport { max-height: 590px; overflow: auto; background-image: radial-gradient(var(--border) 1px, transparent 1px); background-size: 20px 20px; }
+.viewport:focus-visible { outline: 2px solid var(--ring); outline-offset: -3px; }
+.map { width: 936px; position: relative; transform-origin: top left; }
+.headings { display: grid; grid-template-columns: repeat(3, 260px); gap: 56px; padding: 28px 24px; font: 11px "Geist Mono", monospace; text-transform: uppercase; letter-spacing: .12em; }
+.edges { position: absolute; inset: 0; pointer-events: none; fill: none; stroke: var(--primary); stroke-width: 1.5; opacity: .6; }
+.node { position: absolute; width: 260px; height: 88px; padding: 16px 16px 16px 50px; display: flex; flex-direction: column; justify-content: center; text-align: left; background: var(--card); color: var(--foreground); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; }
+.node strong, .node small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+.node strong { font-size: 14px; } .node small { font-size: 11px; color: var(--muted-foreground); margin-top: 6px; }
+.nodeIcon { position: absolute; left: 17px; top: 32px; color: var(--primary); }
+.node:hover, .node[aria-pressed="true"] { border-color: var(--primary); }
+.node:focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; }
+.panel { min-width: 0; padding: 24px; border: 1px solid var(--border); border-radius: 12px; background: var(--card); }
+.panel h2 { margin-bottom: 12px; font-size: 18px; } .panel p { font-size: 13px; color: var(--muted-foreground); }
+@media (max-width: 640px) {
+  .zoom, .edges, .headings { display: none; }
+  .viewport { max-height: none; overflow: visible; padding: 16px; }
+  .extent, .map { width: auto !important; height: auto !important; transform: none !important; }
+  .column { display: grid; gap: 12px; margin-bottom: 20px; }
+  .column::before { content: attr(aria-label); color: var(--muted-foreground); font-size: 12px; }
+  .node { position: relative; left: auto !important; top: auto !important; width: 100%; }
+  .panel { padding: 16px; }
+}
