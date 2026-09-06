@@ -41,3 +41,12 @@ working handoff connectors before a durable, audited runtime exists.
 
 Rollback: remove Studio entry points and routes; existing channel setup, agents,
 queues and conversations continue to work. No queued messages are replayed.
+
+## Canvas delivery evidence
+
+The initial view is at `/clients/<id>/studio`, linked from client details. It derives
+connections from the scoped API, supports selection/zoom/scroll and a keyboard-
+accessible mobile card layout. Empty clients and failed loads do not expose a
+previous client's graph. This stage is read-only; inline writes follow separately.
+Local web lint/webpack build and ES/EN browser smoke at 1440/390/320px passed,
+including edges, keyboard selection, zoom, empty/error cases and zero write requests.
