@@ -9,7 +9,7 @@ from urllib.parse import urlsplit
 from urllib.request import HTTPRedirectHandler, Request, build_opener
 
 ROOT = Path(__file__).resolve().parents[1]
-REQUIRED = {"db", "api", "web", "whatsapp", "whatsapp-cloud-worker", "proxy"}
+REQUIRED = {"db", "api", "web", "whatsapp", "whatsapp-cloud-worker", "whatsapp-qr-worker", "proxy"}
 PROBED = REQUIRED - {"proxy"} | {"social-worker"}
 
 

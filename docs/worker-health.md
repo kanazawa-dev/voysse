@@ -1,6 +1,6 @@
 # Detectar workers sin progreso
 
-Los workers social y WhatsApp Cloud tienen healthcheck de Docker independiente
+Los workers social, WhatsApp Cloud y WhatsApp QR tienen healthcheck de Docker independiente
 de `/ready` de la API. Un contenedor `running` no demuestra que procese la cola.
 
 ## Comprobar
@@ -57,3 +57,10 @@ Verificación local (5 septiembre 2026): `pytest tests/test_worker_health.py -q`
 Simulación en contenedor desechable, con sonda Docker cada segundo: señal
 fresca →healthy, señal caducada →unhealthy. Contenedor de simulación eliminado.
 El despliegue conserva el intervalo30s y3 fallos descritos arriba.
+
+## QR follow-up
+
+The required `whatsapp-qr-worker` uses the same progress-only heartbeat. The host
+monitor now expects it alongside Cloud; social remains optional. See
+[QR rollout and recovery](whatsapp-qr-recovery.md) before upgrading. Historical
+test counts above predate this third worker.

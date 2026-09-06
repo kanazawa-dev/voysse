@@ -289,6 +289,23 @@ class WhatsAppCloudChannel(Base):
     conversations: Mapped[list["Conversation"]] = relationship(back_populates="whatsapp_cloud_channel")
 
 
+class WhatsAppQREvent(Base):
+    __tablename__ = "whatsapp_qr_events"
+    __table_args__ = (UniqueConstraint("channel_id", "external_id", name="uq_qr_event_external"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=new_uuid)
+    channel_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("whatsapp_channels.id", ondelete="CASCADE"), index=True)
+    conversation_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("conversations.id", ondelete="SET NULL"))
+    external_id: Mapped[str] = mapped_column(String(255))
+    payload: Mapped[dict] = mapped_column(JSON)
+    status: Mapped[str] = mapped_column(String(30), default="queued", index=True)
+    reply: Mapped[str | None] = mapped_column(Text)
+    reply_metadata: Mapped[dict] = mapped_column(JSON, default=dict)
+    error_code: Mapped[str | None] = mapped_column(String(80))
+    received_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc, onupdate=now_utc)
+
+
 class WhatsAppCloudEvent(Base):
     __tablename__ = "whatsapp_cloud_events"
     __table_args__ = (UniqueConstraint("channel_id", "external_id", name="uq_cloud_event_external"),)

@@ -2,8 +2,8 @@
 
 ## Current snapshot (supersedes historical delivery notes below)
 
-The product-quality backlog is **not complete**. GitHub had no open issues or PRs
-when checked in this review. Main at `8689a3a` includes the five delivery batches,
+The product-quality backlog is **not complete**. At the previous integration
+checkpoint, main at `d7f8e6b` included the five delivery batches,
 worker healthchecks, dashboard/landing identity, simpler authentication, visible
 form fields and links to existing social channel configuration. Historical notes
 below about uncommitted work, unmerged PR #2 and separate worker branches describe
@@ -16,22 +16,28 @@ Verify the running revision and external configuration separately.
 
 | Unit | Implemented | Remaining scope |
 | --- | --- | --- |
+| Q05 durable QR | Persist-before-ACK admission, dedicated worker, account binding and visible review states; migration 0030; [guide](whatsapp-qr-recovery.md) | Deployment, receipts/session-history reconciliation and real-account validation |
 | Q07 service monitor | Missing/stopped/unhealthy Compose detection and optional HTTPS alerts; [guide](service-monitor.md) | Configure scheduler/receiver and independently detect host outages; real hosting notification drill |
 | Q08 shared quotas | Atomic PostgreSQL public-IP quotas, HMAC keys, bounded cleanup, fail-closed DB errors; migration 0029; [guide](request-limits.md) | Tenant spending caps, provider concurrency limits and trusted-ingress enforcement |
 
 The local monitor detected `proxy:not_running`; other expected services passed,
-including both workers. No restart or live alert was attempted. This is a local
+including the then-required workers (before the QR follow-up). No restart or live alert was attempted. This is a local
 environment observation, not a production outage claim.
 
-Verification for the new units: 11 operations tests passed, including delivery to
+Verification for Q07/Q08 before the QR follow-up: 11 operations tests passed, including delivery to
 a temporary local HTTPS receiver and redirect rejection. The API suite passed
 151 tests in 67.93 seconds, including quota-cleanup cases; migration base → 0029 → base
 → 0029 passed in a separate disposable database. No application database was
-migrated and no production credentials were used. Frontend files are unchanged.
+migrated and no production credentials were used. Those two units did not change frontend files.
+
+QR follow-up verification: 181 API tests, 6 bridge tests and 11 operations tests
+passed; web lint/build and QR/Cloud ES/EN browser checks passed. Migration 0030
+round-trip passed in a separate disposable database. Source verification is not
+a deployment. See the [QR guide](whatsapp-qr-recovery.md) for boundaries.
 
 ### Remaining development and validation
 
-- Durable QR inbound processing and delivery reconciliation (Q05); Cloud, social
+- QR delivery/session-history reconciliation and real-account validation (Q05); Cloud, social
   and human Inbox/portal attempts already have durable records.
 - Guided Meta OAuth, remote revocation, supported media/event handling and real
   account certification (CH01–CH11; manual social configuration already exists).

@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from app.scripts import social_worker, whatsapp_cloud_worker
+from app.scripts import social_worker, whatsapp_cloud_worker, whatsapp_qr_worker
 from app.services import worker_health
 
 
@@ -33,7 +33,7 @@ def test_invalid_or_future_heartbeat_is_unhealthy(tmp_path, monkeypatch, value):
     assert not worker_health.healthy(path)
 
 
-@pytest.mark.parametrize('worker', [social_worker, whatsapp_cloud_worker])
+@pytest.mark.parametrize('worker', [social_worker, whatsapp_cloud_worker, whatsapp_qr_worker])
 @pytest.mark.parametrize('fails', [False, True])
 def test_worker_records_only_completed_iteration(worker, fails, monkeypatch, tmp_path):
     path = tmp_path / 'progress'
@@ -61,7 +61,7 @@ def test_worker_records_only_completed_iteration(worker, fails, monkeypatch, tmp
     assert worker_health.healthy(path) is not fails
 
 
-@pytest.mark.parametrize('worker', [social_worker, whatsapp_cloud_worker])
+@pytest.mark.parametrize('worker', [social_worker, whatsapp_cloud_worker, whatsapp_qr_worker])
 def test_interrupted_work_does_not_report_progress(worker, monkeypatch):
     record = []
     monkeypatch.setattr(worker, 'reset', lambda: None)
