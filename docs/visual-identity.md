@@ -136,3 +136,14 @@ short viewport. Login smoke and the 14-route dashboard smoke passed at
 1440/390/320px; web lint and the production build passed. This completes the
 requested final test phase for these UI changes, not a production deployment. Rollback this refinement through PageHead/sidebar components, their CSS
 and smoke expectations; preserve unrelated auth logic and QR delivery changes.
+
+### Appearance controls
+
+Landing/legal headers and the dashboard topbar expose a 44px light/dark control;
+first-party public app screens keep it in a fixed corner. Embedded customer
+widgets retain their own appearance instead of receiving host controls.
+The independent builds share the `voysse.theme` storage convention (per origin),
+initialize before paint, synchronize tabs and still work if storage is blocked.
+Marketing neutral surfaces use semantic tokens; illustrative product artwork
+retains its deliberate dark composition. Booking dialogs are a separate light
+surface, not a change to the visitor's chosen site theme.

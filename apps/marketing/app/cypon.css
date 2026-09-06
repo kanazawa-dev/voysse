@@ -52,18 +52,18 @@
 .cy-nav {
   width: min(1280px, calc(100% - 80px));
   margin-inline: auto;
-  border-inline: 1px solid #e1e1e5;
+  border-inline: 1px solid var(--brand-line);
 }
 .cy-stripe {
   height: 48px;
   background: repeating-linear-gradient(
     135deg,
-    #fff 0,
-    #fff 8px,
-    #e5e5e9 8px,
-    #e5e5e9 10px
+    var(--popover) 0,
+    var(--popover) 8px,
+    var(--brand-line) 8px,
+    var(--brand-line) 10px
   );
-  border-block: 1px solid #e1e1e5;
+  border-block: 1px solid var(--brand-line);
 }
 .cy-skip {
   position: fixed;
@@ -71,7 +71,7 @@
   left: 20px;
   z-index: 100;
   background: var(--brand-violet);
-  color: #fff;
+  color: var(--primary-foreground);
   padding: 12px;
 }
 .cy-skip:focus {
@@ -81,8 +81,8 @@
   position: sticky;
   top: 0;
   z-index: 40;
-  background: #fff;
-  border-block: 1px solid #e1e1e5;
+  background: var(--popover);
+  border-block: 1px solid var(--brand-line);
 }
 .cy-nav {
   height: 64px;
@@ -93,7 +93,7 @@
   padding: 0 24px;
   display: flex;
   align-items: center;
-  border-right: 1px solid #e1e1e5;
+  border-right: 1px solid var(--brand-line);
 }
 .cy-landing .openvoiss-brand-name {
   font-family: var(--brand-mono);
@@ -112,7 +112,7 @@
 .cy-nav-links > details,
 .cy-nav-links > a {
   position: relative;
-  border-right: 1px solid #e1e1e5;
+  border-right: 1px solid var(--brand-line);
 }
 .cy-nav-links summary,
 .cy-nav-links > a {
@@ -123,7 +123,7 @@
   font: 11px var(--brand-mono);
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: #636370;
+  color: var(--brand-muted);
   cursor: pointer;
   list-style: none;
 }
@@ -135,14 +135,14 @@
 }
 .cy-nav-links details[open] > summary {
   color: var(--brand-violet);
-  background: #f6f5ff;
+  background: var(--accent);
 }
 .cy-nav-dropdown {
   position: absolute;
   top: 63px;
   left: -1px;
   min-width: 270px;
-  background: #fff;
+  background: var(--popover);
   border: 1px solid var(--brand-line);
   padding: 8px;
   box-shadow: 0 16px 24px #18181b0b;
@@ -171,7 +171,7 @@
   align-items: center;
   gap: 8px;
   font: 12px var(--brand-mono);
-  color: #666670;
+  color: var(--brand-muted);
 }
 .cy-menu-toggle {
   display: none;
@@ -185,7 +185,7 @@
   align-items: center;
   gap: 12px;
   background: var(--brand-violet);
-  color: #fff;
+  color: var(--primary-foreground);
   font: 700 12px/20px var(--brand-mono);
   letter-spacing: 0.055em;
   text-transform: uppercase;
@@ -213,11 +213,11 @@
   color: var(--brand-violet);
 }
 .cy-action-secondary {
-  background: #e4e4e9;
-  color: #18181b;
+  background: var(--secondary);
+  color: var(--brand-ink);
 }
 .cy-action-secondary:before {
-  color: #777;
+  color: var(--brand-muted);
 }
 .cy-action:hover {
   background: #3c21dd;
@@ -225,8 +225,8 @@
   color: white;
 }
 .cy-action-secondary:hover {
-  background: #d6d6df;
-  color: #18181b;
+  background: var(--muted);
+  color: var(--brand-ink);
 }
 .cy-actions {
   display: flex;
@@ -256,10 +256,10 @@
 .cy-tag-solid {
   background: var(--brand-violet);
   border-color: var(--brand-violet);
-  color: #fff;
+  color: var(--primary-foreground);
 }
 .cy-tag-solid i {
-  background: #fff;
+  background: var(--popover);
   border-radius: 50%;
   width: 5px;
   height: 5px;
@@ -546,11 +546,11 @@
   gap: 20px;
   padding: 25px;
   border-block: 1px solid var(--brand-line);
-  background: #fafafa;
+  background: var(--card);
 }
 .cy-provider-strip small {
   font: 9px/1.6 var(--brand-mono);
-  color: #777;
+  color: var(--brand-muted);
   max-width: 100px;
   letter-spacing: 0.08em;
 }
@@ -558,7 +558,7 @@
   font-size: 24px;
   letter-spacing: -0.05em;
   font-weight: 600;
-  color: #404047;
+  color: var(--brand-ink);
 }
 .cy-section {
   margin-top: 64px;
@@ -569,7 +569,7 @@
   padding: 24px 15px;
   font: 10px var(--brand-mono);
   letter-spacing: 0.2em;
-  color: #686875;
+  color: var(--brand-muted);
 }
 .cy-index span {
   margin: 0 12px;
@@ -642,7 +642,7 @@
 .cy-feature-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  background: #fafafa;
+  background: var(--card);
   border-bottom: 1px solid var(--brand-line);
 }
 .cy-feature-grid article {
@@ -680,7 +680,7 @@
   align-items: center;
   padding: 10px 2px;
   font: 7px var(--brand-mono);
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--brand-line);
 }
 .cy-mini-list i {
   width: 5px;
@@ -703,7 +703,7 @@
 .cy-mini-stack span {
   width: 100%;
   background: var(--brand-violet);
-  color: #fff;
+  color: var(--primary-foreground);
   text-align: center;
   padding: 8px;
   font: 8px var(--brand-mono);
@@ -742,7 +742,7 @@
   gap: 2px;
   border: 1px solid var(--brand-line);
   padding: 5px;
-  background: #fff;
+  background: var(--popover);
 }
 .cy-pixel-grid i {
   height: 16px;
@@ -751,7 +751,7 @@
 .cy-integrations {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  background: #fff;
+  background: var(--popover);
 }
 .cy-integrations > div {
   display: flex;
@@ -776,7 +776,7 @@
 }
 .cy-integrations small {
   font: 9px var(--brand-mono);
-  color: #777;
+  color: var(--brand-muted);
   text-align: center;
 }
 .cy-section-foot {
@@ -806,7 +806,7 @@
 .cy-work-grid > article {
   padding: 32px;
   border-bottom: 1px solid var(--brand-line);
-  background: #fafafa;
+  background: var(--card);
 }
 .cy-work-grid > article:nth-child(odd) {
   border-right: 1px solid var(--brand-line);
@@ -819,7 +819,7 @@
 .cy-card-label {
   font: 9px var(--brand-mono);
   letter-spacing: 0.1em;
-  color: #777;
+  color: var(--brand-muted);
   display: block;
   margin-bottom: 16px;
 }
@@ -834,7 +834,7 @@
   gap: 9px;
   align-items: center;
   padding: 11px 0;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--brand-line);
   font-size: 11px;
 }
 .cy-inbox-mini i {
@@ -862,7 +862,7 @@
 .cy-voxy-card small {
   display: block;
   font: 10px var(--brand-mono);
-  color: #777;
+  color: var(--brand-muted);
   letter-spacing: 0;
 }
 .cy-label-row {
@@ -878,7 +878,7 @@
   padding: 12px;
   border: 1px solid var(--brand-line);
   font: 9px var(--brand-mono);
-  color: #727078;
+  color: var(--brand-muted);
 }
 .cy-label-row svg {
   color: var(--brand-violet);
@@ -903,11 +903,11 @@
   border: 1px solid var(--brand-line);
 }
 .cy-comparison > div:last-child {
-  background: #fff;
+  background: var(--popover);
 }
 .cy-comparison > div:last-child header {
   background: var(--brand-violet);
-  color: #fff;
+  color: var(--primary-foreground);
 }
 .cy-comparison > div:last-child .openvoiss-brand-static {
   background: #fff !important;
@@ -918,7 +918,7 @@
   gap: 16px;
   font-size: 13px;
   padding: 16px 22px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--brand-line);
 }
 .cy-comparison svg {
   color: var(--brand-violet);
@@ -983,7 +983,7 @@
   align-items: flex-start;
   gap: 10px;
   font-size: 12px;
-  color: #656570;
+  color: var(--brand-muted);
 }
 .cy-plans li svg {
   flex-shrink: 0;
@@ -991,7 +991,7 @@
   margin-top: 3px;
 }
 .cy-plan-featured {
-  background: #eeebff;
+  background: var(--accent);
   border-top: 2px solid var(--brand-violet);
 }
 .cy-faq {
@@ -1034,7 +1034,7 @@
   text-align: center;
   padding: 64px 24px 240px;
   border-block: 1px solid var(--brand-line);
-  background: #fff;
+  background: var(--popover);
   position: relative;
   overflow: hidden;
   margin-top: 80px;
@@ -1069,7 +1069,7 @@
   grid-template-columns: 2fr 1fr 1fr 1fr;
   gap: 40px;
   padding: 48px 24px 0;
-  background: #fafafa;
+  background: var(--card);
 }
 .cy-footer > div {
   display: flex;
@@ -1106,7 +1106,7 @@
   width: 100%;
   gap: 20px;
   font: 8px/1.6 var(--brand-mono);
-  color: #777;
+  color: var(--brand-muted);
 }
 .cy-footer-bottom .cy-live-dot {
   background: var(--brand-violet);
@@ -1182,7 +1182,7 @@
     top: 60px;
     left: 16px;
     right: 16px;
-    background: #fff;
+    background: var(--popover);
     border: 1px solid var(--brand-line);
     padding: 12px;
     box-shadow: 0 16px 20px #0001;
@@ -1598,24 +1598,24 @@
     transform: none;
   }
   .cy-action-secondary:hover {
-    background: #d4d4db;
-    color: #18181b;
+    background: var(--muted);
+    color: var(--brand-ink);
   }
   .cy-nav-links summary:hover,
   .cy-nav-links > a:hover {
-    background: #fafafa;
-    color: #18181b;
+    background: var(--card);
+    color: var(--brand-ink);
   }
   .cy-feature-grid article:hover,
   .cy-work-grid article:hover,
   .cy-integrations > div:hover {
-    background: #fff;
+    background: var(--popover);
   }
   .cy-plans article:not(.cy-plan-featured):hover {
-    background: #fafafa;
+    background: var(--card);
   }
   .cy-plan-featured:hover {
-    background: #e7e2ff;
+    background: color-mix(in srgb, var(--accent) 85%, var(--brand-violet));
   }
   .cy-faq summary:hover {
     color: var(--brand-violet);
@@ -1632,4 +1632,9 @@
     transition-duration: 0s !important;
     animation: none !important;
   }
+}
+
+@media (max-width: 600px) {
+  .cy-nav-right > .cy-action { display: none; }
+  .cy-nav-right { gap: 8px; }
 }

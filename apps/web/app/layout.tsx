@@ -18,10 +18,14 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html
+      suppressHydrationWarning
       lang="en"
       dir="ltr"
       className="font-sans antialiased"
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: "try{document.documentElement.classList.toggle('dark',localStorage.getItem('voysse.theme')==='dark')}catch{}" }} />
+      </head>
       <body>
         <MotionProvider>
           <LanguageProvider>

@@ -19,6 +19,7 @@ import {
   X,
 } from "lucide-react";
 import { BloubAvatar } from "@/components/bloub-avatar";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { OpenvoissBrand } from "@/components/openvoiss-brand";
 import { useLanguage, useT } from "@/lib/i18n";
@@ -406,6 +407,7 @@ export default function WelcomePage() {
             <a className="cy-github" href={github}>
               <Github size={15} /> GitHub
             </a>
+            <ThemeToggle />
             <LanguageSwitcher />
             <Action href={`${appUrl}/login`}>
               {text("Entrar", "Get started")}

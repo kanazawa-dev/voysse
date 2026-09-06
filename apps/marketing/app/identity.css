@@ -112,3 +112,23 @@ body {
     transition: none;
   }
 }
+
+/* Visible, keyboard-accessible appearance control on every first-party shell. */
+:root { color-scheme: light; }
+:root.dark { color-scheme: dark; }
+.cy-theme-toggle {
+  display: inline-flex; align-items: center; justify-content: center;
+  flex-shrink: 0; width: 44px; height: 44px; padding: 0;
+  border: 1px solid var(--border); border-radius: 6px;
+  background: var(--card); color: var(--foreground); cursor: pointer;
+}
+.cy-theme-toggle:hover { background: var(--accent); color: var(--accent-foreground); }
+.cy-theme-toggle:focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; }
+
+.dark {
+  --brand-surface: #141417; --brand-ink: #e4e4eb; --brand-violet: #a698ff;
+  --brand-line: #35353d; --brand-muted: #a3a3b2;
+  --card: #1b1b20; --popover: #222228; --primary-foreground: #171221;
+  --muted: #24242b; --secondary: #2b2738; --accent: #302843;
+  --accent-foreground: #d3c9ff;
+}
