@@ -27,8 +27,12 @@ export function ConnectionGraph({ data, selected, onSelect, onConnect, t, immers
   const pan = useRef<{ x: number; y: number; left: number; top: number } | null>(null);
   const layout = useCanvasLayout(data), { zoom, setZoom } = layout;
   const point = (id: string, x: number, index: number) => layout.positions[id] || { x, y: 70 + index * 112 };
-  const width = Math.max(936, ...Object.values(layout.positions).map(p => p.x + 280));
-  const height = Math.max(Math.max(4, data.agents.length) * 112 + 100, ...Object.values(layout.positions).map(p => p.y + 108));
+  const widgets = data.agents.flatMap((agent, index) => agent.widget_enabled ? [{ agent, index }] : []);
+  // Keep hidden widget positions saved, but exclude them from the visible canvas bounds.
+  const visible = new Set([...data.channels.map(c => `channel:${c.kind}`), ...data.agents.map(a => `agent:${a.id}`), ...widgets.map(({ agent }) => `widget:${agent.id}`)]);
+  const visiblePositions = Object.entries(layout.positions).filter(([id]) => visible.has(id)).map(([, position]) => position);
+  const width = Math.max(widgets.length ? 936 : 620, ...visiblePositions.map(p => p.x + 280));
+  const height = Math.max(Math.max(4, data.agents.length) * 112 + 100, ...visiblePositions.map(p => p.y + 108));
   const edge = (from: { x: number; y: number }, to: { x: number; y: number }) => `M${from.x + 260} ${from.y + 44} C${from.x + 292} ${from.y + 44} ${to.x - 32} ${to.y + 44} ${to.x} ${to.y + 44}`;
   const node = (id: string, x: number, index: number, title: string, subtitle: string,
                 icon: React.ReactNode, kind?: ChannelKind, agentId?: string) => (
@@ -76,7 +80,6 @@ export function ConnectionGraph({ data, selected, onSelect, onConnect, t, immers
               layout.move(p.id, (event.clientX - r.left) / zoom - p.dx, (event.clientY - r.top) / zoom - p.dy);
             } catch { /* Ignore unrelated drag data. */ }
           }}>
-          <div className={styles.headings}><span>{t.channels}</span><span>{t.agents}</span><span>{t.widgets}</span></div>
           <svg className={styles.edges} width={width} height={height} aria-hidden="true">
             {data.channels.map((channel, index) => {
               const target = data.agents.findIndex(a => a.id === channel.agent_id);
@@ -84,7 +87,7 @@ export function ConnectionGraph({ data, selected, onSelect, onConnect, t, immers
                 strokeDasharray={channel.is_enabled ? undefined : '5 5'}
                 d={edge(point(`channel:${channel.kind}`, 24, index), point(`agent:${data.agents[target].id}`, 340, target))} />;
             })}
-            {data.agents.map((agent, index) => <path key={agent.id} strokeDasharray={agent.widget_enabled ? undefined : '5 5'} d={edge(point(`agent:${agent.id}`, 340, index), point(`widget:${agent.id}`, 656, index))} />)}
+            {widgets.map(({ agent, index }) => <path key={agent.id} data-studio-widget-edge={agent.id} d={edge(point(`agent:${agent.id}`, 340, index), point(`widget:${agent.id}`, 656, index))} />)}
           </svg>
           <div className={styles.column} aria-label={t.channels}>{data.channels.map((channel, index) => node(
             `channel:${channel.kind}`, 24, index, channelNames[channel.kind],
@@ -93,7 +96,7 @@ export function ConnectionGraph({ data, selected, onSelect, onConnect, t, immers
           <div className={styles.column} aria-label={t.agents}>{data.agents.map((agent, index) => node(
             `agent:${agent.id}`, 340, index, agent.name, agent.is_active ? t.active : t.inactive, <Bot size={18} />, undefined, agent.id,
           ))}</div>
-          <div className={styles.column} aria-label={t.widgets}>{data.agents.map((agent, index) => node(
+          <div className={styles.column} aria-label={t.widgets}>{widgets.map(({ agent, index }) => node(
             `widget:${agent.id}`, 656, index, `${t.widgets} · ${agent.name}`, agent.widget_enabled ? t.active : t.disabled, <Globe2 size={18} />,
           ))}</div>
         </div>

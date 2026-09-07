@@ -61,6 +61,7 @@ export function StudioInspector({ data, selected, write, connect, busy }: {
           <label>{es ? 'Saludo del chat web' : 'Web chat greeting'}<Input maxLength={2000} value={greeting} onChange={e => setGreeting(e.target.value)} /></label>
           <label>{es ? 'Color' : 'Color'}<input type="color" value={color} onChange={e => setColor(e.target.value)} /></label>
           <label className={styles.check}><input type="checkbox" checked={enabled} onChange={e => setEnabled(e.target.checked)} />{es ? 'Activar chat web' : 'Enable web chat'}</label>
+          <p>{es ? 'Opcional: el chat web aparece en el canvas sólo al activarlo y guardar. No es necesario para probar el agente ni usar otros canales.' : 'Optional: web chat appears on the canvas only after enabling and saving it. It is not required to test the agent or use other channels.'}</p>
           <div className={styles.widget} aria-label={es ? 'Vista previa visual' : 'Visual preview'}>
             <strong style={{ borderColor: color }}>{name}</strong><p>{greeting || (es ? '¡Hola! ¿En qué te ayudo?' : 'Hello! How can I help?')}</p>
             <small>{es ? 'Vista visual del borrador · no envía mensajes' : 'Draft appearance · no messages sent'}</small>
