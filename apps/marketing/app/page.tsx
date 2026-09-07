@@ -18,6 +18,7 @@ import {
   Workflow,
   X,
 } from "lucide-react";
+import { appUrl } from "@/lib/app-url";
 import { BookingDialog } from "@/components/booking-dialog";
 import { BloubAvatar } from "@/components/bloub-avatar";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -311,9 +312,7 @@ export default function WelcomePage() {
     return () => document.removeEventListener("keydown", dismiss);
   }, []);
 
-  const appUrl = (
-    process.env.NEXT_PUBLIC_APP_URL || "https://app.voysse.cl"
-  ).replace(/\/$/, "");
+
   const nav = [
     [
       text("Producto", "Product"),

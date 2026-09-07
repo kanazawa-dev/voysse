@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from .config import get_settings
 from .database import get_db
 from .routers import (
+    acquisition,
     admin,
     agency,
     agent_tools,
@@ -77,6 +78,7 @@ def readiness(db: Session = Depends(get_db)):
     return {"status": "ready"}
 
 
+app.include_router(acquisition.router, prefix="/api")
 app.include_router(auth.router, prefix="/api")
 app.include_router(agency.router, prefix="/api")
 app.include_router(clients.router, prefix="/api")

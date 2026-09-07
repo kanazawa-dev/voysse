@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import "./identity.css";
+import { AcquisitionTracker } from "@/components/acquisition-tracker";
 import { LanguageProvider } from "@/lib/i18n";
 
 
@@ -22,7 +23,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <script dangerouslySetInnerHTML={{ __html: "try{document.documentElement.classList.toggle('dark',localStorage.getItem('voysse.theme')==='dark')}catch{}" }} />
       </head>
       <body>
-        <LanguageProvider>{children}</LanguageProvider>
+        <LanguageProvider><AcquisitionTracker />{children}</LanguageProvider>
       </body>
     </html>
   );

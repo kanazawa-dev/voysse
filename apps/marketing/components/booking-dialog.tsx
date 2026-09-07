@@ -22,7 +22,7 @@ export function BookingDialog({ href, children }: { href: string; children: Reac
     : (es ? "Hablemos de tu proyecto" : "Let's talk about your project");
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={<button type="button" className="cy-action" />}>
+      <DialogTrigger render={<button type="button" data-acquisition-booking className="cy-action" />}>
         {children}<ArrowUpRight size={15} aria-hidden="true" />
       </DialogTrigger>
       <DialogContent className={styles.dialog} showCloseButton={false}>
