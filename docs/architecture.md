@@ -302,3 +302,9 @@ Next.js 16 has real breaking changes versus most models' training data.
 `node_modules/next/dist/docs/` before writing non-trivial Next.js code in this
 app, and heed its deprecation notices. See
 [Contributing](./contributing.md) before making frontend changes.
+
+Shared rate-limit `Retry-After` is bounded to 1..configured window seconds.
+PostgreSQL transaction-start timestamps can predate a bucket created by a concurrent
+transaction; rounding that difference alone can incorrectly advertise an extra
+second. The bound changes only the header, not quota counts or expiry. Regression:
+`tests/test_shared_rate_limits.py`; reverting this bound restores the header race.
