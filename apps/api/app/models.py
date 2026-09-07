@@ -366,6 +366,11 @@ class SocialEvent(Base):
     status: Mapped[str] = mapped_column(String(30), default="queued", index=True)
     attempts: Mapped[int] = mapped_column(Integer, default=0)
     reply: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Serialized execution_dispatch.Dispatched, set only when a published policy
+    # routed this reply; carries the claimed turn across the gap between
+    # generation and confirmed delivery, which a durable retry can re-enter from
+    # a different worker/process. See execution_dispatch.serialize()/deserialize().
+    route_state: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     last_error: Mapped[str | None] = mapped_column(Text, nullable=True)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
     channel: Mapped[SocialChannel] = relationship()

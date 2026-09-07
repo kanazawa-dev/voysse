@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from ..models import Agency, Conversation, Message, WhatsAppCloudChannel, WhatsAppCloudEvent, now_utc
 from ..security import decrypt_secret
+from .execution_dispatch import deserialize, dispatch_abort, dispatch_finalize
 from .whatsapp_cloud import fetch_media, send_text
 from .whatsapp_inbound import InboundMessage, process_inbound
 
@@ -13,6 +14,14 @@ from .whatsapp_inbound import InboundMessage, process_inbound
 def active(db, channel):
     agency = db.get(Agency, channel.agency_id)
     return channel.agent.is_active and channel.is_enabled and channel.client.is_active and agency and agency.is_active
+
+
+async def _release_route(event):
+    """Release a claimed-but-unfinalized route before a ready event is given up
+    on (never sent). Not called when the reply stays valid for a later retry."""
+    routed = deserialize((event.reply_metadata or {}).get("route"))
+    if routed is not None:
+        await dispatch_abort(routed)
 
 
 def require_human_review(db, event):
@@ -56,6 +65,8 @@ async def _locked_work(db, channel_id):
         WhatsAppCloudEvent.status.in_(("preparing", "sending")),
     )).all()
     for job in abandoned:
+        if job.status == "sending":
+            await _release_route(job)  # A route claimed before the crash must not stay claimed forever.
         job.error_code = "preparation_interrupted" if job.status == "preparing" else "delivery_unknown"
         job.status = "needs_review" if job.status == "preparing" else "uncertain"
         conversation = db.scalar(select(Conversation).where(
@@ -119,10 +130,13 @@ async def _locked_work(db, channel_id):
             elif not result.reply:
                 event.status, event.error_code = "needs_review", "preparation_failed"
             elif not result.reply.strip() or len(result.reply) > 4096:
+                if result.route is not None:
+                    await dispatch_abort(deserialize(result.route))
                 event.status, event.error_code = "needs_review", "reply_too_long"
             else:
                 event.reply, event.status = result.reply, "ready"
-                event.reply_metadata = {"sources": result.sources, "tool_calls": result.tool_calls}
+                event.reply_metadata = {"sources": result.sources, "tool_calls": result.tool_calls,
+                                         "responder_name": result.responder_name, "route": result.route}
             if event.status == "needs_review":
                 require_human_review(db, event)
             event.updated_at = now_utc()
@@ -139,16 +153,21 @@ async def _locked_work(db, channel_id):
         return True
     conversation = db.get(Conversation, event.conversation_id)
     if not conversation:
+        await _release_route(event)
         event.status, event.error_code = "needs_review", "conversation_unavailable"
         db.commit()
         return True
     db.refresh(conversation, with_for_update={"of": Conversation})
     db.refresh(channel)
     if conversation.mode == "human" or not active(db, channel) or (event.payload["phone_number_id"] != channel.phone_number_id or event.payload["agent_id"] != str(channel.agent_id)):
+        db.commit()  # Release the conversation lock: dispatch_abort() acquires its own.
+        await _release_route(event)
         event.status, event.error_code = "ignored", "human_or_inactive"
         db.commit()
         return True
     if event.received_at < now_utc() - timedelta(hours=24):
+        db.commit()
+        await _release_route(event)
         event.status, event.error_code = "needs_review", "reply_window_closed"
         db.commit()
         return True
@@ -158,15 +177,23 @@ async def _locked_work(db, channel_id):
     db.expire_all()
     try:
         if conversation.mode == "human" or not active(db, channel) or (event.payload["phone_number_id"] != channel.phone_number_id or event.payload["agent_id"] != str(channel.agent_id)):
+            db.commit()  # Release the conversation lock: dispatch_abort() acquires its own.
+            await _release_route(event)
             event.status, event.error_code = "ignored", "human_or_inactive"
         else:
+            db.commit()  # No open lock during external I/O or dispatch_finalize()'s own lock.
             external = await send_text(decrypt_secret(channel.encrypted_access_token),
                                        channel.phone_number_id, event.payload["sender"], event.reply)
             if not external:
                 raise ValueError("Missing message ID")
-            db.add(Message(conversation_id=conversation.id, role="assistant", content=event.reply,
-                           sender_type="ai", sender_name=channel.agent.name, external_message_id=external,
-                           sources=event.reply_metadata.get("sources", []), tool_calls=event.reply_metadata.get("tool_calls")))
+            routed = deserialize(event.reply_metadata.get("route"))
+            if routed is not None:
+                await dispatch_finalize(routed, external_message_id=external)
+            else:
+                db.add(Message(conversation_id=conversation.id, role="assistant", content=event.reply,
+                               sender_type="ai", sender_name=event.reply_metadata.get("responder_name") or channel.agent.name,
+                               external_message_id=external, sources=event.reply_metadata.get("sources", []),
+                               tool_calls=event.reply_metadata.get("tool_calls")))
             event.status, event.error_code = "sent", None
             conversation.updated_at = now_utc()
         event.updated_at = now_utc()
@@ -174,6 +201,7 @@ async def _locked_work(db, channel_id):
     except Exception:
         db.rollback()
         event = db.get(WhatsAppCloudEvent, event.id)
+        await _release_route(event)
         event.status, event.error_code = "uncertain", "delivery_unknown"
         require_human_review(db, event)
         event.updated_at = now_utc()

@@ -41,7 +41,7 @@ export function PolicyPanel({ data, draft }: { data: StudioGraph; draft: Draft }
   }
   async function apply() {
     if (request.current || !history || !choice || !reason.trim()) return;
-    if (!window.confirm(`${label(choice.action)}${choice.version ? ` ${choice.version.revision}` : ''}?\n\n${es ? 'Se creará una nueva revisión. No modifica el borrador. Si queda como publicación vigente, el chat del panel y el widget enrutarán según sus reglas.' : 'Creates a new revision. Does not change the draft. If it becomes the active publication, dashboard chat and the widget will route per its rules.'}`)) return;
+    if (!window.confirm(`${label(choice.action)}${choice.version ? ` ${choice.version.revision}` : ''}?\n\n${es ? 'Se creará una nueva revisión. No modifica el borrador. Si queda como publicación vigente, el chat del panel, el widget, WhatsApp e Instagram/Messenger enrutarán según sus reglas.' : 'Creates a new revision. Does not change the draft. If it becomes the active publication, dashboard chat, the widget, WhatsApp and Instagram/Messenger will route per its rules.'}`)) return;
     const controller = new AbortController(); request.current = controller; setBusy(true); setError(''); setNotice('');
     try {
       const result = await api<{ version: Version }>(endpoint, { method: 'POST', signal: controller.signal, body: JSON.stringify({
@@ -55,7 +55,7 @@ export function PolicyPanel({ data, draft }: { data: StudioGraph; draft: Draft }
   function choose(action: Action, version?: Version) { setChoice({ action, version }); setReason(''); setError(''); setNotice(''); }
   return <section className={`${styles.preview} ${styles.execution}`} data-policy-panel data-studio-busy={busy} aria-labelledby="policy-title">
     <h3 id="policy-title">{es ? 'Versiones publicadas' : 'Published versions'}</h3>
-    <p>{es ? 'Publicar activa el enrutamiento real en el chat del panel y el widget para los agentes con reglas de salida. WhatsApp y redes sociales no pasan por aquí todavía. Cancelar o salir no cancela solicitudes ya enviadas.' : 'Publishing activates real routing in the dashboard chat and the widget for agents with outgoing rules. WhatsApp and social do not go through this yet. Cancelling or leaving cannot cancel requests already sent.'}</p>
+    <p>{es ? 'Publicar activa el enrutamiento real en el chat del panel, el widget, WhatsApp e Instagram/Messenger para los agentes con reglas de salida. Cancelar o salir no cancela solicitudes ya enviadas.' : 'Publishing activates real routing in the dashboard chat, the widget, WhatsApp and Instagram/Messenger for agents with outgoing rules. Cancelling or leaving cannot cancel requests already sent.'}</p>
     <Button variant="outline" disabled={busy || !!choice} onClick={() => void load()}>{busy ? (es ? 'Procesando…' : 'Working…') : (es ? 'Cargar historial' : 'Load history')}</Button>
     {error && <p role="alert">{error}</p>}{notice && <p role="status">{notice}</p>}
     {history && <>

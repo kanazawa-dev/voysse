@@ -170,3 +170,14 @@ def settle(db, agency_id, conversation_id, turn_id, expected_revision, *, uncert
             runtime.responder_id = None
     db.flush()
     return turn.status == "completed"
+
+
+def settle_safe(db, agency_id, conversation_id, turn_id, expected_revision, *, uncertain=False):
+    """settle(), but for system-facing callers (channel workers) that must never
+    raise into an unattended background job. A race that settle() would normally
+    report as 409 is treated the same as "already resolved"."""
+    try:
+        return settle(db, agency_id, conversation_id, turn_id, expected_revision, uncertain=uncertain)
+    except HTTPException:
+        db.rollback()
+        return False

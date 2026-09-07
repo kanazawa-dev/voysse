@@ -5,6 +5,7 @@ from datetime import timedelta
 from sqlalchemy import case, or_, select, text
 
 from ..models import Agency, Conversation, Message, WhatsAppChannel, WhatsAppQREvent, now_utc
+from .execution_dispatch import deserialize, dispatch_abort, dispatch_finalize
 from .whatsapp import bridge_command
 from .whatsapp_inbound import InboundMessage, process_inbound
 
@@ -17,6 +18,15 @@ def active(db, channel):
 def same_destination(channel, event):
     return (event.payload["agent_id"] == str(channel.agent_id)
             and event.payload["source_phone_number"] == channel.phone_number)
+
+
+async def _release_route(event):
+    """Release a claimed-but-unfinalized route before a ready event is given up
+    on (never sent). Not called for a "waits for reconnection" retry: the reply
+    stays valid and the route must stay claimed for a later attempt."""
+    routed = deserialize((event.reply_metadata or {}).get("route"))
+    if routed is not None:
+        await dispatch_abort(routed)
 
 
 def finish(db, event, status, error=None):
@@ -63,6 +73,8 @@ async def _locked_work(db, channel_id):
     )).all()
     for event in abandoned:
         preparing = event.status == "preparing"
+        if not preparing:
+            await _release_route(event)  # A route claimed before the crash must not stay claimed forever.
         finish(db, event, "needs_review" if preparing else "uncertain",
                "preparation_interrupted" if preparing else "delivery_unknown")
     event = db.scalar(select(WhatsAppQREvent).where(
@@ -105,10 +117,13 @@ async def _locked_work(db, channel_id):
             elif not result.reply or not result.reply.strip():
                 finish(db, event, "needs_review", "preparation_failed")
             elif len(result.reply) > 4096:
+                if result.route is not None:
+                    await dispatch_abort(deserialize(result.route))
                 finish(db, event, "needs_review", "reply_too_long")
             else:
                 event.reply = result.reply
-                event.reply_metadata = {"sources": result.sources, "tool_calls": result.tool_calls}
+                event.reply_metadata = {"sources": result.sources, "tool_calls": result.tool_calls,
+                                         "responder_name": result.responder_name, "route": result.route}
                 finish(db, event, "ready")
         except Exception:
             db.rollback()
@@ -118,14 +133,19 @@ async def _locked_work(db, channel_id):
         return True
     conversation = db.get(Conversation, event.conversation_id)
     if not conversation:
+        await _release_route(event)
         finish(db, event, "needs_review", "conversation_unavailable")
         return True
     db.refresh(conversation, with_for_update={"of": Conversation})
     db.expire_all()
     if conversation.mode == "human" or not active(db, channel):
+        db.commit()  # Release the conversation lock: dispatch_abort() acquires its own.
+        await _release_route(event)
         finish(db, event, "ignored", "human_or_inactive")
         return True
     if not same_destination(channel, event):
+        db.commit()
+        await _release_route(event)
         finish(db, event, "needs_review", "destination_changed")
         return True
     if channel.status != "connected":
@@ -137,8 +157,11 @@ async def _locked_work(db, channel_id):
         db.refresh(channel, with_for_update={"of": WhatsAppChannel})
         db.expire_all()
         if conversation.mode == "human" or not active(db, channel) or not same_destination(channel, event):
+            db.commit()  # Release the conversation lock: dispatch_abort() acquires its own.
+            await _release_route(event)
             finish(db, event, "ignored", "human_or_inactive")
             return True
+        db.commit()  # No open lock during external I/O or dispatch_finalize()'s own lock.
         response = await bridge_command("POST", f"/channels/{channel.id}/send", {
             "remote_jid": event.payload["remote_jid"], "text": event.reply,
             "expected_phone_number": event.payload["source_phone_number"],
@@ -146,12 +169,19 @@ async def _locked_work(db, channel_id):
         external = response.get("external_message_id")
         if not isinstance(external, str) or not external.strip() or len(external) > 255:
             raise ValueError("Missing confirmation")
-        db.add(Message(conversation_id=conversation.id, role="assistant", content=event.reply,
-                       sender_type="ai", sender_name=channel.agent.name, external_message_id=external,
-                       sources=event.reply_metadata.get("sources", []), tool_calls=event.reply_metadata.get("tool_calls")))
+        routed = deserialize(event.reply_metadata.get("route"))
+        if routed is not None:
+            await dispatch_finalize(routed, external_message_id=external)
+        else:
+            db.add(Message(conversation_id=conversation.id, role="assistant", content=event.reply,
+                           sender_type="ai", sender_name=event.reply_metadata.get("responder_name") or channel.agent.name,
+                           external_message_id=external, sources=event.reply_metadata.get("sources", []),
+                           tool_calls=event.reply_metadata.get("tool_calls")))
         conversation.updated_at = now_utc()
         finish(db, event, "sent")
     except Exception:
         db.rollback()
-        finish(db, db.get(WhatsAppQREvent, event_id), "uncertain", "delivery_unknown")
+        event = db.get(WhatsAppQREvent, event_id)
+        await _release_route(event)
+        finish(db, event, "uncertain", "delivery_unknown")
     return True
