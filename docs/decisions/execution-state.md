@@ -153,3 +153,25 @@ Harness: `TEST_DATABASE_URL=<disposable_postgresql_test> pytest -q tests/test_ex
 Cubre cadena, replay durante I/O, cancelación, respuesta tardía, uso contabilizado,
 rollback de respuesta/transferencia, política retirada durante el turno y límite sin
 llamada extra. Browser N/A: no interfaz/endpoint/worker cambió en esta entrega.
+
+## Legacy mode control fence
+
+Inbox and client-portal mode changes now take the same conversation NOWAIT lock
+as execution claims/settlement. Human takeover leaves the turn, responder and
+journal intact for administrative review. It fences late local commits, not I/O
+already started. Once a conversation has a runtime row, legacy `mode=ai` returns
+409 even after completion/review: resumption needs a dedicated audited workflow.
+This prevents a human → AI toggle from making an old in-flight result valid again.
+Conversations without runtime state retain ordinary mode switching.
+
+This is a prerequisite, **not producer activation**. Messages/media/widget/workers
+still need protocol adoption, and real-provider/outbox integration remains pending.
+Rollback: remove `conversation_control.py` and its route calls/tests together;
+no schema or execution history is removed. Do not roll back after adopting live
+producers without stopping and reconciling them first.
+
+Harness: `pytest -q tests/test_conversation_control.py tests/test_execution_runner.py`
+on disposable PostgreSQL covers running/uncertain/completed state, portal scope,
+legacy compatibility, lock contention and real runner takeover during fake I/O.
+Browser N/A: response contracts/UI are unchanged; HTTP integration tests exercise
+both mode routes. No provider credentials or external sends are used in this unit.
