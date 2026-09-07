@@ -34,6 +34,13 @@ Valida antes/después de I/O, contabiliza tokens y bloquea errores/cancelaciones
 reintentos. Proveedores falsos en pruebas; **aún no integrado en endpoints/canales**.
 Ver [contrato y límites](decisions/execution-state.md#runner-interno-de-cadena--sin-transportes).
 
+## Acceso a Studio
+
+**Sidebar → Studio** abre el último cliente autorizado o permite seleccionarlo.
+Búsqueda/selector arriba; cada cliente conserva su canvas. El acceso desde Clientes
+sigue funcionando. Cambiar con el selector confirma descartes y bloquea operaciones
+en curso. No cambia permisos ni activa las derivaciones reales.
+
 ## Organización visual
 
 En escritorio: **Organizar nodos** → arrastrar o usar flechas/Mayús →
@@ -90,6 +97,9 @@ que libere turnos inciertos ni activación de transporte está aprobado implíci
   migración base → 0034 → base → 0034 validada solo en PostgreSQL desechable.
 - Layout API: 10 pruebas enfocadas y 277 API completas aprobadas;
   base → 0035 → base → 0035 validada en PostgreSQL desechable.
+- Navegación global: ESLint/build webpack y smoke de selección aprobados ES/EN,
+  claro/oscuro, 1440/390/320; recordar cliente autorizado, errores, descartes y bloqueo
+  durante guardado. Script `studio-navigation-smoke.cjs`.
 - Layout UI: ESLint/build webpack y siete smokes Studio aprobados ES/EN, claro/oscuro,
   1440/390/320. Arrastre/teclado, líneas, persistencia, CAS, reset y cero escrituras
   de canales en `studio-layout-smoke.cjs`. Captura oscura inspeccionada.

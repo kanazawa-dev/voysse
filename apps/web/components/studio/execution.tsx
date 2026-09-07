@@ -40,7 +40,7 @@ export function ExecutionPanel({ data }: { data: StudioGraph }) {
     } catch (err) { if (!controller.signal.aborted) setError(messageFrom(err) + (es ? ' No se reintentó. Carga los turnos para comprobar el resultado antes de otra acción.' : ' Not retried. Load turns to check the outcome before another action.')); }
     finally { if (!controller.signal.aborted) { request.current = null; setBusy(false); setSelected(null); setListing(null); setReason(''); setAck(false); } }
   }
-  return <section className={`${styles.panel} ${styles.execution}`} data-execution-panel aria-labelledby="execution-title">
+  return <section className={`${styles.panel} ${styles.execution}`} data-execution-panel data-studio-busy={busy} aria-labelledby="execution-title">
     <h2 id="execution-title">{es ? 'Revisión de ejecuciones' : 'Execution review'}</h2>
     <p>{es ? 'Las derivaciones reales aún no están activadas. Este registro no controla los canales actuales ni muestra las simulaciones.' : 'Live handoffs are not enabled yet. This ledger does not control current channels or show simulations.'}</p>
     <div className={styles.actions}><Button variant="outline" disabled={busy || !!selected} onClick={() => { setNotice(''); void load(); }}>{busy ? (es ? 'Procesando…' : 'Working…') : (es ? 'Cargar turnos' : 'Load turns')}</Button></div>

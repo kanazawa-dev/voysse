@@ -28,7 +28,7 @@ export function RoutingSimulation({ data, revision, maxHops }: { data: StudioGra
     } catch (err) { if (!controller.signal.aborted) setError(messageFrom(err)); }
     finally { if (!controller.signal.aborted) { request.current = null; setBusy(false); } }
   }
-  return <section className={styles.preview} data-routing-simulation>
+  return <section className={styles.preview} data-routing-simulation data-studio-busy={busy}>
     <h3>{es ? 'Simular derivaciones con IA' : 'Simulate AI handoffs'}</h3>
     {!chain && <p>{es ? 'Evalúa un mensaje con el modelo del agente de origen. Consume tokens: una evaluación por prueba, sin herramientas, historial real ni envíos. No recorre toda la cadena ni activa agentes.' : 'Evaluate a message with the source agent model. Uses tokens: one evaluation per test, without tools, real history or sends. Does not traverse the full chain or activate agents.'}</p>}
     {chain && <p>{es ? `Simula hasta ${maxHops} pasos con el mismo mensaje original y el modelo de cada agente. Puede consumir tokens en cada paso. Sin herramientas, respuestas de agentes, historial real ni envíos.` : `Simulate up to ${maxHops} steps using the same original message and each agent model. Each step may consume tokens. No tools, agent replies, real history or sends.`}</p>}
