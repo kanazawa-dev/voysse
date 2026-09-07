@@ -1,5 +1,5 @@
 "use client";
-import { useId, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { useLanguage } from '@/lib/i18n';
 import { useCanvasLayout } from './layout';
 import { Bot, Globe2, Radio, ZoomIn, ZoomOut } from 'lucide-react';
@@ -18,6 +18,11 @@ export function channelStatus(channel: StudioChannel, t: StudioCopy) {
   return t.waiting;
 }
 
+// A node can be dragged by its body (reposition) or from its small connector
+// handle (draw a link to another node). Both are plain pointer-capture drags
+// so movement always looks and feels the same, with no separate mode to toggle.
+type Drag = { kind: 'move'; id: string; dx: number; dy: number } | { kind: 'link'; from: string; x: number; y: number };
+
 export function ConnectionGraph({ data, selected, onSelect, onConnect, onAgentConnect, rules = [], onRuleSelect, t, immersive = false }: {
   immersive?: boolean;
   data: StudioGraph; selected: string; onSelect: (id: string) => void; t: StudioCopy;
@@ -27,10 +32,17 @@ export function ConnectionGraph({ data, selected, onSelect, onConnect, onAgentCo
 }) {
   const { lang } = useLanguage();
   const es = lang === 'es', arrow = useId();
-  const [connecting, setConnecting] = useState(false), [source, setSource] = useState('');
-  const hint = immersive ? (lang === 'es' ? 'Arrastra el fondo para moverte. Selecciona un nodo para configurarlo.' : 'Drag the background to pan. Select a node to configure it.') : t.hint;
+  const [drag, setDrag] = useState<Drag | null>(null);
+  // Below 641px the canvas becomes a stacked card list (no absolute positions to
+  // drag between); only the connector handles stay active there for connecting.
+  const [desktop, setDesktop] = useState(true);
+  useEffect(() => {
+    const media = window.matchMedia('(min-width: 641px)'), sync = () => setDesktop(media.matches);
+    sync(); media.addEventListener('change', sync); return () => media.removeEventListener('change', sync);
+  }, []);
+  const map = useRef<HTMLDivElement>(null);
   const pan = useRef<{ x: number; y: number; left: number; top: number } | null>(null);
-  const layout = useCanvasLayout(data), { zoom, setZoom } = layout;
+  const layout = useCanvasLayout(data), { zoom } = layout;
   const point = (id: string, x: number, index: number) => layout.positions[id] || { x, y: 70 + index * 112 };
   const widgets = data.agents.flatMap((agent, index) => agent.widget_enabled ? [{ agent, index }] : []);
   // Keep hidden widget positions saved, but exclude them from the visible canvas bounds.
@@ -40,69 +52,95 @@ export function ConnectionGraph({ data, selected, onSelect, onConnect, onAgentCo
   const width = Math.max(widgets.length ? 936 : hasHandoffs ? 700 : 620, ...visiblePositions.map(p => p.x + (hasHandoffs ? 360 : 280)));
   const height = Math.max(Math.max(4, data.agents.length) * 112 + 100, ...visiblePositions.map(p => p.y + 108));
   const edge = (from: { x: number; y: number }, to: { x: number; y: number }) => `M${from.x + 260} ${from.y + 44} C${from.x + 292} ${from.y + 44} ${to.x - 32} ${to.y + 44} ${to.x} ${to.y + 44}`;
-  const node = (id: string, x: number, index: number, title: string, subtitle: string,
-                icon: React.ReactNode, kind?: ChannelKind, agentId?: string) => (
-    <button key={id} type="button" data-studio-node={id} className={styles.node}
-      style={{ left: point(id, x, index).x, top: point(id, x, index).y, '--node-x': `${point(id, x, index).x}px`, '--node-y': `${point(id, x, index).y}px` } as React.CSSProperties} aria-pressed={connecting && !layout.organize ? source === id : selected === id} onClick={() => {
-        if (layout.organize) return;
-        if (connecting) {
-          if (!source && (agentId || (kind && data.channels.find(c => c.kind === kind)?.id))) setSource(id);
-          else if (source && agentId) {
-            if (source.startsWith('agent:')) onAgentConnect?.(source.slice(6), agentId);
-            else if (source.startsWith('channel:')) onConnect?.(source.slice(8) as ChannelKind, agentId);
-            setSource('');
+  const canLink = (id: string) => id.startsWith('agent:') || (id.startsWith('channel:') && !!onConnect);
+  function toMap(clientX: number, clientY: number) {
+    const rect = map.current?.getBoundingClientRect();
+    return rect ? { x: (clientX - rect.left) / zoom, y: (clientY - rect.top) / zoom } : { x: 0, y: 0 };
+  }
+  function targetAt(clientX: number, clientY: number): string | null {
+    const el = document.elementFromPoint(clientX, clientY)?.closest<HTMLElement>('[data-studio-node]');
+    return el?.dataset.studioNode || null;
+  }
+  function finishLinkTo(from: string, to: string | null) {
+    if (!to || to === from) return;
+    if (from.startsWith('agent:') && to.startsWith('agent:')) onAgentConnect?.(from.slice(6), to.slice(6));
+    else if (from.startsWith('channel:') && to.startsWith('agent:')) onConnect?.(from.slice(8) as ChannelKind, to.slice(6));
+  }
+  const node = (id: string, x: number, index: number, title: string, subtitle: string, icon: React.ReactNode) => {
+    const canDrag = desktop && !layout.busy;
+    const p = point(id, x, index);
+    const linkable = canLink(id) && !!(onAgentConnect || onConnect);
+    return <div key={id} className={styles.nodeWrap} style={{ left: p.x, top: p.y, '--node-x': `${p.x}px`, '--node-y': `${p.y}px` } as React.CSSProperties}>
+      <button type="button" data-studio-node={id} className={styles.node}
+        aria-pressed={selected === id}
+        onClick={() => { if (drag?.kind === 'link') { finishLinkTo(drag.from, id); setDrag(null); } else if (!drag) onSelect(id); }}
+        onKeyDown={event => {
+          if (drag?.kind === 'link' && (event.key === 'Enter' || event.key === ' ')) {
+            event.preventDefault(); finishLinkTo(drag.from, id); setDrag(null); return;
           }
-        } else onSelect(id);
-      }}
-      onKeyDown={event => {
-        if (!layout.organize || layout.busy || !['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) return;
-        event.preventDefault(); const p = point(id, x, index), step = event.shiftKey ? 50 : 10;
-        layout.move(id, p.x + (event.key === 'ArrowRight' ? step : event.key === 'ArrowLeft' ? -step : 0), p.y + (event.key === 'ArrowDown' ? step : event.key === 'ArrowUp' ? -step : 0));
-      }}
-      draggable={!layout.busy && (layout.organize || (connecting && !!agentId) || (!!kind && !!onConnect && !!data.channels.find(c => c.kind === kind)?.id))}
-      onDragStart={event => {
-        if (layout.organize) { const r = event.currentTarget.getBoundingClientRect(); event.dataTransfer.setData('application/x-voysse-layout', JSON.stringify({ id, dx: (event.clientX - r.left) / zoom, dy: (event.clientY - r.top) / zoom })); }
-        else if (connecting && agentId) { setSource(id); event.dataTransfer.setData('application/x-voysse-agent', agentId); }
-        else if (kind) event.dataTransfer.setData('application/x-voysse-channel', kind);
-      }}
-      onDragOver={event => { if (!layout.organize && agentId && onConnect) event.preventDefault(); }}
-      onDrop={event => {
-        if (layout.organize) return;
-        event.preventDefault();
-        const fromAgent = event.dataTransfer.getData('application/x-voysse-agent');
-        if (connecting && agentId && fromAgent) { onAgentConnect?.(fromAgent, agentId); setSource(''); return; }
-        const source = event.dataTransfer.getData('application/x-voysse-channel') as ChannelKind;
-        if (agentId && data.channels.some(c => c.kind === source)) onConnect?.(source, agentId);
-      }}>
-      <span className={styles.nodeIcon}>{icon}</span><strong title={title}>{title}</strong>
-      <small title={subtitle}>{subtitle}</small>
-    </button>
-  );
-  return <section className={styles.graph} aria-label={t.title} onKeyDown={e => { if (e.key === 'Escape') { setConnecting(false); setSource(''); } }}>
-    <div className={styles.toolbar}><p>{hint}</p><div className={styles.zoom}>
-      <Button variant="ghost" size="icon" aria-label={t.zoomOut} disabled={zoom <= .75} onClick={() => setZoom(zoom - .25)}><ZoomOut /></Button>
-      <span>{Math.round(zoom * 100)}%</span>
-      <Button variant="ghost" size="icon" aria-label={t.zoomIn} disabled={zoom >= 1.5} onClick={() => setZoom(zoom + .25)}><ZoomIn /></Button>
-    </div></div>
-    {onAgentConnect && <div className={styles.connectionTools}>
-      <Button variant={connecting ? 'default' : 'outline'} disabled={layout.organize || layout.busy || !data.client.is_active} aria-pressed={connecting} onClick={() => { setConnecting(!connecting); setSource(''); }}>{connecting ? (es ? 'Cancelar conexión' : 'Cancel connection') : (es ? 'Conectar nodos' : 'Connect nodes')}</Button>
-      <p role="status">{connecting && !layout.organize ? (source ? (es ? 'Elige el agente de destino. Escape cancela.' : 'Choose the target agent. Escape cancels.') : (es ? 'Selecciona origen y destino, o arrastra un agente hacia otro.' : 'Select source and target, or drag an agent onto another.')) : (es ? 'Agentes: borrador con condición. Canales: cambio real con confirmación.' : 'Agents: conditional draft. Channels: confirmed live binding.')}</p>
-    </div>}
-    {immersive ? <details className={styles.canvasSettings}><summary>{lang === 'es' ? 'Vista y distribución' : 'View & layout'} · {Math.round(zoom * 100)}%</summary>{layout.controls}</details> : layout.controls}
-    <div className={styles.viewport} tabIndex={0} aria-label={hint}
-      onPointerDown={e => { if (!immersive || e.button !== 0 || (e.target as HTMLElement).closest('button, [role="button"]')) return; pan.current = { x: e.clientX, y: e.clientY, left: e.currentTarget.scrollLeft, top: e.currentTarget.scrollTop }; e.currentTarget.setPointerCapture(e.pointerId); }}
+          if (layout.busy || !['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) return;
+          event.preventDefault(); const here = point(id, x, index), step = event.shiftKey ? 50 : 10;
+          layout.move(id, here.x + (event.key === 'ArrowRight' ? step : event.key === 'ArrowLeft' ? -step : 0), here.y + (event.key === 'ArrowDown' ? step : event.key === 'ArrowUp' ? -step : 0));
+        }}
+        onPointerDown={event => {
+          if (!canDrag || event.button !== 0) return;
+          event.currentTarget.setPointerCapture(event.pointerId);
+          const here = point(id, x, index), start = toMap(event.clientX, event.clientY);
+          setDrag({ kind: 'move', id, dx: start.x - here.x, dy: start.y - here.y });
+        }}
+        onPointerMove={event => {
+          if (drag?.kind !== 'move' || drag.id !== id) return;
+          const at = toMap(event.clientX, event.clientY);
+          layout.move(id, at.x - drag.dx, at.y - drag.dy);
+        }}
+        onPointerUp={() => setDrag(null)}
+        onLostPointerCapture={() => setDrag(null)}>
+        <span className={styles.nodeIcon}>{icon}</span><strong title={title}>{title}</strong>
+        <small title={subtitle}>{subtitle}</small>
+      </button>
+      {linkable && <span data-connector-handle data-studio-node={id} className={styles.connector}
+        role="button" tabIndex={0} aria-label={es ? `Conectar desde ${title}` : `Connect from ${title}`}
+        onKeyDown={event => {
+          if (event.key !== 'Enter' && event.key !== ' ') return;
+          event.preventDefault();
+          setDrag({ kind: 'link', from: id, x: p.x + 260, y: p.y + 44 });
+        }}
+        onPointerDown={event => {
+          event.stopPropagation(); event.preventDefault();
+          event.currentTarget.setPointerCapture(event.pointerId);
+          const at = toMap(event.clientX, event.clientY);
+          setDrag({ kind: 'link', from: id, x: at.x, y: at.y });
+        }}
+        onPointerMove={event => {
+          if (drag?.kind !== 'link') return;
+          event.stopPropagation();
+          setDrag({ ...drag, ...toMap(event.clientX, event.clientY) });
+        }}
+        onPointerUp={event => {
+          event.stopPropagation();
+          if (drag?.kind === 'link') finishLinkTo(drag.from, targetAt(event.clientX, event.clientY));
+          setDrag(null);
+        }}
+        onLostPointerCapture={() => setDrag(null)} />}
+    </div>;
+  };
+  const linking = drag?.kind === 'link';
+  return <section className={styles.graph} aria-label={t.title} onKeyDown={e => { if (e.key === 'Escape') setDrag(null); }}>
+    <div className={styles.toolbar}>
+      <p role="status">{linking ? (es ? 'Suelta sobre un agente para conectar. Escape cancela.' : 'Drop on an agent to connect. Escape cancels.') : (immersive ? (es ? 'Arrastra un nodo para moverlo. Arrastra el punto de conexión hacia otro nodo para enlazarlos.' : 'Drag a node to move it. Drag its connector to another node to link them.') : t.hint)}</p>
+      <div className={styles.zoom}>
+        <Button variant="ghost" size="icon" aria-label={t.zoomOut} disabled={zoom <= .75} onClick={() => layout.setZoom(zoom - .25)}><ZoomOut /></Button>
+        <span>{Math.round(zoom * 100)}%</span>
+        <Button variant="ghost" size="icon" aria-label={t.zoomIn} disabled={zoom >= 1.5} onClick={() => layout.setZoom(zoom + .25)}><ZoomIn /></Button>
+      </div>
+      {layout.controls}
+    </div>
+    <div className={styles.viewport} tabIndex={0} aria-label={t.hint}
+      onPointerDown={e => { if (!immersive || e.button !== 0 || drag || (e.target as HTMLElement).closest('button, [role="button"]')) return; pan.current = { x: e.clientX, y: e.clientY, left: e.currentTarget.scrollLeft, top: e.currentTarget.scrollTop }; e.currentTarget.setPointerCapture(e.pointerId); }}
       onPointerMove={e => { if (pan.current) { e.currentTarget.scrollLeft = pan.current.left + pan.current.x - e.clientX; e.currentTarget.scrollTop = pan.current.top + pan.current.y - e.clientY; } }}
       onPointerUp={() => { pan.current = null; }} onPointerCancel={() => { pan.current = null; }} onLostPointerCapture={() => { pan.current = null; }}>
       <div className={styles.extent} style={{ width: width * zoom, height: height * zoom, '--canvas-width': `${width * zoom}px`, '--canvas-height': `${height * zoom}px` } as React.CSSProperties}>
-        <div className={styles.map} style={{ width, height, transform: `scale(${zoom})`, '--map-width': `${width}px`, '--map-height': `${height}px`, '--map-zoom': zoom } as React.CSSProperties}
-          onDragOver={event => { if (layout.organize) event.preventDefault(); }}
-          onDrop={event => {
-            if (!layout.organize || layout.busy) return;
-            event.preventDefault();
-            try { const p = JSON.parse(event.dataTransfer.getData('application/x-voysse-layout')); const r = event.currentTarget.getBoundingClientRect();
-              layout.move(p.id, (event.clientX - r.left) / zoom - p.dx, (event.clientY - r.top) / zoom - p.dy);
-            } catch { /* Ignore unrelated drag data. */ }
-          }}>
+        <div ref={map} className={styles.map} style={{ width, height, transform: `scale(${zoom})`, '--map-width': `${width}px`, '--map-height': `${height}px`, '--map-zoom': zoom } as React.CSSProperties}>
           <svg className={styles.edges} width={width} height={height}>
             <defs><marker id={arrow} markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6" fill="currentColor" stroke="none" /></marker></defs>
             {data.channels.map((channel, index) => {
@@ -122,13 +160,19 @@ export function ConnectionGraph({ data, selected, onSelect, onConnect, onAgentCo
                 d={`M${from.x + 260} ${from.y + 44} C${bend} ${from.y + 44} ${bend} ${to.y + 44} ${to.x + 260} ${to.y + 44}`}><title>{label}</title></path>;
             })}
             {widgets.map(({ agent, index }) => <path key={agent.id} data-studio-widget-edge={agent.id} d={edge(point(`agent:${agent.id}`, 340, index), point(`widget:${agent.id}`, 656, index))} />)}
+            {drag?.kind === 'link' && (() => {
+              const from = drag.from.startsWith('agent:')
+                ? point(drag.from, 340, data.agents.findIndex(agent => `agent:${agent.id}` === drag.from))
+                : point(drag.from, 24, data.channels.findIndex(channel => `channel:${channel.kind}` === drag.from));
+              return <path data-studio-link-preview className={styles.linkPreview} d={`M${from.x + 260} ${from.y + 44} L${drag.x} ${drag.y}`} />;
+            })()}
           </svg>
           <div className={styles.column} aria-label={t.channels}>{data.channels.map((channel, index) => node(
             `channel:${channel.kind}`, 24, index, channelNames[channel.kind],
-            `${channelStatus(channel, t)} · ${data.agents.find(a => a.id === channel.agent_id)?.name || t.none}`, <Radio size={18} />, channel.kind,
+            `${channelStatus(channel, t)} · ${data.agents.find(a => a.id === channel.agent_id)?.name || t.none}`, <Radio size={18} />,
           ))}</div>
           <div className={styles.column} aria-label={t.agents}>{data.agents.map((agent, index) => node(
-            `agent:${agent.id}`, 340, index, agent.name, agent.is_active ? t.active : t.inactive, <Bot size={18} />, undefined, agent.id,
+            `agent:${agent.id}`, 340, index, agent.name, agent.is_active ? t.active : t.inactive, <Bot size={18} />,
           ))}</div>
           <div className={styles.column} aria-label={t.widgets}>{widgets.map(({ agent, index }) => node(
             `widget:${agent.id}`, 656, index, `${t.widgets} · ${agent.name}`, agent.widget_enabled ? t.active : t.disabled, <Globe2 size={18} />,

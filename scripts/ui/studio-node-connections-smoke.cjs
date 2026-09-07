@@ -23,30 +23,38 @@ const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
    await route.fulfill({json});
   });
   await page.goto((process.env.WEB_URL||'http://127.0.0.1:3140')+(immersive?'/studio/c':'/clients/c/studio'));
-  const panel=page.locator('[data-handoff-editor]'),node=id=>page.locator(`[data-studio-node="agent:${id}"]`);
-  const connect=page.getByRole('button',{name:es?'Conectar nodos':'Connect nodes',exact:true});
+  const panel=page.locator('[data-handoff-editor]'),node=id=>page.locator(`button[data-studio-node="agent:${id}"]`),handle=id=>page.locator(`[data-connector-handle][data-studio-node="agent:${id}"]`);
   await page.waitForFunction(()=>document.querySelector('[data-handoff-editor] form'));
-  await connect.click();await node('0').click();await node('1').click();
+  // Drag from node 0's connector handle to node 1: point-to-point connection, no mode toggle.
+  await handle('0').hover();await page.mouse.down();await node('1').hover();await page.mouse.up();
   const condition=panel.locator('textarea').first();await condition.waitFor();assert.equal(await condition.inputValue(),'');
   assert.equal(writes.length,0);assert.equal(await page.locator('[data-studio-handoff-edge]').count(),1);
   await condition.fill('Technical help');await panel.getByRole('button',{name:es?'Guardar borrador':'Save draft',exact:true}).click();
   await panel.getByRole('status').filter({hasText:es?'Borrador guardado':'Draft saved'}).waitFor();assert.equal(draft.rules.length,1);
   const close=async()=>{if(immersive)await page.getByRole('button',{name:es?'Cerrar panel':'Close panel',exact:true}).click()};
-  await close();await node('0').click();await node('1').click();assert.equal(await panel.locator('[data-rule-index]').count(),1,'duplicate only focuses rule');
-  await close();await node('1').click();await node('0').click();await panel.getByRole('alert').filter({hasText:es?'Conexión no válida':'Invalid connection'}).waitFor();assert.equal(await page.locator('[data-studio-handoff-edge]').count(),1);
-  await close();await node('0').click();await node('2').click();await panel.getByRole('alert').filter({hasText:es?'Conexión no válida':'Invalid connection'}).waitFor();assert.equal(writes.length,1);
+  const link=async(a,b)=>{await handle(a).hover();await page.mouse.down();await node(b).hover();await page.mouse.up();};
+  await close();await link('0','1');assert.equal(await panel.locator('[data-rule-index]').count(),1,'duplicate only focuses rule');
+  await close();await link('1','0');await panel.getByRole('alert').filter({hasText:es?'Conexión no válida':'Invalid connection'}).waitFor();assert.equal(await page.locator('[data-studio-handoff-edge]').count(),1);
+  await close();await link('0','2');await panel.getByRole('alert').filter({hasText:es?'Conexión no válida':'Invalid connection'}).waitFor();assert.equal(writes.length,1);
   await condition.fill('Preserved on conflict');conflict=true;await panel.getByRole('button',{name:es?'Guardar borrador':'Save draft',exact:true}).click();await panel.getByRole('alert').filter({hasText:'Draft changed'}).waitFor();assert.equal(await condition.inputValue(),'Preserved on conflict');conflict=false;
   await panel.getByRole('button',{name:es?'Recargar borrador':'Reload draft',exact:true}).click();await page.waitForFunction(()=>document.querySelector('[data-handoff-editor] textarea').value==='Technical help');
   await page.screenshot({path:`/tmp/studio-node-edge-${lang}-${immersive}-${width}.png`});
-  await close();await page.getByRole('button',{name:es?'Cancelar conexión':'Cancel connection',exact:true}).click();
+  await close();await page.keyboard.press('Escape');
   if(immersive&&width===1440){await page.locator('[data-studio-handoff-edge]').press('Enter');await condition.waitFor();await close();}
-  await connect.click();await node('0').focus();await page.keyboard.press('Enter');await page.keyboard.press('Escape');assert(await connect.isVisible(),'Escape exits');
   await page.reload();await page.locator('[data-studio-handoff-edge]').waitFor({state:'attached'});assert.equal(await page.locator('[data-studio-handoff-edge]').count(),1,'saved edge survives reload');
   if(immersive)await page.getByRole('button',{name:es?'Conexiones y pruebas':'Connections & tests',exact:true}).click();
   await panel.getByRole('button',{name:es?'Eliminar conexión 1':'Remove connection 1',exact:true}).click();await page.waitForFunction(()=>!document.querySelector('[data-studio-handoff-edge]'));
-  if(immersive&&width===1440){await close();await connect.click();await node('0').dragTo(node('1'));await page.locator('[data-studio-handoff-edge]').waitFor();assert.equal(await panel.locator('[data-rule-index]').count(),1,'native drag creates rule');}
+  if(immersive&&width===1440){
+   await close();
+   // Dragging the node body (not the handle) repositions it instead of connecting.
+   const before=await node('0').evaluate(el=>el.closest('div').style.left);
+   await node('0').hover();await page.mouse.down();await page.mouse.move(600,500,{steps:6});await page.mouse.up();
+   assert.notEqual(await node('0').evaluate(el=>el.closest('div').style.left),before,'body drag repositions, does not connect');
+   assert.equal(await page.locator('[data-studio-handoff-edge]').count(),0);
+   await link('0','1');await page.locator('[data-studio-handoff-edge]').waitFor();assert.equal(await panel.locator('[data-rule-index]').count(),1,'handle drag creates rule');
+  }
   assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));assert.deepEqual(errors,[]);
   await page.screenshot({path:`/tmp/studio-node-connections-${lang}-${immersive}-${width}.png`});await page.close();
  }
- console.log('PASS node connections ES/EN desktop/mobile: click/keyboard, draft condition, save/reload, duplicates/cycles/inactive, conflict preservation, remove, no live writes');
+ console.log('PASS node connections ES/EN desktop/mobile: handle drag-to-connect, draft condition, save/reload, duplicates/cycles/inactive, conflict preservation, remove, body drag repositions not connects, no live writes');
 }finally{await browser.close()}})().catch(e=>{console.error(e);process.exitCode=1});
