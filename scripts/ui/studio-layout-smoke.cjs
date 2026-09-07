@@ -22,38 +22,37 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
         }
         return route.fulfill({ json: path.endsWith('/auth/me') ? { id: 'u', name: 'Alex', role: 'admin', agency: { id: 'ag', name: 'Agency' } } : path.endsWith('/layout') ? layout : path.endsWith('/handoffs') ? { revision: 0, valid: true, rules: [], max_hops: 3 } : path.includes('/studio/') ? { client: { id: 'c', name: 'Client', is_active: true }, agents, channels, layout } : [] });
       });
-      const url = (process.env.WEB_URL || 'http://127.0.0.1:3121') + '/clients/c/studio';
+      const url = (process.env.WEB_URL || 'http://localhost:3121') + '/clients/c/studio';
       await page.goto(url);
-      const controls = page.locator('[data-layout-controls]'), node = page.locator('[data-studio-node="agent:a"]');
-      const arrange = controls.getByRole('button', { name: es ? 'Organizar nodos' : 'Arrange nodes', exact: true });
+      const controls = page.locator('[data-layout-controls]'), node = page.locator('button[data-studio-node="agent:a"]'), wrap = node.locator('xpath=..');
       const save = controls.getByRole('button', { name: es ? 'Guardar distribución' : 'Save layout', exact: true });
-      const reload = controls.getByRole('button', { name: es ? 'Recargar distribución' : 'Reload layout', exact: true });
+      const reload = controls.getByRole('button', { name: es ? 'Recargar' : 'Reload', exact: true });
+      const reset = controls.getByRole('button', { name: es ? 'Restablecer' : 'Reset', exact: true });
       const edge = page.locator('[data-studio-edge="whatsapp"]'), initialEdge = await edge.getAttribute('d');
-      await arrange.click(); await node.focus(); await page.keyboard.press('ArrowRight');
-      assert.equal(await node.evaluate(n => n.style.left), '350px');
+      // Dragging is always on -- no "arrange" mode to enter first.
+      await node.focus(); await page.keyboard.press('ArrowRight');
+      assert.equal(await wrap.evaluate(n => n.style.left), '350px');
       assert.notEqual(await edge.getAttribute('d'), initialEdge);
-      await page.keyboard.press('Shift+ArrowDown'); assert.equal(await node.evaluate(n => n.style.top), '120px');
-      const map = node.locator('xpath=../..');
-      await node.dragTo(map, { sourcePosition: { x: 20, y: 20 }, targetPosition: { x: 470, y: 240 } });
-      assert.notEqual(await node.evaluate(n => n.style.left), '350px');
+      await page.keyboard.press('Shift+ArrowDown'); assert.equal(await wrap.evaluate(n => n.style.top), '120px');
+      await node.hover(); await page.mouse.down(); await page.mouse.move(600, 400, { steps: 8 }); await page.mouse.up();
+      assert.notEqual(await wrap.evaluate(n => n.style.left), '350px');
       assert.equal(writes.length, 0, 'arranging must not rebind channels');
       await page.getByRole('button', { name: es ? 'Acercar' : 'Zoom in', exact: true }).click();
-      await save.click(); await controls.getByRole('status').filter({ hasText: es ? /^Distribución guardada/ : /^Saved layout/ }).waitFor();
+      await save.click(); await controls.getByRole('status').filter({ hasText: es ? /^Guardado/ : /^Saved/ }).waitFor();
       assert.equal(layout.zoom, 125); assert(layout.positions['agent:a']); assert.equal(writes.length, 1);
       const saved = JSON.parse(JSON.stringify(layout)); await page.reload();
-      assert.equal(await node.evaluate(n => n.style.left), `${saved.positions['agent:a'].x}px`);
+      assert.equal(await wrap.evaluate(n => n.style.left), `${saved.positions['agent:a'].x}px`);
       assert.equal(await page.getByText('125%', { exact: true }).count(), 1);
-      await arrange.click(); await node.focus(); await page.keyboard.press('ArrowDown');
+      await node.focus(); await page.keyboard.press('ArrowDown');
       conflict = true; await save.click(); await controls.getByRole('alert').filter({ hasText: 'Layout changed' }).waitFor();
-      const unsavedTop = await node.evaluate(n => n.style.top);
-      page.once('dialog', d => d.dismiss()); await reload.click(); assert.equal(await node.evaluate(n => n.style.top), unsavedTop);
+      const unsavedTop = await wrap.evaluate(n => n.style.top);
+      page.once('dialog', d => d.dismiss()); await reload.click(); assert.equal(await wrap.evaluate(n => n.style.top), unsavedTop);
       page.once('dialog', d => d.accept()); await reload.click();
-      await controls.getByRole('status').filter({ hasText: es ? /^Distribución guardada/ : /^Saved layout/ }).waitFor();
-      assert.equal(await node.evaluate(n => n.style.top), `${saved.positions['agent:a'].y}px`);
-      const reset = controls.getByRole('button', { name: es ? 'Restablecer vista' : 'Reset view', exact: true });
+      await controls.getByRole('status').filter({ hasText: es ? /^Guardado/ : /^Saved/ }).waitFor();
+      assert.equal(await wrap.evaluate(n => n.style.top), `${saved.positions['agent:a'].y}px`);
       page.once('dialog', d => d.accept()); await reset.click();
-      assert.equal(await node.evaluate(n => n.style.left), '340px'); assert.equal(await page.getByText('100%', { exact: true }).count(), 1);
-      conflict = false; await save.click(); await controls.getByRole('status').filter({ hasText: es ? /^Distribución guardada/ : /^Saved layout/ }).waitFor();
+      assert.equal(await wrap.evaluate(n => n.style.left), '340px'); assert.equal(await page.getByText('100%', { exact: true }).count(), 1);
+      conflict = false; await save.click(); await controls.getByRole('status').filter({ hasText: es ? /^Guardado/ : /^Saved/ }).waitFor();
       assert.deepEqual(layout.positions, {}); assert.equal(writes.length, 3);
       await page.screenshot({ path: `/tmp/studio-layout-${lang}-${theme}.png`, fullPage: true });
       for (const width of [390, 320]) {
@@ -63,6 +62,6 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
       }
       assert.deepEqual(errors, []); await page.close();
     }
-    console.log('PASS persistent layout ES/EN light/dark: pointer/keyboard positioning, zoom/save/reload, live edges, CAS preservation, reset, no channel writes, mobile cards/selection.');
+    console.log('PASS persistent layout ES/EN light/dark: always-on pointer/keyboard positioning, zoom/save/reload, live edges, CAS preservation, reset, no channel writes, mobile cards/selection.');
   } finally { await browser.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });

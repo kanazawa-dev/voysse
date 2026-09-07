@@ -26,7 +26,7 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
       await canvas.mouse.move(box.x + 650, box.y + 320); await canvas.mouse.down(); await canvas.mouse.move(box.x + 350, box.y + 320, { steps: 8 }); await canvas.mouse.up();
       assert(await viewport.evaluate(n => n.scrollLeft > 0));
       await viewport.evaluate(n => { n.scrollLeft = 0; });
-      await canvas.locator('[data-studio-node="agent:one"]').click();
+      await canvas.locator('button[data-studio-node="agent:one"]').click();
       await canvas.getByRole('button', { name: es ? 'Cerrar panel' : 'Close panel', exact: true }).click();
       await canvas.getByRole('button', { name: es ? 'Conexiones y pruebas' : 'Connections & tests', exact: true }).click();
       await canvas.getByRole('button', { name: es ? 'Añadir conexión' : 'Add connection', exact: true }).click();

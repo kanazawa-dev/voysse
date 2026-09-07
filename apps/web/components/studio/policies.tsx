@@ -41,7 +41,7 @@ export function PolicyPanel({ data, draft }: { data: StudioGraph; draft: Draft }
   }
   async function apply() {
     if (request.current || !history || !choice || !reason.trim()) return;
-    if (!window.confirm(`${label(choice.action)}${choice.version ? ` ${choice.version.revision}` : ''}?\n\n${es ? 'Se creará una nueva revisión. No activa derivaciones ni modifica el borrador o conversaciones.' : 'Creates a new revision. Does not enable handoffs or change the draft or conversations.'}`)) return;
+    if (!window.confirm(`${label(choice.action)}${choice.version ? ` ${choice.version.revision}` : ''}?\n\n${es ? 'Se creará una nueva revisión. No modifica el borrador. Si queda como publicación vigente, el chat del panel y el widget enrutarán según sus reglas.' : 'Creates a new revision. Does not change the draft. If it becomes the active publication, dashboard chat and the widget will route per its rules.'}`)) return;
     const controller = new AbortController(); request.current = controller; setBusy(true); setError(''); setNotice('');
     try {
       const result = await api<{ version: Version }>(endpoint, { method: 'POST', signal: controller.signal, body: JSON.stringify({
@@ -55,7 +55,7 @@ export function PolicyPanel({ data, draft }: { data: StudioGraph; draft: Draft }
   function choose(action: Action, version?: Version) { setChoice({ action, version }); setReason(''); setError(''); setNotice(''); }
   return <section className={`${styles.preview} ${styles.execution}`} data-policy-panel data-studio-busy={busy} aria-labelledby="policy-title">
     <h3 id="policy-title">{es ? 'Versiones publicadas' : 'Published versions'}</h3>
-    <p>{es ? 'Publicar guarda una versión independiente. Las derivaciones reales siguen desactivadas. Cancelar o salir no cancela solicitudes ya enviadas.' : 'Publishing saves a separate version. Live handoffs remain disabled. Cancelling or leaving cannot cancel requests already sent.'}</p>
+    <p>{es ? 'Publicar activa el enrutamiento real en el chat del panel y el widget para los agentes con reglas de salida. WhatsApp y redes sociales no pasan por aquí todavía. Cancelar o salir no cancela solicitudes ya enviadas.' : 'Publishing activates real routing in the dashboard chat and the widget for agents with outgoing rules. WhatsApp and social do not go through this yet. Cancelling or leaving cannot cancel requests already sent.'}</p>
     <Button variant="outline" disabled={busy || !!choice} onClick={() => void load()}>{busy ? (es ? 'Procesando…' : 'Working…') : (es ? 'Cargar historial' : 'Load history')}</Button>
     {error && <p role="alert">{error}</p>}{notice && <p role="status">{notice}</p>}
     {history && <>
@@ -75,7 +75,7 @@ export function PolicyPanel({ data, draft }: { data: StudioGraph; draft: Draft }
     {choice && <form ref={form} tabIndex={-1} className={styles.form} onSubmit={event => { event.preventDefault(); void apply(); }}>
       <h4>{label(choice.action)} {choice.version?.revision}</h4>
       {choice.version && summary(choice.version.policy)}
-      <p>{choice.action === 'restore' ? (es ? 'Restaurar crea otra revisión sin sobrescribir el borrador. Se revalidan las referencias, sin restaurar credenciales ni configuraciones antiguas de agentes.' : 'Restore creates another revision without overwriting the draft. References are revalidated without restoring old agent settings or credentials.') : choice.action === 'publish' ? (es ? `Se publicará el borrador guardado ${draft.revision}; no se activarán derivaciones.` : `Saved draft ${draft.revision} will be published; handoffs will not be enabled.`) : (es ? 'Se retirará la publicación actual, conservando el historial y el borrador.' : 'The current publication will be withdrawn, keeping history and the draft.')}</p>
+      <p>{choice.action === 'restore' ? (es ? 'Restaurar crea otra revisión sin sobrescribir el borrador. Se revalidan las referencias, sin restaurar credenciales ni configuraciones antiguas de agentes.' : 'Restore creates another revision without overwriting the draft. References are revalidated without restoring old agent settings or credentials.') : choice.action === 'publish' ? (es ? `Se publicará el borrador guardado ${draft.revision}; el chat del panel y el widget empezarán a enrutar según sus reglas.` : `Saved draft ${draft.revision} will be published; dashboard chat and the widget will start routing per its rules.`) : (es ? 'Se retirará la publicación actual, conservando el historial y el borrador.' : 'The current publication will be withdrawn, keeping history and the draft.')}</p>
       <fieldset disabled={busy} className={styles.handoffFields}><label>{es ? 'Motivo (sin secretos)' : 'Reason (no secrets)'}<Textarea required maxLength={500} value={reason} onChange={e => setReason(e.target.value)} /></label>
         <div className={styles.actions}><Button type="submit" disabled={!reason.trim()}>{es ? 'Confirmar cambio de versión' : 'Confirm version change'}</Button><Button type="button" variant="outline" onClick={() => setChoice(null)}>{es ? 'Cancelar' : 'Cancel'}</Button></div>
       </fieldset>

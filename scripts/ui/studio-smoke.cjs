@@ -22,15 +22,15 @@ const graph = { client: { id: 'client-a', name: 'Client Alpha', is_active: true 
       for (const width of [1440, 390, 320]) {
         await page.setViewportSize({ width, height: 1000 });
         await page.goto(base + '/clients/client-a/studio');
-        await page.locator('[data-studio-node="agent:a"]').waitFor();
-        assert.equal(await page.locator('[data-studio-node]').count(), 7);
+        await page.locator('button[data-studio-node="agent:a"]').waitFor();
+        assert.equal(await page.locator('button[data-studio-node]').count(), 7);
         assert.equal(await page.locator('[data-studio-edge]').count(), 2);
         assert.equal(await page.locator('[data-studio-node="widget:b"]').count(), 0);
         assert.equal(await page.locator('[data-studio-widget-edge]').count(), 1);
         assert.equal(await page.locator('[class*=headings]').count(), 0);
-        await page.locator('[data-studio-node="agent:a"]').focus();
+        await page.locator('button[data-studio-node="agent:a"]').focus();
         await page.keyboard.press('Enter');
-        assert.equal(await page.locator('[data-studio-node="agent:a"]').getAttribute('aria-pressed'), 'true');
+        assert.equal(await page.locator('button[data-studio-node="agent:a"]').getAttribute('aria-pressed'), 'true');
         assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'no page overflow');
         if (width === 1440) await page.getByRole('button', { name: lang === 'es' ? 'Acercar' : 'Zoom in' }).click();
         await page.screenshot({ path: `/tmp/studio-${lang}-${width}.png`, fullPage: true });
@@ -43,7 +43,7 @@ const graph = { client: { id: 'client-a', name: 'Client Alpha', is_active: true 
       await page.route('**/api/studio/denied', route => route.fulfill({ status: 404, json: { detail: 'Client not found' } }));
       await page.goto(base + '/clients/denied/studio');
       await page.getByRole('alert').filter({ hasText: 'Client not found' }).waitFor();
-      assert.equal(await page.locator('[data-studio-node]').count(), 0);
+      assert.equal(await page.locator('button[data-studio-node]').count(), 0);
       await page.close();
     }
     console.log('PASS Studio: ES/EN responsive graph, edges, keyboard, zoom, empty/error isolation, zero writes.');

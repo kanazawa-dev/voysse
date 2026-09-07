@@ -693,3 +693,73 @@ def test_whatsapp_channel_inbound_ai_takeover_and_session(authenticated_client: 
     assert reply.json()["messages"][-1]["external_message_id"] == "wa-out-human-1"
     sender.assert_awaited_once()
     assert client.patch(f"/api/conversations/{conversation_id}/mode", json={"mode": "ai"}).json()["mode"] == "ai"
+
+
+def _publish_handoff_policy(client, client_id, source_agent_id, target_agent_id):
+    from app.services import execution_dispatch
+
+    saved = client.put(f"/api/studio/{client_id}/handoffs", json={"expected_revision": 0, "rules": [
+        {"source_agent_id": source_agent_id, "target_agent_id": target_agent_id, "condition": "Technical question"},
+    ]})
+    assert saved.status_code == 200, saved.text
+    published = client.post(f"/api/studio/{client_id}/policies", json={
+        "request_id": "11111111-1111-1111-1111-111111111111", "action": "publish", "expected_revision": 0,
+        "draft_revision": saved.json()["revision"], "reason": "Ready to route",
+    })
+    assert published.status_code == 200, published.text
+    return execution_dispatch
+
+
+def _classify_or_respond(classify_text, respond_text):
+    async def side_effect(provider, base_url, api_key, model, messages, **kwargs):
+        if "Classify a test message" in messages[0]["content"]:
+            return ai_service.Completion(text=classify_text)
+        return ai_service.Completion(text=respond_text)
+    return AsyncMock(side_effect=side_effect)
+
+
+def test_dashboard_chat_live_policy_routes_to_target_agent(authenticated_client: TestClient, monkeypatch):
+    client = authenticated_client
+    customer = client.post("/api/clients", json={"name": "Aurora", "industry": "", "description": "", "general_context": "", "is_active": True}).json()
+    client.put("/api/providers/openai", json={"api_key": "secret"})
+    entry = client.post("/api/agents", json={"client_id": customer["id"], "provider": "openai", "model": "gpt-4.1-mini", "name": "Front Desk", "description": "", "instructions": "", "personality": "", "is_active": True}).json()
+    specialist = client.post("/api/agents", json={"client_id": customer["id"], "provider": "openai", "model": "gpt-4.1-mini", "name": "Specialist", "description": "", "instructions": "", "personality": "", "is_active": True}).json()
+    execution_dispatch = _publish_handoff_policy(client, customer["id"], entry["id"], specialist["id"])
+    monkeypatch.setattr(execution_dispatch, "chat_completion", _classify_or_respond(
+        '{"rule_index":0,"reason":"Technical question"}', "Routed dashboard reply."))
+
+    conversation = client.post("/api/conversations", json={"agent_id": entry["id"]}).json()
+    sent = client.post(f"/api/conversations/{conversation['id']}/messages", json={"content": "I need technical help"})
+    assert sent.status_code == 200, sent.text
+    assert sent.json()["messages"][-1]["sender_name"] == "Specialist"
+    assert sent.json()["messages"][-1]["content"] == "Routed dashboard reply."
+
+
+def test_dashboard_chat_without_published_policy_is_unchanged(authenticated_client: TestClient, monkeypatch):
+    client = authenticated_client
+    customer = client.post("/api/clients", json={"name": "Aurora Plain", "industry": "", "description": "", "general_context": "", "is_active": True}).json()
+    client.put("/api/providers/openai", json={"api_key": "secret"})
+    entry = client.post("/api/agents", json={"client_id": customer["id"], "provider": "openai", "model": "gpt-4.1-mini", "name": "Solo", "description": "", "instructions": "", "personality": "", "is_active": True}).json()
+    conversation = client.post("/api/conversations", json={"agent_id": entry["id"]}).json()
+    monkeypatch.setattr(conversations_router, "run_completion", AsyncMock(return_value=ai_service.Completion(text="Direct reply.")))
+    sent = client.post(f"/api/conversations/{conversation['id']}/messages", json={"content": "Hello"})
+    assert sent.status_code == 200, sent.text
+    assert sent.json()["messages"][-1]["sender_name"] == "Solo"
+    assert sent.json()["messages"][-1]["content"] == "Direct reply."
+
+
+def test_widget_live_policy_routes_to_target_agent(authenticated_client: TestClient, monkeypatch):
+    client = authenticated_client
+    customer = client.post("/api/clients", json={"name": "Widget Route Co", "industry": "", "description": "", "general_context": "", "is_active": True}).json()
+    client.put("/api/providers/openai", json={"api_key": "secret"})
+    entry = client.post("/api/agents", json={"client_id": customer["id"], "provider": "openai", "model": "gpt-4.1-mini", "name": "Greeter", "widget_enabled": True, "description": "", "instructions": "", "personality": "", "is_active": True}).json()
+    specialist = client.post("/api/agents", json={"client_id": customer["id"], "provider": "openai", "model": "gpt-4.1-mini", "name": "Specialist", "description": "", "instructions": "", "personality": "", "is_active": True}).json()
+    execution_dispatch = _publish_handoff_policy(client, customer["id"], entry["id"], specialist["id"])
+    monkeypatch.setattr(execution_dispatch, "chat_completion", _classify_or_respond(
+        '{"rule_index":0,"reason":"Technical question"}', "Routed widget reply."))
+
+    sent = client.post(f"/api/widget/{entry['widget_public_id']}/messages", json={"session_id": "s1", "content": "I need technical help"})
+    assert sent.status_code == 200, sent.text
+    assert sent.json()["reply"] == "Routed widget reply."
+    detail = client.get("/api/conversations/inbox").json()[0]
+    assert client.get(f"/api/conversations/{detail['id']}").json()["messages"][-1]["sender_name"] == "Specialist"

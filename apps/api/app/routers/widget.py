@@ -7,6 +7,7 @@ from ..models import Agency, Agent, Conversation, Message, now_utc
 from ..ratelimit import widget_rate_limit
 from ..schemas import WidgetConfigOut, WidgetMessageIn, WidgetReply
 from ..services.tools import run_completion
+from ..services.execution_dispatch import dispatch
 from ..services.knowledge import build_system_prompt, retrieve_knowledge
 from ..services.providers import resolve_agent_credentials
 from ..services.usage import record_usage
@@ -99,7 +100,8 @@ async def widget_message(public_id: str, payload: WidgetMessageIn, db: Session =
     if conversation.title == "Web chat":
         conversation.title = content[:80]
     conversation.updated_at = now_utc()
-    db.add(Message(conversation_id=conversation.id, role="user", content=content, sender_type="visitor", sender_name="Visitor"))
+    visitor_message = Message(conversation_id=conversation.id, role="user", content=content, sender_type="visitor", sender_name="Visitor")
+    db.add(visitor_message)
     db.commit()
 
     if conversation.mode == "human":
@@ -108,6 +110,14 @@ async def widget_message(public_id: str, payload: WidgetMessageIn, db: Session =
     credentials = resolve_agent_credentials(db, agent)
     if not agent.is_active or not credentials or not agent.model.strip():
         return {"mode": "ai", "reply": None, "messages": []}
+
+    dispatched = await dispatch(agency_id=agent.agency_id, conversation=conversation, message_id=visitor_message.id, entry_agent=agent)
+    if dispatched is not None:
+        status, message_id = dispatched
+        if status == "completed":
+            reply = db.get(Message, message_id)
+            return {"mode": "ai", "reply": reply.content if reply else None, "messages": []}
+        return {"mode": "human" if status == "human" else "ai", "reply": None, "messages": []}
 
     knowledge = await retrieve_knowledge(db, agent, content)
     db.refresh(conversation)
