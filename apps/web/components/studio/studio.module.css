@@ -99,3 +99,8 @@
   .canvasTools { width: calc(100% - 16px); display: grid; grid-template-columns: 1fr 1.6fr 1fr; }
   .canvasTools button { min-width: 0; width: 100%; height: auto; min-height: 36px; padding: 6px; font-size: 10px; line-height: 1.2; white-space: normal; }
 }
+
+.connectionTools { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 10px 16px; border-bottom: 1px solid var(--border); }
+.connectionTools p { font-size: 12px; color: var(--muted-foreground); }
+.handoffEdge { pointer-events: stroke; cursor: pointer; stroke-width: 3; }
+.handoffEdge:hover, .handoffEdge:focus { stroke-width: 5; outline: none; }

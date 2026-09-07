@@ -159,3 +159,25 @@ Enable or disable web chat in the agent inspector, then confirm and save; testin
 an agent and configuring other channels do not require web chat. Hidden widget
 positions remain saved for re-enabling, but do not enlarge the visible canvas.
 This presentation change does not enable channels or activate live handoffs.
+
+## Direct node connections
+
+Use **Connect nodes**, then select an origin and a target agent (mouse, touch or
+keyboard), or drag an agent onto another. Agent connections update the existing
+handoff draft, open its condition field and draw a dashed directed edge. The same
+rule appears in the form; editing, removing, saving and reloading stay in sync.
+Select an edge to edit its condition. Escape or Cancel exits connection mode.
+Self-links, duplicates, cycles, unavailable agents and the 32-rule bound are guarded;
+the API remains authoritative and uses the existing revision check on save.
+
+This does not activate handoffs: enter a condition and explicitly save the draft.
+Channel → agent binding keeps its existing live-change confirmation. Organize mode
+only moves nodes and does not connect them. Human fallback remains in the rule
+editor. Mobile's compact list retains click-to-connect and the rule editor even
+where decorative edges are hidden.
+
+Verification: production web build/lint and `scripts/ui/studio-node-connections-smoke.cjs`,
+plus the existing handoff, edit and layout browser regressions. No API/schema change
+or provider I/O. Rollback removes this visual bridge and restores graph/form behavior;
+stored handoff drafts and published policies remain intact. The runtime work listed
+above is still pending; this UI delivery does not enable message producers.
