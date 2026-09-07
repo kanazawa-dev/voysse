@@ -40,7 +40,7 @@ export function useCanvasLayout(data: StudioGraph) {
   }
   return { organize, busy, positions, zoom: value.zoom / 100, move,
     setZoom: (zoom: number) => edit({ ...value, zoom: Math.round(zoom * 100) }),
-    controls: <div className={styles.layoutControls} data-layout-controls>
+    controls: <div className={styles.layoutControls} data-layout-controls data-studio-busy={busy} data-studio-dirty={dirty}>
       <Button variant="outline" aria-pressed={organize} disabled={busy} onClick={() => setOrganize(!organize)}>{es ? 'Organizar nodos' : 'Arrange nodes'}</Button>
       <Button disabled={busy || !dirty} onClick={() => void sync(true)}>{es ? 'Guardar distribución' : 'Save layout'}</Button>
       <Button variant="outline" disabled={busy} onClick={() => void sync(false)}>{es ? 'Recargar distribución' : 'Reload layout'}</Button>

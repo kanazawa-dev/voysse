@@ -53,7 +53,7 @@ export function PolicyPanel({ data, draft }: { data: StudioGraph; draft: Draft }
     finally { if (!controller.signal.aborted) { request.current = null; setBusy(false); setHistory(null); setCurrent(null); setChoice(null); setReason(''); } }
   }
   function choose(action: Action, version?: Version) { setChoice({ action, version }); setReason(''); setError(''); setNotice(''); }
-  return <section className={`${styles.preview} ${styles.execution}`} data-policy-panel aria-labelledby="policy-title">
+  return <section className={`${styles.preview} ${styles.execution}`} data-policy-panel data-studio-busy={busy} aria-labelledby="policy-title">
     <h3 id="policy-title">{es ? 'Versiones publicadas' : 'Published versions'}</h3>
     <p>{es ? 'Publicar guarda una versión independiente. Las derivaciones reales siguen desactivadas. Cancelar o salir no cancela solicitudes ya enviadas.' : 'Publishing saves a separate version. Live handoffs remain disabled. Cancelling or leaving cannot cancel requests already sent.'}</p>
     <Button variant="outline" disabled={busy || !!choice} onClick={() => void load()}>{busy ? (es ? 'Procesando…' : 'Working…') : (es ? 'Cargar historial' : 'Load history')}</Button>

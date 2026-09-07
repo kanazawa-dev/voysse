@@ -109,3 +109,28 @@ arrastre, teclado, líneas, zoom persistente, recarga, conflicto, reset y ausenc
 escrituras de canales; captura oscura inspeccionada. No es aceptación con canal real.
 Rollback: revertir layout.tsx, integración de graph/types/CSS y smoke; la API y
 preferencias guardadas pueden permanecer, sin tocar reglas o asignaciones.
+
+## Entrada global y selector de cliente
+
+Studio aparece como menú propio. `/studio` abre el último cliente autorizado
+recordado para esa agencia/usuario, o el primer cliente activo disponible.
+`/studio/<client-id>` y el acceso anterior `/clients/<id>/studio` reutilizan el mismo
+workspace; no existe un canvas global mezclando clientes. El menú Clientes no queda
+marcado cuando Studio está activo. Operadores conservan acceso únicamente al inbox.
+
+Arriba hay búsqueda y selector nativo accesible, con estados de carga, error/reintento,
+sin clientes y sin coincidencias. La selección recordada contiene solo un ID y se
+valida contra la lista actual del servidor; nunca concede acceso por localStorage.
+Los permisos y el aislamiento del API permanecen sin cambios.
+
+Antes de cambiar mediante el selector se consultan las marcas de estado de los
+paneles: cambios de layout/borrador/inspector exigen confirmar descarte; una operación
+en curso bloquea el cambio. No se intenta cancelar ni repetir efectos remotos.
+El workspace se remonta por cliente y aborta lecturas antiguas. Esta protección es
+para el selector; no es un bloqueo global de navegación del navegador/sidebar.
+
+Verificación: ESLint/build webpack, smoke de navegación ES/EN claro/oscuro a
+1440/390/320, selección aislada, memoria obsoleta, confirmar/cancelar, guardado en
+curso, enlaces anteriores y vacío/error/reintento. Captura móvil oscura inspeccionada.
+Rollback: retirar selector/rutas globales/entrada del sidebar y devolver el workspace
+al acceso anterior. No hay migración ni modificación de datos del cliente.
