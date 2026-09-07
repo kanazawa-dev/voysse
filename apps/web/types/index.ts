@@ -29,7 +29,7 @@ export type Alert = {
   resolved_at: string | null;
 };
 
-export type ModelUsage = { model: string; input_tokens: number; output_tokens: number };
+export type ModelUsage = { provider: string; estimated_cost_usd: number | null; model: string; input_tokens: number; output_tokens: number };
 
 export type ClientUsage = {
   messages: number;

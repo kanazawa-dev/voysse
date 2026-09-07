@@ -1,4 +1,5 @@
 "use client";
+import { UsageCost } from "@/components/usage-cost";
 
 import Link from "next/link";
 import { BloubAvatar } from "@/components/bloub-avatar";
@@ -109,14 +110,14 @@ function ClientUsageView({ clientId }: { clientId: string }) {
   const t = useT();
   const [usage, setUsage] = useState<ClientUsage | null>(null);
   const [days, setDays] = useState(30);
-  useEffect(() => { api<ClientUsage>(`/clients/${clientId}/usage?days=${days}`).then(setUsage); }, [clientId, days]);
+  useEffect(() => { let active = true; api<ClientUsage>(`/clients/${clientId}/usage?days=${days}`).then((data) => { if (active) setUsage(data); }).catch(() => { if (active) setUsage(null); }); return () => { active = false; }; }, [clientId, days]);
 
   const maxUsage = Math.max(1, ...(usage?.usage_by_model.map((item) => item.input_tokens + item.output_tokens) ?? [0]));
 
   return <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
     <div className="flex flex-wrap items-center justify-between gap-3">
       <p className="text-sm text-muted-foreground">{t("clients.detail.usageSubtitle")}</p>
-      <Select value={String(days)} onValueChange={(value) => value && setDays(Number(value))}>
+      <Select value={String(days)} onValueChange={(value) => value && (setUsage(null), setDays(Number(value)))}>
         <SelectTrigger className="w-40"><SelectValue>{t("clients.detail.usageRangeDays", { count: days })}</SelectValue></SelectTrigger>
         <SelectContent>{[7, 14, 30, 90].map((d) => <SelectItem key={d} value={String(d)}>{t("clients.detail.usageRangeDays", { count: d })}</SelectItem>)}</SelectContent>
       </Select>
@@ -126,17 +127,18 @@ function ClientUsageView({ clientId }: { clientId: string }) {
       <Card className="p-5 [&_small]:text-sm [&_small]:text-muted-foreground [&_strong]:mt-1 [&_strong]:block [&_strong]:text-2xl [&_strong]:font-semibold"><small>{t("clients.detail.usageTokens")}</small><strong>{usage ? (usage.tokens_in + usage.tokens_out).toLocaleString() : "—"}</strong><p className="mt-1 text-xs text-muted-foreground">↓ {(usage?.tokens_in ?? 0).toLocaleString()} · ↑ {(usage?.tokens_out ?? 0).toLocaleString()}</p></Card>
       <Card className="p-5 [&_small]:text-sm [&_small]:text-muted-foreground [&_strong]:mt-1 [&_strong]:block [&_strong]:text-2xl [&_strong]:font-semibold">
         <small>{t("clients.detail.usageCost")}</small>
-        <strong>{usage?.estimated_cost_usd != null ? `$${usage.estimated_cost_usd.toFixed(2)}` : "—"}</strong>
-        {usage && usage.estimated_cost_usd == null && <p className="mt-1 text-xs text-muted-foreground">{t("clients.detail.usageCostUnsetHint")}</p>}
+        <strong>{<UsageCost value={usage?.estimated_cost_usd} />}</strong>
+        {usage && usage.estimated_cost_usd == null && <p className="mt-1 text-xs text-muted-foreground">{t("home.usage.unavailable")}</p>}
       </Card>
     </section>
+    <p className="text-xs text-muted-foreground">{t("home.usage.costNote")}</p>
     <Card className="p-5">
       <h3 className="font-heading">{t("clients.detail.usageByModel")}</h3>
       {usage?.usage_by_model.length ? (
         <div className="mt-4 space-y-3">
           {usage.usage_by_model.map((item) => {
             const total = item.input_tokens + item.output_tokens;
-            return <div className="grid items-center gap-3 text-sm sm:grid-cols-[minmax(8rem,1fr)_3fr_auto]" key={item.model}><strong>{item.model}</strong><Progress value={Math.round((total / maxUsage) * 100)} /><span className="text-xs tabular-nums text-muted-foreground">{total.toLocaleString()} tok</span></div>;
+            return <div className="grid items-center gap-3 text-sm sm:grid-cols-[minmax(8rem,1fr)_3fr_auto]" key={`${item.provider}:${item.model}`}><strong>{item.model}</strong><Progress value={Math.round((total / maxUsage) * 100)} /><span className="text-xs tabular-nums text-muted-foreground">{total.toLocaleString()} tok · <UsageCost value={item.estimated_cost_usd} /></span></div>;
           })}
         </div>
       ) : <div className="mt-4 flex min-h-24 items-center justify-center gap-3 rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground"><BarChart3 size={22} /><div><strong>{t("clients.detail.usageEmpty")}</strong></div></div>}

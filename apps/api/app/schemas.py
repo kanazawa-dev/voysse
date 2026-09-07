@@ -496,12 +496,24 @@ class TopAgent(BaseModel):
 
 
 class ModelUsage(BaseModel):
+    provider: str = ""
+    estimated_cost_usd: float | None = None
     model: str
     input_tokens: int
     output_tokens: int
 
 
+class ClientCostUsage(BaseModel):
+    client_id: uuid.UUID | None
+    name: str | None
+    input_tokens: int
+    output_tokens: int
+    estimated_cost_usd: float | None
+
+
 class DashboardMetrics(BaseModel):
+    estimated_cost_usd: float | None = None
+    usage_by_client: list[ClientCostUsage] = Field(default_factory=list)
     messages: int
     human_conversations: int
     by_channel: dict[str, int]
@@ -517,8 +529,7 @@ class ClientUsageOut(BaseModel):
     tokens_in: int
     tokens_out: int
     usage_by_model: list[ModelUsage]
-    # Null when the agency hasn't set a cost rate in Settings -- Voysse
-    # doesn't guess at pricing on the agency's behalf.
+    # Null if any recorded model has no verified or custom rate.
     estimated_cost_usd: float | None = None
 
 

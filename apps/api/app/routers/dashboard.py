@@ -6,8 +6,9 @@ from sqlalchemy.orm import Session
 
 from ..database import get_db
 from ..deps import get_current_user
-from ..models import Agent, Client, Conversation, Message, UsageRecord, User, WhatsAppChannel, now_utc
+from ..models import Agent, Client, Conversation, Message, User, WhatsAppChannel, now_utc
 from ..schemas import DashboardMetrics, DashboardOut
+from ..services.usage_cost import usage_report
 
 
 router = APIRouter(prefix="/dashboard", tags=["Inicio"])
@@ -102,24 +103,7 @@ def dashboard_metrics(
     ).all()
     top_agents = [{"id": aid, "name": name, "conversations": count} for aid, name, count in top_rows]
 
-    tokens_in, tokens_out = db.execute(
-        select(
-            func.coalesce(func.sum(UsageRecord.input_tokens), 0),
-            func.coalesce(func.sum(UsageRecord.output_tokens), 0),
-        ).where(UsageRecord.agency_id == agency_id, UsageRecord.created_at >= since)
-    ).one()
-    usage_rows = db.execute(
-        select(
-            UsageRecord.model,
-            func.coalesce(func.sum(UsageRecord.input_tokens), 0),
-            func.coalesce(func.sum(UsageRecord.output_tokens), 0),
-        )
-        .where(UsageRecord.agency_id == agency_id, UsageRecord.created_at >= since)
-        .group_by(UsageRecord.model)
-        .order_by((func.sum(UsageRecord.input_tokens) + func.sum(UsageRecord.output_tokens)).desc())
-        .limit(6)
-    ).all()
-    usage_by_model = [{"model": model, "input_tokens": input_tokens, "output_tokens": output_tokens} for model, input_tokens, output_tokens in usage_rows]
+    usage = usage_report(db, user.agency, since)
 
     return {
         "messages": messages,
@@ -127,7 +111,5 @@ def dashboard_metrics(
         "by_channel": by_channel,
         "daily_conversations": daily_conversations,
         "top_agents": top_agents,
-        "tokens_in": int(tokens_in),
-        "tokens_out": int(tokens_out),
-        "usage_by_model": usage_by_model,
+        **usage,
     }
