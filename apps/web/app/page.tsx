@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { UsageCost } from "@/components/usage-cost";
 import { BloubAvatar } from "@/components/bloub-avatar";
 import { useEffect, useState } from "react";
 import { ArrowRight, Bot, Building2, Cpu, MessagesSquare, MessageSquareText, Radio, UserRound } from "lucide-react";
@@ -17,8 +18,8 @@ import { useReducedMotion } from "motion/react";
 type Dashboard = { clients: number; active_clients: number; agents: number; active_agents: number; conversations: number; channels: number; connected_channels: number; recent_agents: AgentSummary[] };
 type DailyPoint = { date: string; count: number };
 type TopAgent = { id: string; name: string; conversations: number };
-type ModelUsage = { model: string; input_tokens: number; output_tokens: number };
-type Metrics = { messages: number; human_conversations: number; by_channel: Record<string, number>; daily_conversations: DailyPoint[]; top_agents: TopAgent[]; tokens_in: number; tokens_out: number; usage_by_model: ModelUsage[] };
+type ModelUsage = { provider: string; estimated_cost_usd: number | null; model: string; input_tokens: number; output_tokens: number };
+type Metrics = { estimated_cost_usd: number | null; usage_by_client: { client_id: string | null; name: string | null; input_tokens: number; output_tokens: number; estimated_cost_usd: number | null }[]; messages: number; human_conversations: number; by_channel: Record<string, number>; daily_conversations: DailyPoint[]; top_agents: TopAgent[]; tokens_in: number; tokens_out: number; usage_by_model: ModelUsage[] };
 
 function AnimatedMetric({ value }: { value: number | undefined }) {
   const reducedMotion = useReducedMotion();
@@ -34,7 +35,7 @@ export default function HomePage() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [range, setRange] = useState(14);
   useEffect(() => { Promise.all([api<Dashboard>("/dashboard"), api<Agent[]>("/agents"), api<Conversation[]>("/conversations")]).then(([d, a, x]) => { setData(d); setAgents(a); setConversations(x); }); }, []);
-  useEffect(() => { api<Metrics>(`/dashboard/metrics?days=${range}`).then(setMetrics).catch(() => {}); }, [range]);
+  useEffect(() => { let active = true; api<Metrics>(`/dashboard/metrics?days=${range}`).then((data) => { if (active) setMetrics(data); }).catch(() => { if (active) setMetrics(null); }); return () => { active = false; }; }, [range]);
 
   const maxDaily = Math.max(1, ...(metrics?.daily_conversations.map((p) => p.count) ?? [0]));
   const trend = metrics?.daily_conversations ?? [];
@@ -43,7 +44,7 @@ export default function HomePage() {
 
   return (
     <div className="flex w-full flex-col gap-6">
-      <PageHead eyebrow={t("home.head.eyebrow")} title={t("home.head.title")} description={t("home.head.description")} action={<Select value={String(range)} onValueChange={(value) => value && setRange(Number(value))}><SelectTrigger><SelectValue>{t("home.range.days", { count: range })}</SelectValue></SelectTrigger><SelectContent>{[7, 14, 30, 90].map((days) => <SelectItem key={days} value={String(days)}>{t("home.range.days", { count: days })}</SelectItem>)}</SelectContent></Select>} />
+      <PageHead eyebrow={t("home.head.eyebrow")} title={t("home.head.title")} description={t("home.head.description")} action={<Select value={String(range)} onValueChange={(value) => value && (setMetrics(null), setRange(Number(value)))}><SelectTrigger><SelectValue>{t("home.range.days", { count: range })}</SelectValue></SelectTrigger><SelectContent>{[7, 14, 30, 90].map((days) => <SelectItem key={days} value={String(days)}>{t("home.range.days", { count: days })}</SelectItem>)}</SelectContent></Select>} />
       <Card className="cy-onboarding relative isolate overflow-hidden p-5 [&_ol]:grid [&_ol]:gap-3 md:[&_ol]:grid-cols-3 [&_li]:flex [&_li]:gap-3 [&_li]:rounded-lg [&_li]:bg-muted/50 [&_li]:p-3 [&_li>span]:flex [&_li>span]:size-7 [&_li>span]:shrink-0 [&_li>span]:items-center [&_li>span]:justify-center [&_li>span]:rounded-full [&_li>span]:bg-primary [&_li>span]:text-xs [&_li>span]:font-semibold [&_li>span]:text-primary-foreground [&_small]:block [&_small]:text-muted-foreground">
         <div aria-hidden="true" className="cy-workspace-backdrop" />
         <div className="relative z-10 mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between [&_h3]:font-semibold [&_p]:mt-1 [&_p]:text-sm [&_p]:text-muted-foreground"><div><h3 className="font-pixel">{t("home.nextSteps.title")}</h3><p>{t("home.nextSteps.subtitle")}</p></div></div>
@@ -74,7 +75,17 @@ export default function HomePage() {
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between [&_h3]:font-semibold [&_p]:mt-1 [&_p]:text-sm [&_p]:text-muted-foreground"><div><h3 className="font-heading">{t("home.usage.title")}</h3><p>{t("home.usage.subtitle")}</p></div>
           <div className="flex flex-wrap gap-3 text-xs text-muted-foreground [&_span]:inline-flex [&_span]:items-center [&_span]:gap-1"><span>↓ {(metrics?.tokens_in ?? 0).toLocaleString("es")} {t("home.usage.in")}</span><span>↑ {(metrics?.tokens_out ?? 0).toLocaleString("es")} {t("home.usage.out")}</span></div>
         </div>
-        {usage.length ? <div className="space-y-3">{usage.map((item) => { const total = item.input_tokens + item.output_tokens; return <div className="grid items-center gap-3 text-sm sm:grid-cols-[minmax(8rem,1fr)_3fr_auto]" key={item.model}><strong>{item.model}</strong><Progress value={Math.round((total / maxUsage) * 100)} /><span className="text-xs tabular-nums text-muted-foreground">{total.toLocaleString("es")} tok</span></div>; })}</div> : <div className="flex min-h-24 items-center justify-center gap-3 rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground"><Cpu size={22} /><div><strong>{t("home.usage.empty")}</strong></div></div>}
+        <p className="mb-2 text-sm font-medium">{t("home.usage.cost")}: <UsageCost value={metrics?.estimated_cost_usd} /></p>
+        <p className="mb-4 text-xs text-muted-foreground">{t("home.usage.costNote")}</p>
+        {metrics && metrics.estimated_cost_usd == null && <p className="mb-4 text-xs text-muted-foreground">{t("home.usage.unavailable")}</p>}
+        {usage.length ? <div className="space-y-3">{usage.map((item) => { const total = item.input_tokens + item.output_tokens; return <div className="grid items-center gap-3 text-sm sm:grid-cols-[minmax(8rem,1fr)_3fr_auto]" key={`${item.provider}:${item.model}`}><strong>{item.model}</strong><Progress value={Math.round((total / maxUsage) * 100)} /><span className="text-xs tabular-nums text-muted-foreground">{total.toLocaleString("es")} tok · <UsageCost value={item.estimated_cost_usd} /></span></div>; })}</div> : <div className="flex min-h-24 items-center justify-center gap-3 rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground"><Cpu size={22} /><div><strong>{t("home.usage.empty")}</strong></div></div>}
+      </Card>
+      <Card className="p-5">
+        <h3 className="font-heading">{t("home.usage.byClient")}</h3>
+        <div className="mt-3 divide-y">{metrics?.usage_by_client?.map((item) => <div key={item.client_id ?? "unassigned"} className="flex flex-wrap items-center justify-between gap-2 py-3 text-sm">
+          {item.client_id ? <Link className="break-words hover:underline" href={`/clients/${item.client_id}`}>{item.name}</Link> : <span>{t("home.usage.unassigned")}</span>}
+          <span className="text-xs tabular-nums">{(item.input_tokens + item.output_tokens).toLocaleString()} tok · <UsageCost value={item.estimated_cost_usd} /></span>
+        </div>)}</div>
       </Card>
       <Card className="p-5">
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between [&_h3]:font-semibold [&_p]:mt-1 [&_p]:text-sm [&_p]:text-muted-foreground"><div><h3 className="font-heading">{t("home.recentAgents.title")}</h3><p>{t("home.recentAgents.subtitle")}</p></div><Link href="/agents" className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline">{t("home.recentAgents.viewAll")} <ArrowRight size={15} /></Link></div>

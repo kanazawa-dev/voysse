@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from ..database import get_db
 from ..deps import get_current_user
-from ..models import Agent, Client, Conversation, Message, UsageRecord, User, new_domain_token, now_utc
+from ..models import Agent, Client, Conversation, Message, User, new_domain_token, now_utc
 from ..schemas import (
     ClientCreate,
     ClientDomainOut,
@@ -16,11 +16,11 @@ from ..schemas import (
     ClientPortalUpdate,
     ClientUpdate,
     ClientUsageOut,
-    ModelUsage,
 )
 from ..security import hash_password
 from ..services import dns as dns_service
 from ..slugs import slugify, unique_slug
+from ..services.usage_cost import usage_report
 
 
 router = APIRouter(prefix="/clients", tags=["Clients"])
@@ -100,45 +100,8 @@ def client_usage(
         .where(Conversation.client_id == client_id, Message.created_at >= since)
     ) or 0
 
-    tokens_in, tokens_out = db.execute(
-        select(
-            func.coalesce(func.sum(UsageRecord.input_tokens), 0),
-            func.coalesce(func.sum(UsageRecord.output_tokens), 0),
-        )
-        .join(Agent, UsageRecord.agent_id == Agent.id)
-        .where(Agent.client_id == client_id, UsageRecord.created_at >= since)
-    ).one()
-    tokens_in, tokens_out = int(tokens_in), int(tokens_out)
-
-    usage_rows = db.execute(
-        select(
-            UsageRecord.model,
-            func.coalesce(func.sum(UsageRecord.input_tokens), 0),
-            func.coalesce(func.sum(UsageRecord.output_tokens), 0),
-        )
-        .join(Agent, UsageRecord.agent_id == Agent.id)
-        .where(Agent.client_id == client_id, UsageRecord.created_at >= since)
-        .group_by(UsageRecord.model)
-        .order_by((func.sum(UsageRecord.input_tokens) + func.sum(UsageRecord.output_tokens)).desc())
-    ).all()
-    usage_by_model = [ModelUsage(model=model, input_tokens=i, output_tokens=o) for model, i, o in usage_rows]
-
-    agency = user.agency
-    estimated_cost_usd = None
-    if agency.cost_per_million_input_tokens is not None and agency.cost_per_million_output_tokens is not None:
-        estimated_cost_usd = round(
-            tokens_in / 1_000_000 * agency.cost_per_million_input_tokens
-            + tokens_out / 1_000_000 * agency.cost_per_million_output_tokens,
-            2,
-        )
-
-    return ClientUsageOut(
-        messages=messages,
-        tokens_in=tokens_in,
-        tokens_out=tokens_out,
-        usage_by_model=usage_by_model,
-        estimated_cost_usd=estimated_cost_usd,
-    )
+    usage = usage_report(db, user.agency, since, client_id)
+    return ClientUsageOut(messages=messages, **usage)
 
 
 @router.patch("/{client_id}/portal", response_model=ClientOut)

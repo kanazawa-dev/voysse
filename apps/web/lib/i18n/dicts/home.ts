@@ -40,6 +40,12 @@ const en = {
     empty: "No conversations yet.",
   },
   usage: {
+    cost: "Estimated spend",
+    byClient: "Usage by client",
+    unassigned: "Unassigned / deleted agent",
+    costNote: "Estimate at current rates, not an invoice. Uses custom or verified GPT-4.1 rates; excludes cache discounts, taxes and unrecorded tools/media. Clients follow current agent assignments.",
+    unavailable: "Some models have no rate. Set both custom rates in Settings to estimate all recorded tokens.",
+
     title: "Token usage",
     subtitle: "By model",
     in: "in",
@@ -96,6 +102,12 @@ const es: typeof en = {
     empty: "Aún no hay conversaciones.",
   },
   usage: {
+    cost: "Gasto estimado",
+    byClient: "Uso por cliente",
+    unassigned: "Sin asignar / agente eliminado",
+    costNote: "Estimación con tarifas actuales, no una factura. Usa tarifas personalizadas o verificadas de GPT-4.1; excluye descuentos de caché, impuestos y herramientas/multimedia no registradas. Los clientes corresponden a la asignación actual de los agentes.",
+    unavailable: "Hay modelos sin tarifa. Configura ambas tarifas personalizadas en Ajustes para estimar todos los tokens registrados.",
+
     title: "Uso de tokens",
     subtitle: "Por modelo",
     in: "entrada",
