@@ -1,6 +1,6 @@
 "use client";
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, Plus, RefreshCw } from 'lucide-react';
 import { api, messageFrom } from '@/lib/api';
@@ -12,6 +12,7 @@ import { type StudioGraph, type ChannelKind } from '@/components/studio/types';
 import { ExecutionPanel } from '@/components/studio/execution';
 import { HandoffEditor } from '@/components/studio/handoffs';
 import { StudioInspector } from '@/components/studio/inspector';
+import { ImmersiveStudio } from '@/components/studio/immersive';
 import { ClientPicker } from '@/components/studio/client-picker';
 import styles from '@/components/studio/studio.module.css';
 
@@ -20,6 +21,8 @@ export default function StudioPage() {
   return <ClientStudio key={id} id={id} />;
 }
 function ClientStudio({ id }: { id: string }) {
+  const immersive = usePathname().startsWith('/studio/');
+  const [panel, setPanel] = useState('');
   const { lang } = useLanguage();
   const t = studioCopy[lang];
   const [data, setData] = useState<StudioGraph | null>(null);
@@ -38,12 +41,12 @@ function ClientStudio({ id }: { id: string }) {
     return () => controller.abort();
   }, [id, revision]);
   useEffect(() => {
-    if (selected && window.innerWidth < 1200) {
+    if (!immersive && selected && window.innerWidth < 1200) {
       const panel = document.querySelector<HTMLElement>('[data-studio-inspector]');
       panel?.focus({ preventScroll: true });
       panel?.scrollIntoView({ block: 'start', behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
     }
-  }, [selected]);
+  }, [selected, immersive]);
   async function write(path: string, method: string, body: object, summary = '') {
     if (writing.current || !window.confirm(summary + '\n\n' + (lang === 'es' ? '¿Aplicar este cambio? Puede afectar canales activos. Las pruebas usan solo la configuración guardada.' : 'Apply this change? Active channels may be affected. Tests use saved settings only.'))) return;
     writing.current = true; loadVersion.current++; setBusy(true); setError('');
@@ -60,6 +63,11 @@ function ClientStudio({ id }: { id: string }) {
     void write(`/studio/${id}/channels/${kind}/agent`, 'PUT', { agent_id: agentId, expected_agent_id: channel.agent_id, expected_updated_at: channel.updated_at }, `${kind}: ${data.agents.find(a => a.id === channel.agent_id)?.name || '—'} → ${data.agents.find(a => a.id === agentId)?.name}`);
   }
   const version = data?.agents.find(a => selected.endsWith(':' + a.id))?.updated_at || data?.channels.find(c => selected === 'channel:' + c.kind)?.updated_at || '';
+  if (immersive) return <ImmersiveStudio id={id} name={data?.client.name || ''} panel={panel} setPanel={setPanel}
+    actions={<><Button variant="outline" disabled={busy} onClick={() => setRevision(v => v + 1)}><RefreshCw />{t.refresh}</Button><Button disabled={busy} onClick={() => { setSelected('new'); setPanel('inspector'); }}><Plus />{t.add}</Button></>}
+    graph={data ? <ConnectionGraph immersive data={data} selected={selected} onSelect={value => { if (!busy) { setSelected(value); setPanel('inspector'); } }} onConnect={connect} t={t} /> : <p role="status">{error || t.loading}</p>}
+    inspector={data && <StudioInspector key={selected + version} data={data} selected={selected} write={write} connect={connect} busy={busy} />}
+    handoffs={data && <HandoffEditor data={data} />} execution={data && <ExecutionPanel data={data} />} error={error} busy={busy} />;
   return <div className={styles.workspace} data-studio-workspace data-studio-busy={busy}>
     <ClientPicker current={id} />
     <Link href={`/clients/${id}`} className="inline-flex items-center gap-2 text-sm"><ArrowLeft size={16} />{t.back}</Link>

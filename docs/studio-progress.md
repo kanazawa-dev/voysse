@@ -36,7 +36,9 @@ Ver [contrato y límites](decisions/execution-state.md#runner-interno-de-cadena-
 
 ## Acceso a Studio
 
-**Sidebar → Studio** abre el último cliente autorizado o permite seleccionarlo.
+**Sidebar → Studio** abre una ventana/pestaña independiente con el último cliente
+autorizado. Canvas a pantalla completa sin scroll de página; paneles internos para
+configurar, probar y revisar. Tema/idioma y selector integrados en la cabecera.
 Búsqueda/selector arriba; cada cliente conserva su canvas. El acceso desde Clientes
 sigue funcionando. Cambiar con el selector confirma descartes y bloquea operaciones
 en curso. No cambia permisos ni activa las derivaciones reales.
@@ -119,10 +121,24 @@ que libere turnos inciertos ni activación de transporte está aprobado implíci
   Script: `scripts/ui/studio-policies-smoke.cjs`; captura móvil inspeccionada.
 - La copia principal local conserva cambios paralelos de adquisición. Su actualización
   desde main se detuvo para no sobrescribirlos; usar un worktree desde `origin/main`.
-  La migración de adquisición pendiente debe reconciliarse con la cadena vigente hasta `0035_studio_layout`.
+  Adquisición ya está en main por PR #78 (`e3e77de`): migración
+  `0036_acquisition_counts` sobre `0035_studio_layout`. Las copias locales antiguas
+  no deben aplicarse ciegamente sobre main.
 - Antes de retomar: `git status`, revisar PR/CI y comparar `main` con `origin/main`.
   No incluir cambios concurrentes de marketing ni carpetas privadas en commits de Studio.
 - No hay despliegue ni aceptación externa demostrados por estas pruebas.
+
+## Checkpoint para apagar y retomar
+
+- Navegación global, layout y runner interno ya estaban integrados antes de esta entrega.
+- Esta entrega agrega el canvas inmersivo; revisar PR/CI de issue #79 antes de retomar.
+- Código y documentación se conservan en Git; no hay servicios de prueba necesarios
+  para continuar. Los previews iniciados por esta entrega se detienen al terminar.
+- No sobrescribir el checkout principal: conserva trabajo paralelo. Hay un respaldo
+  local externo de su diff y archivos sin seguimiento; la ruta exacta queda en memoria
+  de sesión y en el reporte de entrega. El respaldo no equivale a un merge.
+- Para completar Studio siguen pendientes adaptador real de IA/permisos/RAG/tools,
+  outbox, adopción de canales, recuperación humana, activación y aceptación operativa.
 
 ## Archivos y rollback
 

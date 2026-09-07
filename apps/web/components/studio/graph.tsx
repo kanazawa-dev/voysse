@@ -1,4 +1,6 @@
 "use client";
+import { useRef } from 'react';
+import { useLanguage } from '@/lib/i18n';
 import { useCanvasLayout } from './layout';
 import { Bot, Globe2, Radio, ZoomIn, ZoomOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -15,10 +17,14 @@ export function channelStatus(channel: StudioChannel, t: StudioCopy) {
   return t.waiting;
 }
 
-export function ConnectionGraph({ data, selected, onSelect, onConnect, t }: {
+export function ConnectionGraph({ data, selected, onSelect, onConnect, t, immersive = false }: {
+  immersive?: boolean;
   data: StudioGraph; selected: string; onSelect: (id: string) => void; t: StudioCopy;
   onConnect?: (kind: ChannelKind, agentId: string) => void;
 }) {
+  const { lang } = useLanguage();
+  const hint = immersive ? (lang === 'es' ? 'Arrastra el fondo para moverte. Selecciona un nodo para configurarlo.' : 'Drag the background to pan. Select a node to configure it.') : t.hint;
+  const pan = useRef<{ x: number; y: number; left: number; top: number } | null>(null);
   const layout = useCanvasLayout(data), { zoom, setZoom } = layout;
   const point = (id: string, x: number, index: number) => layout.positions[id] || { x, y: 70 + index * 112 };
   const width = Math.max(936, ...Object.values(layout.positions).map(p => p.x + 280));
@@ -27,7 +33,7 @@ export function ConnectionGraph({ data, selected, onSelect, onConnect, t }: {
   const node = (id: string, x: number, index: number, title: string, subtitle: string,
                 icon: React.ReactNode, kind?: ChannelKind, agentId?: string) => (
     <button key={id} type="button" data-studio-node={id} className={styles.node}
-      style={{ left: point(id, x, index).x, top: point(id, x, index).y }} aria-pressed={selected === id} onClick={() => { if (!layout.organize) onSelect(id); }}
+      style={{ left: point(id, x, index).x, top: point(id, x, index).y, '--node-x': `${point(id, x, index).x}px`, '--node-y': `${point(id, x, index).y}px` } as React.CSSProperties} aria-pressed={selected === id} onClick={() => { if (!layout.organize) onSelect(id); }}
       onKeyDown={event => {
         if (!layout.organize || layout.busy || !['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) return;
         event.preventDefault(); const p = point(id, x, index), step = event.shiftKey ? 50 : 10;
@@ -50,15 +56,18 @@ export function ConnectionGraph({ data, selected, onSelect, onConnect, t }: {
     </button>
   );
   return <section className={styles.graph} aria-label={t.title}>
-    <div className={styles.toolbar}><p>{t.hint}</p><div className={styles.zoom}>
+    <div className={styles.toolbar}><p>{hint}</p><div className={styles.zoom}>
       <Button variant="ghost" size="icon" aria-label={t.zoomOut} disabled={zoom <= .75} onClick={() => setZoom(zoom - .25)}><ZoomOut /></Button>
       <span>{Math.round(zoom * 100)}%</span>
       <Button variant="ghost" size="icon" aria-label={t.zoomIn} disabled={zoom >= 1.5} onClick={() => setZoom(zoom + .25)}><ZoomIn /></Button>
     </div></div>
-    {layout.controls}
-    <div className={styles.viewport} tabIndex={0} aria-label={t.hint}>
-      <div className={styles.extent} style={{ width: width * zoom, height: height * zoom }}>
-        <div className={styles.map} style={{ width, height, transform: `scale(${zoom})` }}
+    {immersive ? <details className={styles.canvasSettings}><summary>{lang === 'es' ? 'Vista y distribución' : 'View & layout'} · {Math.round(zoom * 100)}%</summary>{layout.controls}</details> : layout.controls}
+    <div className={styles.viewport} tabIndex={0} aria-label={hint}
+      onPointerDown={e => { if (!immersive || e.button !== 0 || (e.target as HTMLElement).closest('button')) return; pan.current = { x: e.clientX, y: e.clientY, left: e.currentTarget.scrollLeft, top: e.currentTarget.scrollTop }; e.currentTarget.setPointerCapture(e.pointerId); }}
+      onPointerMove={e => { if (pan.current) { e.currentTarget.scrollLeft = pan.current.left + pan.current.x - e.clientX; e.currentTarget.scrollTop = pan.current.top + pan.current.y - e.clientY; } }}
+      onPointerUp={() => { pan.current = null; }} onPointerCancel={() => { pan.current = null; }} onLostPointerCapture={() => { pan.current = null; }}>
+      <div className={styles.extent} style={{ width: width * zoom, height: height * zoom, '--canvas-width': `${width * zoom}px`, '--canvas-height': `${height * zoom}px` } as React.CSSProperties}>
+        <div className={styles.map} style={{ width, height, transform: `scale(${zoom})`, '--map-width': `${width}px`, '--map-height': `${height}px`, '--map-zoom': zoom } as React.CSSProperties}
           onDragOver={event => { if (layout.organize) event.preventDefault(); }}
           onDrop={event => {
             if (!layout.organize || layout.busy) return;

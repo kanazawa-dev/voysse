@@ -134,3 +134,31 @@ Verificación: ESLint/build webpack, smoke de navegación ES/EN claro/oscuro a
 curso, enlaces anteriores y vacío/error/reintento. Captura móvil oscura inspeccionada.
 Rollback: retirar selector/rutas globales/entrada del sidebar y devolver el workspace
 al acceso anterior. No hay migración ni modificación de datos del cliente.
+
+## Studio inmersivo — ventana independiente
+
+Los enlaces Studio del menú y del cliente abren un contexto nuevo (`_blank` con
+`noopener noreferrer`); el navegador decide si es ventana o pestaña. No usamos
+popups automáticos. `/studio/<id>` mantiene autenticación y permisos, pero ocupa
+100dvh sin sidebar ni scroll de página. El acceso legado sigue disponible.
+
+El fondo se desplaza arrastrando o con trackpad; las barras del canvas se ocultan,
+no sus controles de teclado/zoom. **Vista y distribución** conserva organizar,
+guardar, recargar y restablecer. En móvil sigue siendo un mapa, no una página larga.
+La cabecera integra cliente/buscador desplegable, tema, idioma y acciones de agente.
+
+Inspector, conexiones/pruebas (incluye publicación/simulación) y ejecuciones abren
+paneles dentro del canvas. Se mantienen montados al ocultarse para preservar borradores
+y el bloqueo de operaciones. Escape/cerrar devuelve foco a las herramientas. Formularios
+largos tienen desplazamiento interno; no se recorta su contenido para fingir que cabe.
+Configuraciones avanzadas enlazadas y la activación real de canales no cambian.
+
+Verificar con `studio-immersive-smoke.cjs`: nueva pestaña sin opener, dashboard
+original conservado, pan, paneles persistentes, cero escrituras y viewport sin overflow
+ES/EN, claro/oscuro a 1440/390/320. Repetir navegación y los siete recorridos previos.
+Rollback: quitar shell inmersivo y enlaces nuevos; el workspace legado y datos
+persistidos permanecen. No hay migración, despliegue ni activación de transportes.
+
+La regresión de layout espera `^Saved layout` (no substring: también coincidía con
+`Unsaved layout`). El smoke inmersivo comprueba además que todos los botones caben
+en el viewport móvil; medir solo el ancho del documento no detecta controles recortados.

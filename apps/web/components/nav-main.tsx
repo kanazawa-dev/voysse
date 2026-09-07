@@ -19,6 +19,7 @@ export function NavMain({
     url: string
     icon: React.ComponentType<{ className?: string }>
     isActive?: boolean
+    newWindow?: boolean
   }[]
 }) {
   const t = useT()
@@ -35,7 +36,7 @@ export function NavMain({
           <SidebarMenuItem key={item.title}>
             <SidebarMenuButton
               aria-label={item.title}
-              render={<Link href={item.url} aria-current={item.isActive ? "page" : undefined} onClick={() => setOpenMobile(false)} />}
+              render={<Link href={item.url} target={item.newWindow ? "_blank" : undefined} rel={item.newWindow ? "noopener noreferrer" : undefined} aria-current={item.isActive ? "page" : undefined} onClick={() => setOpenMobile(false)} />}
               isActive={item.isActive}
               tooltip={item.title}
               className="cy-sidebar-action"

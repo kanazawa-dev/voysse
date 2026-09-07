@@ -74,6 +74,8 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   if (user.role === "operator" && pathname !== "/inbox") return null;
 
+  if (pathname === "/studio" || pathname.startsWith("/studio/")) return <main className="fixed inset-0 overflow-hidden bg-background">{children}</main>;
+
   const currentSection = pathname === "/"
     ? "Dashboard"
     : pathname
