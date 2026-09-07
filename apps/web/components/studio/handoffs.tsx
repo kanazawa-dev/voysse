@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useImperativeHandle, useRef, useState, type Ref } from 'react';
 import { api, messageFrom } from '@/lib/api';
 import { useLanguage } from '@/lib/i18n';
 import { Button } from '@/components/ui/button';
@@ -9,9 +9,12 @@ import { RoutingSimulation } from './simulation';
 import type { StudioGraph } from './types';
 import styles from './studio.module.css';
 
-type Rule = { source_agent_id: string; target_agent_id: string | null; condition: string };
+export type Rule = { source_agent_id: string; target_agent_id: string | null; condition: string };
 type Draft = { rules: Rule[]; max_hops: number; human_fallback: true; revision: number; valid: boolean; problems: string[] };
-export function HandoffEditor({ data }: { data: StudioGraph }) {
+export type HandoffHandle = { connect: (source: string, target: string) => void; focusRule: (index: number) => void };
+export function HandoffEditor({ data, ref, onRulesChange }: { data: StudioGraph; ref?: Ref<HandoffHandle>; onRulesChange?: (rules: Rule[]) => void }) {
+  const element = useRef<HTMLElement>(null);
+  const focusRule = (index: number) => window.setTimeout(() => element.current?.querySelector<HTMLTextAreaElement>(`[data-rule-index="${index}"] textarea`)?.focus(), 0);
   const { lang } = useLanguage();
   const es = lang === 'es';
   const [draft, setDraft] = useState<Draft | null>(null);
@@ -43,6 +46,23 @@ export function HandoffEditor({ data }: { data: StudioGraph }) {
   function edit(next: Draft) {
     setDraft(next); setDirty(true); setNotice(''); setPath([]); setFinished(false);
   }
+  useEffect(() => { onRulesChange?.(draft?.rules || []); }, [draft, onRulesChange]);
+  useImperativeHandle(ref, () => ({ focusRule, connect(source, target) {
+    if (!draft || lock.current || !data.client.is_active) { setError(es ? 'Espera a que el borrador esté disponible.' : 'Wait until the draft is available.'); return; }
+    const seen = new Set<string>();
+    const reaches = (node: string): boolean => {
+      if (node === source) return true;
+      if (seen.has(node)) return false;
+      seen.add(node);
+      return draft.rules.some(r => r.source_agent_id === node && r.target_agent_id !== null && reaches(r.target_agent_id));
+    };
+    if (source === target || !agents.some(a => a.id === source) || !agents.some(a => a.id === target) || draft.rules.length >= 32 || reaches(target)) {
+      setError(es ? 'Conexión no válida: revisa agentes activos, ciclos y el límite de 32 conexiones.' : 'Invalid connection: check active agents, cycles and the 32-connection limit.'); return;
+    }
+    const existing = draft.rules.findIndex(r => r.source_agent_id === source && r.target_agent_id === target);
+    if (existing >= 0) { focusRule(existing); return; }
+    setError(''); edit({ ...draft, rules: [...draft.rules, { source_agent_id: source, target_agent_id: target, condition: '' }] }); focusRule(draft.rules.length);
+  }}));
   async function sync(save: boolean) {
     if (lock.current || (save && !draft)) return;
     if (!save && dirty && !window.confirm(es ? '¿Descartar los cambios locales y cargar el borrador guardado?' : 'Discard local changes and load the saved draft?')) return;
@@ -61,7 +81,7 @@ export function HandoffEditor({ data }: { data: StudioGraph }) {
   const current = path.at(-1);
   const choices = draft?.rules.filter(r => r.source_agent_id === current) || [];
   const invalid = draft?.rules.some(r => !available(r.source_agent_id) || !available(r.target_agent_id));
-  return <section className={styles.panel} data-handoff-editor data-studio-busy={busy} data-studio-dirty={dirty} aria-labelledby="handoff-title">
+  return <section ref={element} className={styles.panel} data-handoff-editor data-studio-busy={busy} data-studio-dirty={dirty} aria-labelledby="handoff-title">
     <h2 id="handoff-title">{es ? 'Derivaciones entre agentes' : 'Agent handoffs'}</h2>
     <p>{es ? 'Borrador · Sin activar. Define conexiones sin cambiar conversaciones reales.' : 'Draft · Inactive. Define connections without changing real conversations.'}</p>
     {error && <p role="alert">{error}</p>}
@@ -73,7 +93,7 @@ export function HandoffEditor({ data }: { data: StudioGraph }) {
         <fieldset disabled={busy} className={styles.handoffFields}>
           <label>{es ? 'Máximo de saltos' : 'Maximum hops'}<select value={draft.max_hops} onChange={event => edit({ ...draft, max_hops: Number(event.target.value) })}>{[1, 2, 3, 4, 5].map(n => <option key={n}>{n}</option>)}</select></label>
           <p>{es ? 'La salida a atención humana siempre está disponible.' : 'Human fallback is always available.'}</p>
-          {draft.rules.map((rule, index) => <fieldset key={index} className={styles.handoffRule}>
+          {draft.rules.map((rule, index) => <fieldset key={index} data-rule-index={index} className={styles.handoffRule}>
             <legend>{es ? 'Conexión' : 'Connection'} {index + 1} · {es ? 'Borrador' : 'Draft'}</legend>
             {(['source_agent_id', 'target_agent_id'] as const).map(field => <label key={field}>
               {field === 'source_agent_id' ? (es ? 'Desde' : 'From') : (es ? 'Hacia' : 'To')}

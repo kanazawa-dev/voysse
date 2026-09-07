@@ -10,7 +10,7 @@ import { ConnectionGraph } from '@/components/studio/graph';
 import { studioCopy } from '@/components/studio/copy';
 import { type StudioGraph, type ChannelKind } from '@/components/studio/types';
 import { ExecutionPanel } from '@/components/studio/execution';
-import { HandoffEditor } from '@/components/studio/handoffs';
+import { HandoffEditor, type HandoffHandle, type Rule } from '@/components/studio/handoffs';
 import { StudioInspector } from '@/components/studio/inspector';
 import { ImmersiveStudio } from '@/components/studio/immersive';
 import { ClientPicker } from '@/components/studio/client-picker';
@@ -23,6 +23,10 @@ export default function StudioPage() {
 function ClientStudio({ id }: { id: string }) {
   const immersive = usePathname().startsWith('/studio/');
   const [panel, setPanel] = useState('');
+  const handoff = useRef<HandoffHandle>(null);
+  const [rules, setRules] = useState<Rule[]>([]);
+  const openRule = (index: number) => { setPanel('handoffs'); handoff.current?.focusRule(index); };
+  const connectAgents = (source: string, target: string) => { setPanel('handoffs'); handoff.current?.connect(source, target); };
   const { lang } = useLanguage();
   const t = studioCopy[lang];
   const [data, setData] = useState<StudioGraph | null>(null);
@@ -66,9 +70,9 @@ function ClientStudio({ id }: { id: string }) {
   const version = data?.agents.find(a => selected.endsWith(':' + a.id))?.updated_at || data?.channels.find(c => selected === 'channel:' + c.kind)?.updated_at || '';
   if (immersive) return <ImmersiveStudio id={id} name={data?.client.name || ''} panel={panel} setPanel={setPanel}
     actions={<><Button variant="outline" disabled={busy} onClick={() => setRevision(v => v + 1)}><RefreshCw />{t.refresh}</Button><Button disabled={busy} onClick={() => { setSelected('new'); setPanel('inspector'); }}><Plus />{t.add}</Button></>}
-    graph={data ? <ConnectionGraph immersive data={data} selected={selected} onSelect={value => { if (!busy) { setSelected(value); setPanel('inspector'); } }} onConnect={connect} t={t} /> : <p role="status">{error || t.loading}</p>}
+    graph={data ? <ConnectionGraph immersive data={data} selected={selected} onSelect={value => { if (!busy) { setSelected(value); setPanel('inspector'); } }} onConnect={connect} onAgentConnect={connectAgents} rules={rules} onRuleSelect={openRule} t={t} /> : <p role="status">{error || t.loading}</p>}
     inspector={data && <StudioInspector key={selected + version} data={data} selected={selected} write={write} connect={connect} busy={busy} />}
-    handoffs={data && <HandoffEditor data={data} />} execution={data && <ExecutionPanel data={data} />} error={error} busy={busy} />;
+    handoffs={data && <HandoffEditor ref={handoff} onRulesChange={setRules} data={data} />} execution={data && <ExecutionPanel data={data} />} error={error} busy={busy} />;
   return <div className={styles.workspace} data-studio-workspace data-studio-busy={busy}>
     <ClientPicker current={id} />
     <Link href={`/clients/${id}`} className="inline-flex items-center gap-2 text-sm"><ArrowLeft size={16} />{t.back}</Link>
@@ -79,10 +83,10 @@ function ClientStudio({ id }: { id: string }) {
     {!data ? <p role="status">{error ? '' : t.loading}</p> : <>
       {!data.agents.length && <p>{t.empty}</p>}
       <div className={styles.editor}>
-        <ConnectionGraph data={data} selected={selected} onSelect={value => { if (!busy) setSelected(value); }} onConnect={connect} t={t} />
+        <ConnectionGraph data={data} selected={selected} onSelect={value => { if (!busy) setSelected(value); }} onConnect={connect} onAgentConnect={connectAgents} rules={rules} onRuleSelect={openRule} t={t} />
         <StudioInspector key={selected + version} data={data} selected={selected} write={write} connect={connect} busy={busy} />
       </div>
-      <HandoffEditor data={data} />
+      <HandoffEditor ref={handoff} onRulesChange={setRules} data={data} />
       <ExecutionPanel data={data} />
     </>}
   </div>;
