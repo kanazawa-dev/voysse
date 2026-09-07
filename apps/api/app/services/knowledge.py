@@ -186,14 +186,14 @@ def _business_brief(agent: Agent) -> str:
     return "\n".join(lines)
 
 
-def build_system_prompt(agent: Agent, knowledge_text: str) -> str:
+def build_system_prompt(agent: Agent, knowledge_text: str, *, at: datetime | None = None) -> str:
     client = agent.client
     tz_name = (agent.timezone or "UTC").strip() or "UTC"
     try:
-        now = datetime.now(ZoneInfo(tz_name))
+        now = at.astimezone(ZoneInfo(tz_name)) if at else datetime.now(ZoneInfo(tz_name))
     except (ZoneInfoNotFoundError, ValueError):
         tz_name = "UTC"
-        now = datetime.now(ZoneInfo("UTC"))
+        now = at.astimezone(ZoneInfo("UTC")) if at else datetime.now(ZoneInfo("UTC"))
     parts = [
         f"Eres {agent.name}, un agente de IA de {client.name}.",
         f"FECHA Y HORA ACTUAL ({tz_name}): {now:%Y-%m-%d %H:%M}.",

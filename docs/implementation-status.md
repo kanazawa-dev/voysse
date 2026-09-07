@@ -8,7 +8,9 @@ rollback. Ya existe API de versiones publicadas (publicar/restaurar/retirar),
 y controles visuales de historial/comparación/confirmación, siempre sin activar
 transportes. La distribución del canvas (posiciones/zoom) ya tiene guardado con CAS
 y modo organizar separado de conectar canales. El protocolo interno fija la versión por turno; adoptar el runner
-y los productores es el siguiente paso. Las entregas históricas de abajo no reemplazan ese checkpoint.
+y los productores es el siguiente paso. El runner interno de cadena ya une
+clasificación por callback, contexto y respuesta atómica, pero no llama proveedores
+reales ni transportes; falta el adaptador operativo y outbox. Las entregas históricas de abajo no reemplazan ese checkpoint.
 
 ## Current snapshot (supersedes historical delivery notes below)
 

@@ -117,3 +117,39 @@ del cliente, versión ausente/ajena, agentes inactivos y salida humana segura.
 Verificación 0034: 8 casos nuevos/21 enfocados y 267 pruebas API completas aprobadas;
 base → 0034 → base → 0034 pasó en PostgreSQL desechable. Sin cambios de UI (browser
 N/A) ni uso de proveedores. La adopción en transportes sigue pendiente.
+
+## Runner interno de cadena — sin transportes
+
+`execution_runner.run` une claim publicado, clasificación acotada, transferencias y
+respuesta final guardada en una transacción con `settle`. **No envía al canal**.
+Solo un claim nuevo ejecuta el callback; duplicados devuelven estado sin repetir I/O.
+Cada agente usa su configuración y contexto compartido hasta el mensaje reclamado:
+como máximo 100 mensajes (según su memoria), 64k caracteres de historial y 64k de
+instrucciones. No incluye mensajes posteriores; no trunca silenciosamente un exceso.
+El prompt fija su fecha al mensaje ancla para no invalidar resultados al cambiar de minuto.
+
+El callback interno `provider(Input, phase)` devuelve `Completion`: `classify` usa
+índices globales del snapshot, `respond` solo se permite sin reglas salientes.
+No-match, JSON inválido, índice ajeno o límite de saltos terminan en humano.
+El límite no hace una llamada extra. Se vuelve a comprobar responsable, revisión,
+política, actividad, configuración y contexto antes/después de I/O. Ninguna sesión
+ni bloqueo DB se mantiene durante el callback; tokens se contabilizan antes de
+rechazar resultados obsoletos. El mensaje final y cierre se confirman juntos.
+
+Errores/cancelaciones intentan marcar incierto. Si la DB no permite hacerlo, queda
+el claim en curso bloqueado: nunca liberar por plazo, reintentar ni continuar desde
+un claim existente. Tomar control humano invalida resultados pero no cancela I/O.
+
+**Límite de esta entrega:** callback inyectado y probado con proveedores falsos;
+ningún endpoint/worker lo invoca. El callback debe ser estrictamente sin tools/envíos;
+rechazar `tool_calls` no puede deshacer efectos externos de un callback incorrecto.
+Faltan adaptador real de credenciales/permisos, RAG, límites de gasto, outbox durable,
+adopción de todos los productores y reanudación humana auditada antes de activar.
+Los cambios coordinados de configuración/credenciales requieren cercado en esos adaptadores.
+Rollback: retirar runner/tests; el parámetro opcional `at` del prompt es compatible
+con llamadas anteriores. Sin migración nueva ni borrado de turnos/auditoría.
+
+Harness: `TEST_DATABASE_URL=<disposable_postgresql_test> pytest -q tests/test_execution_runner.py`.
+Cubre cadena, replay durante I/O, cancelación, respuesta tardía, uso contabilizado,
+rollback de respuesta/transferencia, política retirada durante el turno y límite sin
+llamada extra. Browser N/A: no interfaz/endpoint/worker cambió en esta entrega.
