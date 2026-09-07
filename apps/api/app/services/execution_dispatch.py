@@ -10,7 +10,7 @@ are for callers that must confirm external delivery before the reply is visible
 then dispatch_finalize() on success or dispatch_abort() on failure.
 """
 import uuid
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 from sqlalchemy import select
 
@@ -74,8 +74,9 @@ async def _provider(agency_id, work, phase):
         knowledge = await retrieve_knowledge(db, agent, query)
         system = build_system_prompt(agent, knowledge.text, at=work.anchor_at)
         messages = [{"role": "system", "content": system}, *[{"role": role, "content": content} for role, content in work.messages]]
-        return await run_completion(db, agent, base_url, api_key, messages,
+        completion = await run_completion(db, agent, base_url, api_key, messages,
             temperature=agent.temperature, max_tokens=agent.max_tokens)
+        return replace(completion, sources=knowledge.sources)
 
 
 async def dispatch_prepare(*, agency_id, conversation, message_id, entry_agent) -> Dispatched | None:
@@ -123,7 +124,7 @@ def serialize(dispatched: Dispatched) -> dict | None:
         return None
     p = dispatched.prepared
     return {"turn_id": str(p.turn_id), "revision": p.revision, "agent_id": str(p.agent_id),
-            "agent_name": p.agent_name, "content": p.content,
+            "agent_name": p.agent_name, "content": p.content, "tool_calls": p.tool_calls, "sources": list(p.sources),
             "agency_id": str(dispatched.agency_id), "conversation_id": str(dispatched.conversation_id)}
 
 
@@ -131,7 +132,7 @@ def deserialize(data: dict | None) -> Dispatched | None:
     if data is None:
         return None
     prepared = execution_runner.Prepared(uuid.UUID(data["turn_id"]), data["revision"], uuid.UUID(data["agent_id"]),
-        data["agent_name"], data["content"])
+        data["agent_name"], data["content"], data.get("tool_calls"), tuple(data.get("sources") or ()))
     return Dispatched(prepared, uuid.UUID(data["agency_id"]), uuid.UUID(data["conversation_id"]))
 
 
