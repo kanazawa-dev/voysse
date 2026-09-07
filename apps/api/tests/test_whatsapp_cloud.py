@@ -210,6 +210,59 @@ def test_webhook_text_message_creates_conversation_and_replies(authenticated_cli
     assert fake_send.await_count == 1
 
 
+def test_published_policy_routes_reply_to_target_agent(authenticated_client: TestClient, monkeypatch):
+    from sqlalchemy import select
+    from app.models import ExecutionTurn
+    from test_flows import _classify_or_respond, _publish_handoff_policy
+
+    client = authenticated_client
+    customer, agent, channel = _setup_channel(client)
+    specialist = client.post("/api/agents", json={"client_id": customer["id"], "provider": "openai",
+        "model": "gpt-4.1-mini", "name": "Specialist", "description": "", "instructions": "", "personality": "", "is_active": True}).json()
+    execution_dispatch = _publish_handoff_policy(client, customer["id"], agent["id"], specialist["id"])
+    monkeypatch.setattr(execution_dispatch, "chat_completion", _classify_or_respond(
+        '{"rule_index":0,"reason":"Technical question"}', "Routed WhatsApp Cloud reply."))
+    fake_send = AsyncMock(return_value="wamid.out-route-1")
+    monkeypatch.setattr(cloud_worker, "send_text", fake_send)
+
+    payload = _webhook_payload([{"from": "5730011", "id": "wamid.route-1", "type": "text", "text": {"body": "I need technical help"}}])
+    assert _post_signed(client, channel["id"], payload).status_code == 200
+
+    conversation = client.get("/api/conversations").json()[0]
+    detail = client.get(f"/api/conversations/{conversation['id']}").json()
+    assert detail["messages"][-1]["sender_name"] == "Specialist"
+    assert detail["messages"][-1]["content"] == "Routed WhatsApp Cloud reply."
+    assert detail["messages"][-1]["external_message_id"] == "wamid.out-route-1"
+    with TestingSession() as db:
+        turn = db.scalar(select(ExecutionTurn))
+        assert turn.status == "completed" and len(turn.transitions) == 1
+
+
+def test_published_policy_send_failure_marks_turn_uncertain(authenticated_client: TestClient, monkeypatch):
+    from sqlalchemy import select
+    from app.models import ExecutionTurn
+    from test_flows import _classify_or_respond, _publish_handoff_policy
+
+    client = authenticated_client
+    customer, agent, channel = _setup_channel(client)
+    specialist = client.post("/api/agents", json={"client_id": customer["id"], "provider": "openai",
+        "model": "gpt-4.1-mini", "name": "Specialist", "description": "", "instructions": "", "personality": "", "is_active": True}).json()
+    execution_dispatch = _publish_handoff_policy(client, customer["id"], agent["id"], specialist["id"])
+    monkeypatch.setattr(execution_dispatch, "chat_completion", _classify_or_respond(
+        '{"rule_index":0,"reason":"Technical question"}', "Routed reply that will never arrive."))
+    monkeypatch.setattr(cloud_worker, "send_text", AsyncMock(side_effect=HTTPException(502, "Timeout")))
+
+    payload = _webhook_payload([{"from": "5730011", "id": "wamid.route-fail-1", "type": "text", "text": {"body": "I need technical help"}}])
+    assert _post_signed(client, channel["id"], payload).status_code == 200
+
+    conversation = client.get("/api/conversations").json()[0]
+    detail = client.get(f"/api/conversations/{conversation['id']}").json()
+    assert [item["sender_type"] for item in detail["messages"]] == ["visitor"]  # never persisted
+    with TestingSession() as db:
+        turn = db.scalar(select(ExecutionTurn))
+        assert turn.status == "uncertain"
+
+
 def test_human_takeover_during_generation_suppresses_reply(authenticated_client: TestClient, monkeypatch):
     from sqlalchemy import select
     from conftest import TestingSession

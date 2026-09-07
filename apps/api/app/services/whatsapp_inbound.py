@@ -3,7 +3,10 @@
 Shared by the Baileys bridge endpoint and the Cloud API webhook: dedupe by
 external message id, find or create the conversation, resolve media into text,
 store the visitor message, and produce the AI reply unless a human operator has
-taken over. The caller is responsible for actually delivering the reply.
+taken over. If the client has a published policy routing the assigned agent,
+execution_dispatch handles generation instead (real handoffs, no knowledge or
+custom tools -- see execution_runner). The caller is responsible for actually
+delivering the reply.
 """
 
 import uuid
@@ -15,6 +18,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
 from ..models import Agent, Conversation, Message, now_utc
+from .execution_dispatch import dispatch_finalize, dispatch_prepare, serialize
 from .knowledge import build_system_prompt, retrieve_knowledge
 from .media import describe_image, transcribe_audio
 from .providers import resolve_agent_credentials, resolve_provider_credentials
@@ -43,6 +47,13 @@ class InboundResult:
     outbound_message_id: uuid.UUID | None = None
     sources: list = field(default_factory=list)
     tool_calls: list | None = None
+    responder_name: str | None = None
+    # Set only when persist_reply=False and a published policy routed this
+    # message: a serialized execution_dispatch.Dispatched (see serialize()) the
+    # caller must persist alongside `reply` and pass through deserialize() to
+    # dispatch_finalize()/dispatch_abort() once external delivery is confirmed
+    # or fails, instead of storing `reply` as a plain Message itself.
+    route: dict | None = None
 
 
 def _media_placeholder(kind: str) -> str:
@@ -151,6 +162,23 @@ async def process_inbound(
     if conversation.mode == "human" or not generate_reply:
         return InboundResult(accepted=True, conversation_id=conversation.id, mode="human")
 
+    routed = await dispatch_prepare(agency_id=channel.agency_id, conversation=conversation,
+        message_id=visitor_message.id, entry_agent=channel.agent)
+    if routed is not None and routed.prepared is None:
+        # A published policy routes this agent but the turn ended without a
+        # reply (human handoff, hop limit, or a failure already marked
+        # uncertain): never fall back to the direct single-agent path here.
+        return InboundResult(accepted=True, conversation_id=conversation.id, mode="human")
+    if routed is not None:
+        reply, responder_name = routed.prepared.content, routed.prepared.agent_name
+        if persist_reply:
+            outbound_id = await dispatch_finalize(routed)
+            db.commit()
+            return InboundResult(accepted=True, reply=reply, conversation_id=conversation.id,
+                mode="ai", outbound_message_id=outbound_id, responder_name=responder_name)
+        return InboundResult(accepted=True, reply=reply, conversation_id=conversation.id,
+            mode="ai", responder_name=responder_name, route=serialize(routed))
+
     agent = channel.agent
     credentials = resolve_agent_credentials(db, agent)
     if not agent.is_active or not credentials or not agent.model.strip():
@@ -218,4 +246,5 @@ async def process_inbound(
         mode="ai",
         outbound_message_id=outbound.id if persist_reply else None,
         sources=knowledge.sources, tool_calls=completion.tool_calls,
+        responder_name=agent.name,
     )

@@ -1,7 +1,14 @@
-"""Dormant, tool-free policy runner. No current endpoint/worker calls this module.
+"""Tool-free policy runner, split into a generate step and a persist step.
 
 The injected provider adapter MUST NOT execute tools or send channel messages.
 Only a newly committed claim may run. Lost work stays blocked; there is no resume.
+
+``prepare()`` claims a turn and hops through classification until it reaches a
+terminal responder, returning the generated text WITHOUT storing it. ``finalize()``
+stores that text as a Message and settles the turn. ``run()`` composes the two for
+callers (dashboard chat, the widget) where "generated" and "shown" are the same
+moment. Callers that must confirm external delivery before the reply is visible
+(WhatsApp, Instagram/Messenger) call prepare() and finalize()/abort() separately.
 """
 import uuid
 from dataclasses import dataclass
@@ -26,6 +33,15 @@ class Input:
     messages: tuple[tuple[str, str], ...]
     # Global policy index, target UUID (None = human), condition.
     rules: tuple[tuple[int, uuid.UUID | None, str], ...]
+
+
+@dataclass(frozen=True)
+class Prepared:
+    turn_id: uuid.UUID
+    revision: int
+    agent_id: uuid.UUID
+    agent_name: str
+    content: str
 
 
 def snapshot(db, agency, conversation_id, turn_id, revision):
@@ -60,12 +76,14 @@ def checked(db, agency, conversation, turn, revision, expected):
     return current
 
 
-async def run(session_factory, agency, conversation, turn, message, revision, provider):
+async def prepare(session_factory, agency, conversation, turn, message, revision, provider):
     """provider(Input, phase) -> Completion; phase is classify or respond.
 
     classify must return Choice JSON using only Input.rules indices. No rules =
     terminal responder. Null/invalid classification = human, never guessed routing.
-    Returns (status, assistant_message_id | None); completed means stored, NOT sent.
+    Returns (status, Prepared | None); status in {"ready", "human"}. "ready" means
+    text was generated but NOT stored — call finalize() to store it, or abort() if
+    external delivery fails before finalize() runs.
     Caller must authenticate/authorize before invocation; no public API is exposed.
     """
     with session_factory.begin() as db:
@@ -93,14 +111,7 @@ async def run(session_factory, agency, conversation, turn, message, revision, pr
                 if not work.rules:
                     if not isinstance(completion.text, str) or not 1 <= len(completion.text.strip()) <= 32000:
                         raise HTTPException(409, 'Invalid response')
-                    response = Message(conversation_id=conversation, role='assistant', content=completion.text,
-                                       sender_type='ai', sender_name=db.get(Agent, work.agent_id).name)
-                    db.add(response)
-                    if not state.settle(db, agency, conversation, turn, revision):
-                        raise HTTPException(409, 'Response no longer owned')
-                    db.get(Conversation, conversation).updated_at = now_utc()
-                    db.flush()
-                    return 'completed', response.id
+                    return 'ready', Prepared(turn, revision, work.agent_id, db.get(Agent, work.agent_id).name, completion.text)
                 target, reason = None, 'Invalid or uncertain classification'
                 try:
                     choice = Choice.model_validate_json(completion.text)
@@ -120,6 +131,45 @@ async def run(session_factory, agency, conversation, turn, message, revision, pr
         try:
             with session_factory.begin() as db:
                 state.settle(db, agency, conversation, turn, revision, uncertain=True)
+        except Exception:
+            pass
+        raise
+
+
+async def finalize(session_factory, agency, conversation, prepared: Prepared, *, external_message_id=None):
+    """Store prepare()'s generated text and settle its turn. Raises if the turn
+    is no longer owned (e.g. a human takeover raced ahead of external delivery)."""
+    with session_factory.begin() as db:
+        response = Message(conversation_id=conversation, role='assistant', content=prepared.content,
+                           sender_type='ai', sender_name=prepared.agent_name, external_message_id=external_message_id)
+        db.add(response)
+        if not state.settle(db, agency, conversation, prepared.turn_id, prepared.revision):
+            raise HTTPException(409, 'Response no longer owned')
+        db.get(Conversation, conversation).updated_at = now_utc()
+        db.flush()
+        return response.id
+
+
+async def abort(session_factory, agency, conversation, prepared: Prepared):
+    """External delivery failed after a successful prepare(): release the turn as
+    uncertain instead of leaving it claimed forever. Never raises."""
+    with session_factory.begin() as db:
+        state.settle_safe(db, agency, conversation, prepared.turn_id, prepared.revision, uncertain=True)
+
+
+async def run(session_factory, agency, conversation, turn, message, revision, provider):
+    """prepare() immediately followed by finalize(), for callers where "generated"
+    and "shown" are the same moment. Returns (status, assistant_message_id | None);
+    completed means stored, NOT sent."""
+    status, prepared = await prepare(session_factory, agency, conversation, turn, message, revision, provider)
+    if status != 'ready':
+        return status, None
+    try:
+        return 'completed', await finalize(session_factory, agency, conversation, prepared)
+    except BaseException:
+        try:
+            with session_factory.begin() as db:
+                state.settle(db, agency, conversation, prepared.turn_id, prepared.revision, uncertain=True)
         except Exception:
             pass
         raise

@@ -42,7 +42,7 @@ export function ExecutionPanel({ data }: { data: StudioGraph }) {
   }
   return <section className={`${styles.panel} ${styles.execution}`} data-execution-panel data-studio-busy={busy} aria-labelledby="execution-title">
     <h2 id="execution-title">{es ? 'Revisión de ejecuciones' : 'Execution review'}</h2>
-    <p>{es ? 'Registro real de ejecuciones para chat del panel y widget cuando el cliente tiene una política publicada. WhatsApp y redes aún no pasan por aquí. No muestra las simulaciones.' : 'Live execution ledger for dashboard chat and the widget when the client has a published policy. WhatsApp and social do not go through this yet. This does not show simulator tests.'}</p>
+    <p>{es ? 'Registro real de ejecuciones para chat del panel, widget, WhatsApp e Instagram/Messenger cuando el cliente tiene una política publicada. No muestra las simulaciones.' : 'Live execution ledger for dashboard chat, the widget, WhatsApp and Instagram/Messenger when the client has a published policy. This does not show simulator tests.'}</p>
     <div className={styles.actions}><Button variant="outline" disabled={busy || !!selected} onClick={() => { setNotice(''); void load(); }}>{busy ? (es ? 'Procesando…' : 'Working…') : (es ? 'Cargar turnos' : 'Load turns')}</Button></div>
     {error && <p role="alert">{error}</p>}{notice && <p role="status">{notice}</p>}
     {listing && <>

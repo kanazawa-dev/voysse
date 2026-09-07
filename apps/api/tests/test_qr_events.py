@@ -60,6 +60,53 @@ def test_admission_durable_deduplicated_and_worker_separate(setup):
     assert setup[3].await_count == setup[4].await_count == 1
 
 
+def test_published_policy_routes_reply_to_target_agent(setup, monkeypatch):
+    from app.models import ExecutionTurn
+    from test_flows import _classify_or_respond, _publish_handoff_policy
+
+    client, customer, channel, _generate, send = setup
+    specialist = client.post("/api/agents", json={"client_id": customer["id"], "provider": "openai",
+        "model": "gpt-4.1-mini", "name": "Specialist", "is_active": True}).json()
+    execution_dispatch = _publish_handoff_policy(client, customer["id"], channel["agent_id"], specialist["id"])
+    monkeypatch.setattr(execution_dispatch, "chat_completion", _classify_or_respond(
+        '{"rule_index":0,"reason":"Technical question"}', "Routed QR reply."))
+    send.return_value = {"external_message_id": "out-route-1"}
+
+    enqueue(setup, text="I need technical help")
+    assert work()
+    assert not work()
+    assert event().status == "sent"
+    with TestingSession() as db:
+        message = db.scalar(select(Message).where(Message.role == "assistant"))
+        assert message.sender_name == "Specialist"
+        assert message.content == "Routed QR reply."
+        assert message.external_message_id == "out-route-1"
+        turn = db.scalar(select(ExecutionTurn))
+        assert turn.status == "completed" and len(turn.transitions) == 1
+
+
+def test_published_policy_send_failure_marks_turn_uncertain(setup, monkeypatch):
+    from app.models import ExecutionTurn
+    from test_flows import _classify_or_respond, _publish_handoff_policy
+
+    client, customer, channel, _generate, send = setup
+    specialist = client.post("/api/agents", json={"client_id": customer["id"], "provider": "openai",
+        "model": "gpt-4.1-mini", "name": "Specialist", "is_active": True}).json()
+    execution_dispatch = _publish_handoff_policy(client, customer["id"], channel["agent_id"], specialist["id"])
+    monkeypatch.setattr(execution_dispatch, "chat_completion", _classify_or_respond(
+        '{"rule_index":0,"reason":"Technical question"}', "Routed reply that will never arrive."))
+    send.side_effect = RuntimeError("bridge unreachable")
+
+    enqueue(setup, text="I need technical help")
+    assert work()
+    assert not work()
+    assert event().status == "uncertain"
+    with TestingSession() as db:
+        assert not list(db.scalars(select(Message).where(Message.role == "assistant")))
+        turn = db.scalar(select(ExecutionTurn))
+        assert turn.status == "uncertain"
+
+
 def test_failed_preparation_is_visible_without_replay(setup):
     setup[3].side_effect = RuntimeError("secret-and-private-provider-payload")
     enqueue(setup)
