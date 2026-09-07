@@ -28,6 +28,10 @@ export function StudioInspector({ data, selected, write, connect, busy }: {
   const [color, setColor] = useState(agent?.widget_color || '#5135ff');
   const [enabled, setEnabled] = useState(agent?.widget_enabled || false);
   const creating = selected === 'new';
+  const dirty = creating ? Boolean(name || description || instructions) : agent ?
+    name !== agent.name || description !== (agent.description || '') || instructions !== (agent.instructions || '') ||
+    greeting !== (agent.widget_greeting || '') || color !== (agent.widget_color || '#5135ff') || enabled !== (agent.widget_enabled || false) :
+    Boolean(channel && target !== (channel.agent_id || ''));
   async function save(event: FormEvent) {
     event.preventDefault();
     if (creating) await write('/agents', 'POST', { client_id: data.client.id, name, description, instructions });
@@ -36,7 +40,7 @@ export function StudioInspector({ data, selected, write, connect, busy }: {
       widget_greeting: greeting, widget_color: color, widget_enabled: enabled,
     });
   }
-  return <aside className={styles.panel} aria-label={t.selected} data-studio-inspector tabIndex={-1}>
+  return <aside className={styles.panel} aria-label={t.selected} data-studio-inspector data-studio-dirty={dirty} data-studio-busy={busy} tabIndex={-1}>
     <h2>{creating ? t.add : agent?.name || (channel ? channelNames[channel.kind] : t.choose)}</h2>
     {agent && <Button className="mb-4" variant="outline" render={<a href="#studio-preview" />}>{es ? 'Ir a probar agente' : 'Go to agent test'}</Button>}
     {channel && <div className={styles.form}>
@@ -88,7 +92,7 @@ function PreviewChat({ clientId, agent }: { clientId: string; agent: StudioAgent
     } catch (err) { if (!controller.signal.aborted) setError(messageFrom(err)); }
     finally { if (!controller.signal.aborted) { request.current = null; setBusy(false); } }
   }
-  return <section className={styles.preview} id="studio-preview">
+  return <section className={styles.preview} id="studio-preview" data-studio-busy={busy}>
     <h2>{es ? 'Probar agente' : 'Test agent'}</h2>
     <p>{es ? 'Usa la configuración guardada. Consume tokens del proveedor; no ejecuta herramientas ni envía a canales. El chat se pierde al salir.' : 'Uses saved settings. Provider tokens are billed; no tools or channel sends. This chat is cleared when you leave.'}</p>
     <div role="log" className={styles.transcript}>{turns.map((turn, index) => <p key={index}><strong>{turn.role === 'user' ? (es ? 'Tú' : 'You') : agent.name}</strong><br />{turn.content}</p>)}</div>

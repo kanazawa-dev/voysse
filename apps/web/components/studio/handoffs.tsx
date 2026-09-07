@@ -61,7 +61,7 @@ export function HandoffEditor({ data }: { data: StudioGraph }) {
   const current = path.at(-1);
   const choices = draft?.rules.filter(r => r.source_agent_id === current) || [];
   const invalid = draft?.rules.some(r => !available(r.source_agent_id) || !available(r.target_agent_id));
-  return <section className={styles.panel} data-handoff-editor aria-labelledby="handoff-title">
+  return <section className={styles.panel} data-handoff-editor data-studio-busy={busy} data-studio-dirty={dirty} aria-labelledby="handoff-title">
     <h2 id="handoff-title">{es ? 'Derivaciones entre agentes' : 'Agent handoffs'}</h2>
     <p>{es ? 'Borrador · Sin activar. Define conexiones sin cambiar conversaciones reales.' : 'Draft · Inactive. Define connections without changing real conversations.'}</p>
     {error && <p role="alert">{error}</p>}
