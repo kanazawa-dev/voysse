@@ -61,3 +61,42 @@
 .pickerFields { display: flex; flex-wrap: wrap; gap: 12px; }
 .pickerFields label { display: grid; gap: 6px; flex: 1 1 220px; min-width: 0; font-size: 12px; }
 .pickerFields select { height: 36px; width: 100%; min-width: 0; padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--background); color: var(--foreground); }
+.immersive { height: 100dvh; width: 100%; display: flex; flex-direction: column; overflow: hidden; background: var(--background); }
+.canvasHeader { z-index: 20; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 10px 16px; border-bottom: 1px solid var(--border); background: var(--card); }
+.canvasHeader > a { font-size: 14px; white-space: nowrap; }
+.canvasHeader > button { max-width: 240px; overflow: hidden; }
+.canvasActions { margin-left: auto; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.canvasPicker { position: absolute; top: 64px; left: 12px; width: min(440px, calc(100% - 24px)); z-index: 40; box-shadow: 0 16px 40px #0003; }
+.canvasStage { position: relative; flex: 1; min-height: 0; min-width: 0; overflow: hidden; }
+.canvasStage > .graph { position: absolute; inset: 0; border: 0; border-radius: 0; display: flex; flex-direction: column; }
+.canvasStage .viewport { flex: 1; max-height: none; min-height: 0; overflow: auto; scrollbar-width: none; touch-action: none; cursor: grab; padding: 0; }
+.canvasStage .viewport::-webkit-scrollbar { display: none; }
+.canvasStage .viewport:active { cursor: grabbing; }
+.canvasStage .toolbar { padding-left: 210px; min-height: 48px; }
+.canvasStage .toolbar p { font-size: 11px; }
+.canvasSettings { position: absolute; left: 12px; top: 9px; z-index: 10; max-width: min(360px, calc(100% - 24px)); }
+.canvasSettings summary { cursor: pointer; padding: 6px 10px; background: var(--card); border: 1px solid var(--border); border-radius: 6px; font-size: 12px; }
+.canvasSettings[open] { box-shadow: 0 12px 30px #0002; }
+.canvasSettings .layoutControls { background: var(--card); display: flex; }
+.canvasTools { position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); display: flex; gap: 6px; z-index: 15; padding: 6px; border-radius: 10px; background: var(--card); border: 1px solid var(--border); box-shadow: 0 8px 24px #0002; max-width: calc(100% - 16px); }
+.canvasTools button { font-size: 12px; white-space: normal; }
+.canvasDock { position: absolute; right: 12px; top: 60px; bottom: 80px; width: min(420px, calc(100% - 24px)); z-index: 20; display: flex; flex-direction: column; background: var(--card); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 16px 40px #0003; overflow: hidden; }
+.immersive [hidden] { display: none !important; }
+.dockHeader { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-bottom: 1px solid var(--border); font-size: 12px; }
+.dockBody { overflow: auto; min-height: 0; overscroll-behavior: contain; }
+.dockBody .panel { border: 0; border-radius: 0; padding: 16px; }
+.canvasError { position: absolute; left: 16px; bottom: 84px; max-width: min(480px, calc(100% - 32px)); background: var(--card); border: 1px solid var(--destructive); padding: 12px; z-index: 25; }
+@media (max-width: 640px) {
+  .canvasHeader { padding: 8px; gap: 6px; }
+  .canvasActions { width: 100%; justify-content: space-between; gap: 4px; }
+  .canvasActions button { font-size: 11px; }
+  .canvasStage .toolbar p { display: none; } .canvasStage .zoom { display: flex; }
+  .canvasStage .extent { width: var(--canvas-width) !important; height: var(--canvas-height) !important; }
+  .canvasStage .map { width: var(--map-width) !important; height: var(--map-height) !important; transform: scale(var(--map-zoom)) !important; }
+  .canvasStage .edges { display: block; } .canvasStage .headings { display: grid; }
+  .canvasStage .column { display: contents; } .canvasStage .column::before { display: none; }
+  .canvasStage .node { position: absolute; width: 260px; left: var(--node-x) !important; top: var(--node-y) !important; }
+  .canvasDock { top: 56px; bottom: 80px; }
+  .canvasTools { width: calc(100% - 16px); display: grid; grid-template-columns: 1fr 1.6fr 1fr; }
+  .canvasTools button { min-width: 0; width: 100%; height: auto; min-height: 36px; padding: 6px; font-size: 10px; line-height: 1.2; white-space: normal; }
+}

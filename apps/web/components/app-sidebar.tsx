@@ -62,10 +62,10 @@ export function AppSidebar({ user, ...props }: React.ComponentProps<typeof Sideb
   const compact = state === "collapsed" && !isMobile
 
   const studioActive = pathname === "/studio" || pathname.startsWith("/studio/") || /^\/clients\/[^/]+\/studio$/.test(pathname)
-  const mainNav: { title: string; url: string; icon: React.ComponentType<{ className?: string }>; isActive?: boolean }[] = [
+  const mainNav: { title: string; url: string; icon: React.ComponentType<{ className?: string }>; isActive?: boolean; newWindow?: boolean }[] = [
     { title: t("nav.home"), url: "/", icon: LayoutDashboard, isActive: pathname === "/" },
     { title: t("nav.clients"), url: "/clients", icon: Building2, isActive: pathname.startsWith("/clients") && !studioActive },
-    { title: "Studio", url: "/studio", icon: Workflow, isActive: studioActive },
+    { title: "Studio", url: "/studio", icon: Workflow, isActive: studioActive, newWindow: true },
     { title: t("nav.agents"), url: "/agents", icon: Bot, isActive: pathname.startsWith("/agents") },
     { title: t("nav.inbox"), url: "/inbox", icon: Inbox, isActive: pathname.startsWith("/inbox") },
     { title: t("nav.playground"), url: "/playground", icon: MessageSquareText, isActive: pathname.startsWith("/playground") },
