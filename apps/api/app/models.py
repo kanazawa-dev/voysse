@@ -68,6 +68,7 @@ class User(Base):
     email: Mapped[str] = mapped_column(String(320), index=True)
     password_hash: Mapped[str] = mapped_column(String(255))
     role: Mapped[str] = mapped_column(String(30), default="admin")
+    onboarding_state: Mapped[dict] = mapped_column(JSON, default=dict, server_default="{}")
     session_version: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
     reset_token_hash: Mapped[str | None] = mapped_column(String(64), unique=True)
     reset_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

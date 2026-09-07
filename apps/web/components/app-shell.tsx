@@ -6,6 +6,7 @@ import { ApiError, api } from "@/lib/api";
 import { useT } from "@/lib/i18n";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { AlertsBell } from "@/components/alerts-bell";
+import { OnboardingTour } from "@/components/onboarding/tour";
 import { AppSidebar } from "@/components/app-sidebar";
 import { BloubAvatar } from "@/components/bloub-avatar";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
@@ -98,7 +99,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               </BreadcrumbList>
             </Breadcrumb>
           </div>
-          <div className="ml-auto flex items-center gap-3 px-4"><ThemeToggle />{user.role === "admin" && <AlertsBell />}</div>
+          <div className="ml-auto flex items-center gap-3 px-4"><OnboardingTour key={user.agency.id + user.id} role={user.role} /><ThemeToggle />{user.role === "admin" && <AlertsBell />}</div>
         </header>
         <main className="cy-workspace-content flex min-w-0 flex-1 flex-col gap-6 p-4 sm:p-8">{children}</main>
       </SidebarInset>
