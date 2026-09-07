@@ -54,6 +54,7 @@ function ClientStudio({ id }: { id: string }) {
       const result = await api<{ id?: string }>(path, { method, body: JSON.stringify(body) });
       setData(await api<StudioGraph>(`/studio/${id}`));
       if (path === '/agents' && result.id) setSelected(`agent:${result.id}`);
+      else if (selected.startsWith('widget:')) setSelected(selected.replace('widget:', 'agent:'));
     } catch (err) { setError(messageFrom(err) + (lang === 'es' ? ' Actualiza antes de intentar otra vez.' : ' Refresh before trying again.')); }
     finally { writing.current = false; setBusy(false); }
   }

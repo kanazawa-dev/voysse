@@ -23,8 +23,11 @@ const graph = { client: { id: 'client-a', name: 'Client Alpha', is_active: true 
         await page.setViewportSize({ width, height: 1000 });
         await page.goto(base + '/clients/client-a/studio');
         await page.locator('[data-studio-node="agent:a"]').waitFor();
-        assert.equal(await page.locator('[data-studio-node]').count(), 8);
+        assert.equal(await page.locator('[data-studio-node]').count(), 7);
         assert.equal(await page.locator('[data-studio-edge]').count(), 2);
+        assert.equal(await page.locator('[data-studio-node="widget:b"]').count(), 0);
+        assert.equal(await page.locator('[data-studio-widget-edge]').count(), 1);
+        assert.equal(await page.locator('[class*=headings]').count(), 0);
         await page.locator('[data-studio-node="agent:a"]').focus();
         await page.keyboard.press('Enter');
         assert.equal(await page.locator('[data-studio-node="agent:a"]').getAttribute('aria-pressed'), 'true');

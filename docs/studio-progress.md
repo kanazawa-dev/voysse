@@ -150,3 +150,12 @@ que libere turnos inciertos ni activación de transporte está aprobado implíci
   y [decisiones del canvas](decisions/client-studio.md): límites y diseño.
 - Rollback del panel: retirar `execution.tsx`, su entrada/estilos y smoke; conservar
   API, ledger y auditoría. Revertir interfaz no borra los cierres humanos ya registrados.
+
+## Optional web chat nodes
+
+The canvas has no fixed column headings. Agent and channel icons identify each
+node. Web chat nodes and their edges appear only for agents with web chat enabled.
+Enable or disable web chat in the agent inspector, then confirm and save; testing
+an agent and configuring other channels do not require web chat. Hidden widget
+positions remain saved for re-enabling, but do not enlarge the visible canvas.
+This presentation change does not enable channels or activate live handoffs.
