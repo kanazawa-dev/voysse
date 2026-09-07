@@ -19,6 +19,7 @@ from ..schemas import (
     SendMessageRequest,
 )
 from ..services.tools import run_completion
+from ..services.execution_dispatch import dispatch
 from ..services.knowledge import build_system_prompt, retrieve_knowledge
 from ..services.media import describe_image, transcribe_audio
 from ..services.providers import resolve_agent_credentials, resolve_provider_credentials
@@ -206,8 +207,18 @@ async def _generate_reply(
     agent: Agent,
     credentials: tuple[str, str],
     query: str,
+    message_id: uuid.UUID,
 ) -> Conversation:
-    """Run the agent over the current conversation and store the assistant reply."""
+    """Run the agent over the current conversation and store the assistant reply.
+
+    If the client has a published policy that routes this agent, the durable
+    execution runner handles it instead (real handoffs, no custom tools). With
+    no published policy for this agent this is unchanged from before.
+    """
+    dispatched = await dispatch(agency_id=user.agency_id, conversation=conversation, message_id=message_id, entry_agent=agent)
+    if dispatched is not None:
+        return _conversation(db, user, conversation.id)
+
     knowledge = await retrieve_knowledge(db, agent, query)
     refreshed = _conversation(db, user, conversation.id)
     recent = refreshed.messages[-agent.memory_limit:] if agent.memory_limit else []
@@ -253,9 +264,10 @@ async def send_message(
     if not conversation.messages:
         conversation.title = content[:80]
     conversation.updated_at = now_utc()
-    db.add(Message(conversation_id=conversation.id, role="user", content=content, sender_type="visitor", sender_name="You"))
+    visitor_message = Message(conversation_id=conversation.id, role="user", content=content, sender_type="visitor", sender_name="You")
+    db.add(visitor_message)
     db.commit()
-    return await _generate_reply(db, user, conversation, agent, credentials, content)
+    return await _generate_reply(db, user, conversation, agent, credentials, content, visitor_message.id)
 
 
 @router.post("/{conversation_id}/media", response_model=ConversationDetail)
@@ -306,9 +318,10 @@ async def send_media_message(
     if not conversation.messages:
         conversation.title = (caption or content)[:80]
     conversation.updated_at = now_utc()
-    db.add(Message(conversation_id=conversation.id, role="user", content=content, sender_type="visitor", sender_name="You"))
+    visitor_message = Message(conversation_id=conversation.id, role="user", content=content, sender_type="visitor", sender_name="You")
+    db.add(visitor_message)
     db.commit()
-    return await _generate_reply(db, user, conversation, agent, credentials, content)
+    return await _generate_reply(db, user, conversation, agent, credentials, content, visitor_message.id)
 
 
 @router.patch("/{conversation_id}/mode", response_model=ConversationDetail)

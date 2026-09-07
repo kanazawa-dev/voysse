@@ -43,7 +43,7 @@ def history(client_id: uuid.UUID, limit: int = Query(10, ge=1, le=50),
     query = select(PolicyRevision).where(PolicyRevision.client_id == client_id)
     if before_revision is not None: query = query.where(PolicyRevision.revision < before_revision)
     rows = db.scalars(query.order_by(PolicyRevision.revision.desc()).limit(limit + 1)).all()
-    return {"runtime_enabled": False, "items": [encoded(row) for row in rows[:limit]], "has_more": len(rows) > limit}
+    return {"runtime_enabled": True, "items": [encoded(row) for row in rows[:limit]], "has_more": len(rows) > limit}
 
 
 def lock(db, query):
@@ -70,7 +70,7 @@ def publish(client_id: uuid.UUID, payload: Publish, db: Session = Depends(get_db
     if existing:
         if existing.client_id != client_id or existing.actor_id != actor_id or existing.request != identity:
             raise HTTPException(409, "Publication key reused with different input")
-        return {"runtime_enabled": False, "applied": False, "version": encoded(existing)}
+        return {"runtime_enabled": True, "applied": False, "version": encoded(existing)}
     latest = db.scalar(select(PolicyRevision).where(PolicyRevision.client_id == client_id).order_by(PolicyRevision.revision.desc()).limit(1))
     if (latest.revision if latest else 0) != payload.expected_revision:
         raise HTTPException(409, "Published policy changed; reload")
@@ -97,4 +97,4 @@ def publish(client_id: uuid.UUID, payload: Publish, db: Session = Depends(get_db
     except IntegrityError as exc:
         db.rollback()
         raise HTTPException(409, "Publication key or revision already used") from exc
-    return {"runtime_enabled": False, "applied": True, "version": encoded(row)}
+    return {"runtime_enabled": True, "applied": True, "version": encoded(row)}

@@ -18,7 +18,7 @@ def test_publish_snapshot_restore_and_unpublish_are_separate_from_draft(setup):
     c.put(url, json={'expected_revision': 0, 'rules': [rule(a[0], a[1])]})
     conv = c.post('/api/conversations', json={'agent_id': a[0]}).json()['id']
     response, body = post(c, url)
-    assert response.status_code == 200 and response.json()['runtime_enabled'] is False
+    assert response.status_code == 200 and response.json()['runtime_enabled'] is True
     first = response.json()['version']; assert first['revision'] == 1 and first['actor_id']
     assert c.post(url.replace('/handoffs', '/policies'), json=body).json()['applied'] is False
     c.put(url, json={'expected_revision': 1, 'rules': [rule(a[0], None)]})
