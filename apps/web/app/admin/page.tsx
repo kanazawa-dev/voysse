@@ -1,5 +1,6 @@
 "use client";
 
+import { AcquisitionReport } from "@/components/acquisition-report";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -121,6 +122,8 @@ export default function AdminPage() {
             <StatCard icon={<Inbox size={20} />} label={t("admin.stats.leads")} value={stats?.leads_total} caption={t("admin.stats.leadsNew", { count: stats?.leads_new ?? 0 })} />
           </section>
         )}
+
+        {tab === "stats" && <AcquisitionReport />}
 
         {tab === "leads" && (
           leads.length ? (
