@@ -17,7 +17,7 @@ históricas. Describe código y verificación, no un despliegue en producción.
 | Publicación API | Instantáneas auditadas, CAS/UUID, restaurar y retirar sin activar runtime | PR #64, main `e624efc` |
 | Publicación UI | Historial, comparación del borrador guardado, publicar/restaurar/retirar con motivo y confirmación | PR #66, main `ae0f1a5` |
 | Layout API | Posiciones/zoom cosméticos, CAS y límites; no cambia routing | PR #70, main `c414464` |
-| Layout UI | Organizar con mouse/teclado, guardar/recargar/restablecer; móvil apilado | Entrega vinculada a issue #71 |
+| Layout UI | Organizar con mouse/teclado, guardar/recargar/restablecer; móvil apilado | PR #72, main `cc9687a` |
 | Política por turno | Pin histórico, selección actual bajo bloqueo, replay estable y transferencias dentro del grafo fijado | PR #68, main `8d46f23` |
 
 **No confundir:** el canvas sí cambia la asignación canal → agente al confirmarla.
@@ -25,6 +25,14 @@ Las reglas editadas siguen siendo borradores hasta publicar explícitamente por 
 Una versión publicada todavía NO activa derivaciones. La simulación no las publica
 ni genera turnos reales. El protocolo durable y su revisión todavía no son usados
 por los productores actuales de mensajes; un registro vacío es esperable.
+
+## Runner interno
+
+Recorrido publicado con callback sin herramientas: clasificación acotada, responsable
+actual, contexto compartido y una respuesta final guardada con cierre atómico.
+Valida antes/después de I/O, contabiliza tokens y bloquea errores/cancelaciones sin
+reintentos. Proveedores falsos en pruebas; **aún no integrado en endpoints/canales**.
+Ver [contrato y límites](decisions/execution-state.md#runner-interno-de-cadena--sin-transportes).
 
 ## Organización visual
 
@@ -52,8 +60,9 @@ las acciones locales: cargar otra vez para conciliar, nunca reenviar automática
    claim antes de I/O, una respuesta por propietario, contexto compartido y límites;
    cercar escrituras tardías y coordinar salida humana/resume explícito. No cambiar
    `Conversation.agent_id`. Cubrir borrar/mover/desactivar agentes y cambios de permisos.
-2. **Clasificación y entrega reales con política publicada.** Usar el responsable
-   actual, journal acotado y outbox durable; no repetir tools/envíos inciertos. Pruebas
+2. **Adaptador de IA y entrega reales con política publicada.** El runner interno
+   ya clasifica mediante callback y guarda respuesta; faltan credenciales/permisos,
+   RAG, tools y outbox durable. No repetir tools/envíos inciertos. Pruebas
    de concurrencia, caída, duplicados, revisión humana y cambios de configuración.
 3. **Feedback de ejecución real en el canvas.** La distribución visual ya puede
    moverse/guardarse/restaurarse; falta reflejar el recorrido real cuando los
@@ -74,6 +83,9 @@ que libere turnos inciertos ni activación de transporte está aprobado implíci
   base → 0033 → base → 0033 aprobada en DB desechable.
   Ver [contrato, migración y rollback](decisions/policy-publication.md);
   Pinning interno e interfaz implementados; adopción por productores aún pendiente.
+- Runner: 21 casos enfocados finales aprobados; suite local de 297 aprobada antes
+  del último caso de rollback. CI vuelve a ejecutar la suite completa. Callback falso,
+  sin proveedor/canal real; `tests/test_execution_runner.py`.
 - Pin por turno: 8 casos nuevos, 21 enfocados y 267 API completas aprobadas;
   migración base → 0034 → base → 0034 validada solo en PostgreSQL desechable.
 - Layout API: 10 pruebas enfocadas y 277 API completas aprobadas;
