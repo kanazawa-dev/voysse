@@ -24,8 +24,12 @@ def routed(authenticated_client, monkeypatch):
         db.add(message); db.flush()
         message_id = message.id
         agency_id = db.get(Conversation, conversation_id).agency_id
-    monkeypatch.setattr(execution_dispatch, 'chat_completion', AsyncMock(
-        return_value=Completion(text='{"rule_index":0,"reason":"Technical"}')))
+    mock = AsyncMock(return_value=Completion(text='{"rule_index":0,"reason":"Technical"}'))
+    monkeypatch.setattr(execution_dispatch, 'chat_completion', mock)
+    # The respond phase now calls run_completion() (for knowledge/tools), not
+    # chat_completion() directly; same mock covers both call signatures here
+    # since neither test cares about the exact reply text, only who sent it.
+    monkeypatch.setattr(execution_dispatch, 'run_completion', mock)
     return c, agency_id, conversation_id, message_id, agents, client_id
 
 
