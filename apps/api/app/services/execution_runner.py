@@ -1,6 +1,8 @@
-"""Tool-free policy runner, split into a generate step and a persist step.
+"""Policy runner, split into a generate step and a persist step.
 
-The injected provider adapter MUST NOT execute tools or send channel messages.
+The injected provider adapter MUST NOT send channel messages itself -- only
+finalize()/run() ever store or hand back a reply. Classification never runs
+tools or sees knowledge; only the terminal "respond" phase may use both.
 Only a newly committed claim may run. Lost work stays blocked; there is no resume.
 
 ``prepare()`` claims a turn and hops through classification until it reaches a
@@ -33,6 +35,9 @@ class Input:
     messages: tuple[tuple[str, str], ...]
     # Global policy index, target UUID (None = human), condition.
     rules: tuple[tuple[int, uuid.UUID | None, str], ...]
+    # "Current time" basis for `system`; a respond-phase provider rebuilding the
+    # prompt with knowledge reuses this so the two stay consistent.
+    anchor_at: datetime
 
 
 @dataclass(frozen=True)
@@ -42,6 +47,7 @@ class Prepared:
     agent_id: uuid.UUID
     agent_name: str
     content: str
+    tool_calls: list[dict] | None = None
 
 
 def snapshot(db, agency, conversation_id, turn_id, revision):
@@ -66,7 +72,7 @@ def snapshot(db, agency, conversation_id, turn_id, revision):
     system = build_system_prompt(agent, '', at=anchor.created_at)
     if len(system) > 64000:
         raise HTTPException(409, 'Instructions exceed execution budget')
-    return Input(agent.id, agent.updated_at, agent.provider, agent.model.strip(), system, messages, rules)
+    return Input(agent.id, agent.updated_at, agent.provider, agent.model.strip(), system, messages, rules, anchor.created_at)
 
 
 def checked(db, agency, conversation, turn, revision, expected):
@@ -106,12 +112,13 @@ async def prepare(session_factory, agency, conversation, turn, message, revision
                 record_usage(db, agency, agent.id if agent else None, work.provider, work.model, completion)
             with session_factory.begin() as db:
                 checked(db, agency, conversation, turn, revision, work)
-                if completion.tool_calls:
-                    raise HTTPException(409, 'Tools are not supported by this runner')
                 if not work.rules:
                     if not isinstance(completion.text, str) or not 1 <= len(completion.text.strip()) <= 32000:
                         raise HTTPException(409, 'Invalid response')
-                    return 'ready', Prepared(turn, revision, work.agent_id, db.get(Agent, work.agent_id).name, completion.text)
+                    return 'ready', Prepared(turn, revision, work.agent_id, db.get(Agent, work.agent_id).name,
+                                              completion.text, completion.tool_calls)
+                if completion.tool_calls:
+                    raise HTTPException(409, 'Tools are not supported for classification')
                 target, reason = None, 'Invalid or uncertain classification'
                 try:
                     choice = Choice.model_validate_json(completion.text)
@@ -141,7 +148,8 @@ async def finalize(session_factory, agency, conversation, prepared: Prepared, *,
     is no longer owned (e.g. a human takeover raced ahead of external delivery)."""
     with session_factory.begin() as db:
         response = Message(conversation_id=conversation, role='assistant', content=prepared.content,
-                           sender_type='ai', sender_name=prepared.agent_name, external_message_id=external_message_id)
+                           sender_type='ai', sender_name=prepared.agent_name, external_message_id=external_message_id,
+                           tool_calls=prepared.tool_calls)
         db.add(response)
         if not state.settle(db, agency, conversation, prepared.turn_id, prepared.revision):
             raise HTTPException(409, 'Response no longer owned')

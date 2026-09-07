@@ -75,15 +75,15 @@ def test_durable_receive_reply_dedup_and_inbox(setup_social, platform):
 
 def test_published_policy_routes_reply_to_target_agent(setup_social, monkeypatch):
     from app.models import ExecutionTurn
-    from test_flows import _classify_or_respond, _publish_handoff_policy
+    from test_flows import _mock_routed_completions, _publish_handoff_policy
 
     client, customer, agent, create = setup_social
     path = create()
     specialist = client.post("/api/agents", json={"client_id": customer["id"], "provider": "openai",
         "model": "gpt-4.1-mini", "name": "Specialist", "instructions": "Handle technical questions"}).json()
     execution_dispatch = _publish_handoff_policy(client, customer["id"], agent["id"], specialist["id"])
-    monkeypatch.setattr(execution_dispatch, "chat_completion", _classify_or_respond(
-        '{"rule_index":0,"reason":"Technical question"}', "Routed social reply."))
+    _mock_routed_completions(execution_dispatch, monkeypatch,
+        '{"rule_index":0,"reason":"Technical question"}', "Routed social reply.")
 
     assert post(client).status_code == 200
     assert work()
@@ -99,15 +99,15 @@ def test_published_policy_routes_reply_to_target_agent(setup_social, monkeypatch
 
 def test_published_policy_send_failure_marks_turn_uncertain(setup_social, monkeypatch):
     from app.models import ExecutionTurn
-    from test_flows import _classify_or_respond, _publish_handoff_policy
+    from test_flows import _mock_routed_completions, _publish_handoff_policy
 
     client, customer, agent, create = setup_social
     path = create()
     specialist = client.post("/api/agents", json={"client_id": customer["id"], "provider": "openai",
         "model": "gpt-4.1-mini", "name": "Specialist", "instructions": "Handle technical questions"}).json()
     execution_dispatch = _publish_handoff_policy(client, customer["id"], agent["id"], specialist["id"])
-    monkeypatch.setattr(execution_dispatch, "chat_completion", _classify_or_respond(
-        '{"rule_index":0,"reason":"Technical question"}', "Routed reply that will never arrive."))
+    _mock_routed_completions(execution_dispatch, monkeypatch,
+        '{"rule_index":0,"reason":"Technical question"}', "Routed reply that will never arrive.")
     monkeypatch.setattr(social_worker, "send_text", AsyncMock(side_effect=HTTPException(502, "Timeout")))
 
     assert post(client).status_code == 200

@@ -711,11 +711,23 @@ def _publish_handoff_policy(client, client_id, source_agent_id, target_agent_id)
 
 
 def _classify_or_respond(classify_text, respond_text):
-    async def side_effect(provider, base_url, api_key, model, messages, **kwargs):
-        if "Classify a test message" in messages[0]["content"]:
+    """Stand-in for both chat_completion() (classify phase) and run_completion()
+    (respond phase, which also takes a leading db/agent) -- positional lookup
+    of the `messages` list keeps it usable as either mock."""
+    async def side_effect(*args, **kwargs):
+        messages = kwargs.get("messages") or next((arg for arg in args if isinstance(arg, list)), [])
+        if messages and "Classify a test message" in messages[0]["content"]:
             return ai_service.Completion(text=classify_text)
         return ai_service.Completion(text=respond_text)
     return AsyncMock(side_effect=side_effect)
+
+
+def _mock_routed_completions(execution_dispatch, monkeypatch, classify_text, respond_text):
+    """Patch both provider calls execution_dispatch's respond/classify phases use."""
+    mock = _classify_or_respond(classify_text, respond_text)
+    monkeypatch.setattr(execution_dispatch, "chat_completion", mock)
+    monkeypatch.setattr(execution_dispatch, "run_completion", mock)
+    return mock
 
 
 def test_dashboard_chat_live_policy_routes_to_target_agent(authenticated_client: TestClient, monkeypatch):
@@ -725,8 +737,8 @@ def test_dashboard_chat_live_policy_routes_to_target_agent(authenticated_client:
     entry = client.post("/api/agents", json={"client_id": customer["id"], "provider": "openai", "model": "gpt-4.1-mini", "name": "Front Desk", "description": "", "instructions": "", "personality": "", "is_active": True}).json()
     specialist = client.post("/api/agents", json={"client_id": customer["id"], "provider": "openai", "model": "gpt-4.1-mini", "name": "Specialist", "description": "", "instructions": "", "personality": "", "is_active": True}).json()
     execution_dispatch = _publish_handoff_policy(client, customer["id"], entry["id"], specialist["id"])
-    monkeypatch.setattr(execution_dispatch, "chat_completion", _classify_or_respond(
-        '{"rule_index":0,"reason":"Technical question"}', "Routed dashboard reply."))
+    _mock_routed_completions(execution_dispatch, monkeypatch,
+        '{"rule_index":0,"reason":"Technical question"}', "Routed dashboard reply.")
 
     conversation = client.post("/api/conversations", json={"agent_id": entry["id"]}).json()
     sent = client.post(f"/api/conversations/{conversation['id']}/messages", json={"content": "I need technical help"})
@@ -755,11 +767,80 @@ def test_widget_live_policy_routes_to_target_agent(authenticated_client: TestCli
     entry = client.post("/api/agents", json={"client_id": customer["id"], "provider": "openai", "model": "gpt-4.1-mini", "name": "Greeter", "widget_enabled": True, "description": "", "instructions": "", "personality": "", "is_active": True}).json()
     specialist = client.post("/api/agents", json={"client_id": customer["id"], "provider": "openai", "model": "gpt-4.1-mini", "name": "Specialist", "description": "", "instructions": "", "personality": "", "is_active": True}).json()
     execution_dispatch = _publish_handoff_policy(client, customer["id"], entry["id"], specialist["id"])
-    monkeypatch.setattr(execution_dispatch, "chat_completion", _classify_or_respond(
-        '{"rule_index":0,"reason":"Technical question"}', "Routed widget reply."))
+    _mock_routed_completions(execution_dispatch, monkeypatch,
+        '{"rule_index":0,"reason":"Technical question"}', "Routed widget reply.")
 
     sent = client.post(f"/api/widget/{entry['widget_public_id']}/messages", json={"session_id": "s1", "content": "I need technical help"})
     assert sent.status_code == 200, sent.text
     assert sent.json()["reply"] == "Routed widget reply."
     detail = client.get("/api/conversations/inbox").json()[0]
     assert client.get(f"/api/conversations/{detail['id']}").json()["messages"][-1]["sender_name"] == "Specialist"
+
+
+def test_routed_reply_uses_target_agents_knowledge(authenticated_client: TestClient, monkeypatch):
+    """The terminal "respond" hop must see the routed agent's own knowledge base,
+    not answer blind -- a gap inherited from PR #94 (dashboard/widget-only routing
+    with no knowledge/tools support), now fixed for every channel at once."""
+    client = authenticated_client
+    customer = client.post("/api/clients", json={"name": "Knowledge Route Co", "industry": "", "description": "", "general_context": "", "is_active": True}).json()
+    client.put("/api/providers/openai", json={"api_key": "secret"})
+    entry = client.post("/api/agents", json={"client_id": customer["id"], "provider": "openai", "model": "gpt-4.1-mini", "name": "Front Desk", "description": "", "instructions": "", "personality": "", "is_active": True}).json()
+    specialist = client.post("/api/agents", json={"client_id": customer["id"], "provider": "openai", "model": "gpt-4.1-mini", "name": "Specialist", "description": "", "instructions": "", "personality": "", "is_active": True}).json()
+
+    class FakePage:
+        def extract_text(self):
+            return "The warranty on treatments lasts two years."
+
+    class FakeReader:
+        def __init__(self, _path):
+            self.pages = [FakePage()]
+
+    monkeypatch.setattr(agents_router, "PdfReader", FakeReader)
+    monkeypatch.setattr(agents_router, "embed_document_chunks", AsyncMock(return_value=0))
+    uploaded = client.post(f"/api/agents/{specialist['id']}/documents",
+        files={"file": ("garantias.pdf", b"%PDF-test", "application/pdf")})
+    assert uploaded.status_code == 201, uploaded.text
+
+    execution_dispatch = _publish_handoff_policy(client, customer["id"], entry["id"], specialist["id"])
+    monkeypatch.setattr(execution_dispatch, "chat_completion", _classify_or_respond(
+        '{"rule_index":0,"reason":"Technical question"}', "unused"))
+    captured = {}
+
+    async def fake_run_completion(db, agent, base_url, api_key, messages, **kwargs):
+        captured["system"] = messages[0]["content"]
+        return ai_service.Completion(text="The stated warranty is two years.")
+
+    monkeypatch.setattr(execution_dispatch, "run_completion", fake_run_completion)
+
+    conversation = client.post("/api/conversations", json={"agent_id": entry["id"]}).json()
+    sent = client.post(f"/api/conversations/{conversation['id']}/messages", json={"content": "How long does the warranty last?"})
+    assert sent.status_code == 200, sent.text
+    assert sent.json()["messages"][-1]["sender_name"] == "Specialist"
+    assert sent.json()["messages"][-1]["content"] == "The stated warranty is two years."
+    assert "warranty" in captured["system"]
+
+
+def test_routed_reply_persists_tool_calls(authenticated_client: TestClient, monkeypatch):
+    """The terminal "respond" hop may now run tools; their metadata must persist
+    on the routed Message like it already does for the direct (non-routed) path."""
+    client = authenticated_client
+    customer = client.post("/api/clients", json={"name": "Tool Route Co", "industry": "", "description": "", "general_context": "", "is_active": True}).json()
+    client.put("/api/providers/openai", json={"api_key": "secret"})
+    entry = client.post("/api/agents", json={"client_id": customer["id"], "provider": "openai", "model": "gpt-4.1-mini", "name": "Front Desk", "description": "", "instructions": "", "personality": "", "is_active": True}).json()
+    specialist = client.post("/api/agents", json={"client_id": customer["id"], "provider": "openai", "model": "gpt-4.1-mini", "name": "Specialist", "description": "", "instructions": "", "personality": "", "is_active": True}).json()
+    execution_dispatch = _publish_handoff_policy(client, customer["id"], entry["id"], specialist["id"])
+    monkeypatch.setattr(execution_dispatch, "chat_completion", _classify_or_respond(
+        '{"rule_index":0,"reason":"Technical question"}', "unused"))
+    tool_calls = [{"name": "check_order", "arguments": {"order_id": "42"}, "result_preview": "shipped", "is_error": False}]
+
+    async def fake_run_completion(db, agent, base_url, api_key, messages, **kwargs):
+        return ai_service.Completion(text="It shipped.", tool_calls=tool_calls)
+
+    monkeypatch.setattr(execution_dispatch, "run_completion", fake_run_completion)
+
+    conversation = client.post("/api/conversations", json={"agent_id": entry["id"]}).json()
+    sent = client.post(f"/api/conversations/{conversation['id']}/messages", json={"content": "I need technical help"})
+    assert sent.status_code == 200, sent.text
+    assistant = sent.json()["messages"][-1]
+    assert assistant["sender_name"] == "Specialist"
+    assert assistant["tool_calls"] == tool_calls

@@ -20,7 +20,9 @@ from ..routers.studio_handoffs import Draft
 from ..routers.studio_simulation import classify_messages
 from . import execution_runner
 from .ai import chat_completion
+from .knowledge import build_system_prompt, retrieve_knowledge
 from .providers import resolve_provider_credentials
+from .tools import run_completion
 
 _TURN_NAMESPACE = uuid.UUID("2f6a5d9e-6f0a-4a1e-9d3a-6a2c8b7e5d4f")
 
@@ -58,19 +60,22 @@ async def _provider(agency_id, work, phase):
     with SessionLocal() as db:
         credentials = resolve_provider_credentials(db, agency_id, work.provider)
         agent = db.get(Agent, work.agent_id)
-        temperature = agent.temperature if agent else None
-        max_tokens = agent.max_tokens if agent else None
-    if not credentials:
-        raise ValueError("Responder credentials unavailable")
-    base_url, api_key = credentials
-    if phase == "classify":
-        conditions = {i: condition for i, _target, condition in work.rules}
-        message_text = work.messages[-1][1] if work.messages else ""
-        messages = classify_messages(conditions, message_text, "es")
-        return await chat_completion(work.provider, base_url, api_key, work.model, messages, temperature=0, max_tokens=256)
-    messages = [{"role": "system", "content": work.system}, *[{"role": role, "content": content} for role, content in work.messages]]
-    return await chat_completion(work.provider, base_url, api_key, work.model, messages,
-        temperature=temperature, max_tokens=max_tokens)
+        if not credentials or not agent:
+            raise ValueError("Responder credentials unavailable")
+        base_url, api_key = credentials
+        if phase == "classify":
+            conditions = {i: condition for i, _target, condition in work.rules}
+            message_text = work.messages[-1][1] if work.messages else ""
+            messages = classify_messages(conditions, message_text, "es")
+            return await chat_completion(work.provider, base_url, api_key, work.model, messages, temperature=0, max_tokens=256)
+        # Only the terminal "respond" phase sees real knowledge and may run tools;
+        # classification stays tool-free and knowledge-free, unchanged above.
+        query = work.messages[-1][1] if work.messages else ""
+        knowledge = await retrieve_knowledge(db, agent, query)
+        system = build_system_prompt(agent, knowledge.text, at=work.anchor_at)
+        messages = [{"role": "system", "content": system}, *[{"role": role, "content": content} for role, content in work.messages]]
+        return await run_completion(db, agent, base_url, api_key, messages,
+            temperature=agent.temperature, max_tokens=agent.max_tokens)
 
 
 async def dispatch_prepare(*, agency_id, conversation, message_id, entry_agent) -> Dispatched | None:

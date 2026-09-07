@@ -213,15 +213,15 @@ def test_webhook_text_message_creates_conversation_and_replies(authenticated_cli
 def test_published_policy_routes_reply_to_target_agent(authenticated_client: TestClient, monkeypatch):
     from sqlalchemy import select
     from app.models import ExecutionTurn
-    from test_flows import _classify_or_respond, _publish_handoff_policy
+    from test_flows import _mock_routed_completions, _publish_handoff_policy
 
     client = authenticated_client
     customer, agent, channel = _setup_channel(client)
     specialist = client.post("/api/agents", json={"client_id": customer["id"], "provider": "openai",
         "model": "gpt-4.1-mini", "name": "Specialist", "description": "", "instructions": "", "personality": "", "is_active": True}).json()
     execution_dispatch = _publish_handoff_policy(client, customer["id"], agent["id"], specialist["id"])
-    monkeypatch.setattr(execution_dispatch, "chat_completion", _classify_or_respond(
-        '{"rule_index":0,"reason":"Technical question"}', "Routed WhatsApp Cloud reply."))
+    _mock_routed_completions(execution_dispatch, monkeypatch,
+        '{"rule_index":0,"reason":"Technical question"}', "Routed WhatsApp Cloud reply.")
     fake_send = AsyncMock(return_value="wamid.out-route-1")
     monkeypatch.setattr(cloud_worker, "send_text", fake_send)
 
@@ -241,15 +241,15 @@ def test_published_policy_routes_reply_to_target_agent(authenticated_client: Tes
 def test_published_policy_send_failure_marks_turn_uncertain(authenticated_client: TestClient, monkeypatch):
     from sqlalchemy import select
     from app.models import ExecutionTurn
-    from test_flows import _classify_or_respond, _publish_handoff_policy
+    from test_flows import _mock_routed_completions, _publish_handoff_policy
 
     client = authenticated_client
     customer, agent, channel = _setup_channel(client)
     specialist = client.post("/api/agents", json={"client_id": customer["id"], "provider": "openai",
         "model": "gpt-4.1-mini", "name": "Specialist", "description": "", "instructions": "", "personality": "", "is_active": True}).json()
     execution_dispatch = _publish_handoff_policy(client, customer["id"], agent["id"], specialist["id"])
-    monkeypatch.setattr(execution_dispatch, "chat_completion", _classify_or_respond(
-        '{"rule_index":0,"reason":"Technical question"}', "Routed reply that will never arrive."))
+    _mock_routed_completions(execution_dispatch, monkeypatch,
+        '{"rule_index":0,"reason":"Technical question"}', "Routed reply that will never arrive.")
     monkeypatch.setattr(cloud_worker, "send_text", AsyncMock(side_effect=HTTPException(502, "Timeout")))
 
     payload = _webhook_payload([{"from": "5730011", "id": "wamid.route-fail-1", "type": "text", "text": {"body": "I need technical help"}}])
