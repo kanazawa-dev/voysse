@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Respon
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session, joinedload, selectinload
 
+from ..services.conversation_control import set_mode
 from ..database import get_db
 from ..deps import get_current_user, get_inbox_user
 from ..models import Agent, Conversation, Message, User, now_utc
@@ -318,8 +319,7 @@ def set_conversation_mode(
     user: User = Depends(get_inbox_user),
 ):
     conversation = _conversation(db, user, conversation_id)
-    conversation.mode = payload.mode
-    conversation.updated_at = now_utc()
+    set_mode(db, conversation, payload.mode)
     db.commit()
     return _visible_conversation(db, user, conversation_id)
 

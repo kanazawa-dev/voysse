@@ -6,8 +6,9 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session, joinedload, selectinload
 
 from ..config import get_settings
+from ..services.conversation_control import set_mode
 from ..database import get_db
-from ..models import Agency, Agent, Client, Conversation, Message, now_utc
+from ..models import Agency, Agent, Client, Conversation, Message
 from ..ratelimit import login_rate_limit
 from ..schemas import (
     AgentSummary,
@@ -171,8 +172,7 @@ def portal_mode(
     db: Session = Depends(get_db),
 ):
     conversation = _detail(db, client, conversation_id)
-    conversation.mode = payload.mode
-    conversation.updated_at = now_utc()
+    set_mode(db, conversation, payload.mode)
     db.commit()
     return _visible_detail(db, client, conversation_id)
 
