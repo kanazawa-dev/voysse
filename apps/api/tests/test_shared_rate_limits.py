@@ -118,3 +118,17 @@ def test_disabled_limits_do_not_connect(monkeypatch):
     config.get_settings.cache_clear()
     monkeypatch.setattr(ratelimit, "engine", None)
     RateLimiter(1, 60, name="disabled")(_request())
+
+
+@pytest.mark.parametrize('remaining, expected', [(60.001, 60), (60, 60), (15.1, 16), (0.1, 1), (-0.1, 1)])
+def test_shared_retry_bounds_with_newer_concurrent_bucket(monkeypatch, remaining, expected):
+    from contextlib import nullcontext
+    from types import SimpleNamespace
+    row = SimpleNamespace(hits=6, remaining=remaining)
+    connection = SimpleNamespace(execute=lambda *args, **kwargs: SimpleNamespace(one=lambda: row))
+    monkeypatch.setattr(ratelimit, 'engine', SimpleNamespace(begin=lambda: nullcontext(connection)))
+    limiter = RateLimiter(5, 60, name='newer-bucket')
+    assert limiter._register_shared('client') == (6, expected)
+    with pytest.raises(HTTPException) as error: limiter(_request())
+    assert error.value.status_code == 429
+    assert error.value.headers['Retry-After'] == str(expected)

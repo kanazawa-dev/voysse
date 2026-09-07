@@ -76,7 +76,9 @@ class RateLimiter:
                         ELSE rate_limit_buckets.expires_at END
                 RETURNING hits, extract(epoch FROM (expires_at - now())) AS remaining
             """), {"key": key, "seconds": self.seconds, "cap": self.times + 1}).one()
-            return row.hits, max(1, math.ceil(row.remaining))
+            # now() is transaction-start time; a concurrently inserted bucket
+            # can be newer than this transaction. Never advertise over one window.
+            return row.hits, max(1, min(self.seconds, math.ceil(row.remaining)))
 
     def __call__(self, request: Request) -> None:
         if not get_settings().rate_limit_enabled:
