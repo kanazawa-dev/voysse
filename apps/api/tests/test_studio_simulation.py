@@ -4,6 +4,7 @@ import pytest
 from sqlalchemy import func, select
 from app.models import Agent, Client, Conversation, UsageRecord, User
 from app.routers import studio_simulation as sim
+from app.services import handoffs
 from app.services.ai import Completion
 from conftest import TestingSession
 
@@ -18,7 +19,7 @@ def setup(authenticated_client, monkeypatch):
              {'source_agent_id': agents[1], 'target_agent_id': None, 'condition': 'Needs human'}]
     assert c.put(url, json={'expected_revision': 0, 'rules': rules}).status_code == 200
     mock = AsyncMock(return_value=Completion('{"rule_index":0,"reason":"Technical question"}', 10, 5))
-    monkeypatch.setattr(sim, 'chat_completion', mock)
+    monkeypatch.setattr(handoffs, 'chat_completion', mock)
     monkeypatch.setattr(sim, 'resolve_agent_credentials', lambda *_: ('https://invalid.example', 'fake'))
     return c, url, agents, mock, {'source_agent_id': agents[0], 'expected_revision': 1, 'message': 'Help with an error'}
 

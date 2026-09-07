@@ -1,7 +1,7 @@
 import uuid
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 
-from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, JSON, LargeBinary, String, Text, UniqueConstraint
+from sqlalchemy import BigInteger, Date, Boolean, DateTime, Float, ForeignKey, Integer, JSON, LargeBinary, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .database import Base
@@ -364,6 +364,9 @@ class SocialEvent(Base):
     status: Mapped[str] = mapped_column(String(30), default="queued", index=True)
     attempts: Mapped[int] = mapped_column(Integer, default=0)
     reply: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # The agent that actually produced `reply`; may differ from the channel's
+    # assigned agent when a live handoff rule routed the turn.
+    responder_name: Mapped[str | None] = mapped_column(String(180), nullable=True)
     last_error: Mapped[str | None] = mapped_column(Text, nullable=True)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
     channel: Mapped[SocialChannel] = relationship()
@@ -586,3 +589,12 @@ class ExecutionTurn(Base):
     transitions: Mapped[list] = mapped_column(JSON, default=list)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc, onupdate=now_utc)
+
+
+class AcquisitionCount(Base):
+    __tablename__ = "acquisition_counts"
+
+    day: Mapped[date] = mapped_column(Date, primary_key=True)
+    source: Mapped[str] = mapped_column(String(80), primary_key=True)
+    event: Mapped[str] = mapped_column(String(16), primary_key=True)
+    count: Mapped[int] = mapped_column(BigInteger, default=0)

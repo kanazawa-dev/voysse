@@ -29,7 +29,7 @@ def test_review_preserves_context_and_blocks_late_completion(review_case, uncert
     c, url, action, payload, (agency, conv, message, agents), turn = review_case
     if uncertain: call(state.settle, agency, conv, turn, 0, uncertain=True)
     data = c.get(url).json()
-    assert data['runtime_enabled'] is False and len(data['items']) == 1
+    assert data['runtime_enabled'] is True and len(data['items']) == 1
     assert 'Context stays here' not in str(data)
     assert data['items'][0]['status'] == ('uncertain' if uncertain else 'running')
     response = c.post(action, json=payload)

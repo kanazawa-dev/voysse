@@ -26,7 +26,7 @@ def test_persist_revision_and_explicit_draft_only(setup):
     assert response.status_code == 200
     data = c.get(url).json()
     assert data['rules'] == payload['rules'] and data['revision'] == 1
-    assert data['state'] == 'draft' and data['runtime_enabled'] is False
+    assert data['state'] == 'draft' and data['runtime_enabled'] is True
     assert data['human_fallback'] is True and data['valid'] is True
     assert c.put(url, json=payload).status_code == 409
     assert 'handoff_draft' not in c.get('/api/clients/' + client_id).json()
@@ -64,7 +64,7 @@ def test_agent_scope_and_later_invalidation(setup):
         db.commit()
     data = c.get(url).json()
     assert not data['valid'] and data['problems'] == ['unavailable_agent']
-    assert data['runtime_enabled'] is False and data['revision'] == 1
+    assert data['runtime_enabled'] is True and data['revision'] == 1
 
 
 def test_agency_and_operator_boundaries(setup):

@@ -2,6 +2,7 @@ import asyncio
 import hashlib
 import hmac
 import json
+import uuid
 from datetime import timedelta
 from unittest.mock import AsyncMock
 
@@ -117,6 +118,33 @@ def test_ambiguous_send_never_retried(setup_social, monkeypatch):
     assert client.post(f"{path}/events/{event['id']}/retry").status_code == 409
     assert not work()
     assert social_worker.send_text.await_count == 1
+
+
+def test_live_handoff_rule_routes_reply_to_target_agent(setup_social, monkeypatch):
+    from app.services import handoffs as handoffs_service
+    from app.models import ConversationRuntime
+
+    client, customer, agent, create = setup_social
+    path = create()
+    specialist = client.post("/api/agents", json={"client_id": customer["id"], "provider": "openai",
+        "model": "gpt-4.1-mini", "name": "Specialist", "instructions": "Handle technical questions"}).json()
+    saved = client.put(f"/api/studio/{customer['id']}/handoffs", json={"expected_revision": 0, "rules": [
+        {"source_agent_id": agent["id"], "target_agent_id": specialist["id"], "condition": "Technical question"},
+    ]})
+    assert saved.status_code == 200, saved.text
+    monkeypatch.setattr(handoffs_service, "chat_completion", AsyncMock(
+        return_value=Completion(text='{"rule_index":0,"reason":"Technical question"}')))
+    monkeypatch.setattr(social_worker, "chat_completion", AsyncMock(return_value=Completion(text="Routed social reply")))
+
+    assert post(client).status_code == 200
+    assert work()
+    assert not work()
+    assert client.get(path + "/events").json()[0]["status"] == "sent"
+    detail = client.get(f"/api/conversations/{client.get('/api/conversations').json()[0]['id']}").json()
+    assert detail["messages"][-1]["sender_name"] == "Specialist"
+    with TestingSession() as db:
+        conversation_id = db.query(ConversationRuntime).one().conversation_id
+        assert db.get(ConversationRuntime, conversation_id).responder_id == uuid.UUID(specialist["id"])
 
 
 def test_old_message_and_attachments_do_not_trigger_ai_reply(setup_social):

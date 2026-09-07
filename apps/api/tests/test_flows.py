@@ -1,5 +1,6 @@
 import asyncio
 import base64
+import uuid
 from unittest.mock import AsyncMock
 
 from fastapi.testclient import TestClient
@@ -693,3 +694,80 @@ def test_whatsapp_channel_inbound_ai_takeover_and_session(authenticated_client: 
     assert reply.json()["messages"][-1]["external_message_id"] == "wa-out-human-1"
     sender.assert_awaited_once()
     assert client.patch(f"/api/conversations/{conversation_id}/mode", json={"mode": "ai"}).json()["mode"] == "ai"
+
+
+def _configure_handoff(client, client_id, source_agent_id, target_agent_id, monkeypatch):
+    from app.services import handoffs as handoffs_service
+    saved = client.put(f"/api/studio/{client_id}/handoffs", json={"expected_revision": 0, "rules": [
+        {"source_agent_id": source_agent_id, "target_agent_id": target_agent_id, "condition": "Technical question"},
+    ]})
+    assert saved.status_code == 200, saved.text
+    monkeypatch.setattr(handoffs_service, "chat_completion", AsyncMock(
+        return_value=ai_service.Completion(text='{"rule_index":0,"reason":"Technical question"}')))
+
+
+def test_dashboard_chat_live_handoff_routes_to_target_agent(authenticated_client: TestClient, monkeypatch):
+    client = authenticated_client
+    customer = client.post("/api/clients", json={"name": "Aurora", "industry": "", "description": "", "general_context": "", "is_active": True}).json()
+    client.put("/api/providers/openai", json={"api_key": "secret"})
+    entry = client.post("/api/agents", json={"client_id": customer["id"], "provider": "openai", "model": "gpt-4.1-mini", "name": "Front Desk", "description": "", "instructions": "", "personality": "", "is_active": True}).json()
+    specialist = client.post("/api/agents", json={"client_id": customer["id"], "provider": "openai", "model": "gpt-4.1-mini", "name": "Specialist", "description": "", "instructions": "", "personality": "", "is_active": True}).json()
+    _configure_handoff(client, customer["id"], entry["id"], specialist["id"], monkeypatch)
+
+    conversation = client.post("/api/conversations", json={"agent_id": entry["id"]}).json()
+    fake_completion = AsyncMock(return_value=ai_service.Completion(text="Routed reply."))
+    monkeypatch.setattr(conversations_router, "run_completion", fake_completion)
+    sent = client.post(f"/api/conversations/{conversation['id']}/messages", json={"content": "I need technical help"})
+    assert sent.status_code == 200, sent.text
+    assert sent.json()["messages"][-1]["sender_name"] == "Specialist"
+
+    from app.models import ConversationRuntime, ExecutionTurn
+    with TestingSession() as db:
+        turn = db.query(ExecutionTurn).first()
+        assert turn.status == "completed" and len(turn.transitions) == 1
+        assert db.get(ConversationRuntime, turn.conversation_id).responder_id == uuid.UUID(specialist["id"])
+
+
+def test_widget_live_handoff_routes_to_target_agent(authenticated_client: TestClient, monkeypatch):
+    client = authenticated_client
+    customer = client.post("/api/clients", json={"name": "Widget Route Co", "industry": "", "description": "", "general_context": "", "is_active": True}).json()
+    client.put("/api/providers/openai", json={"api_key": "secret"})
+    entry = client.post("/api/agents", json={"client_id": customer["id"], "provider": "openai", "model": "gpt-4.1-mini", "name": "Greeter", "widget_enabled": True, "description": "", "instructions": "", "personality": "", "is_active": True}).json()
+    specialist = client.post("/api/agents", json={"client_id": customer["id"], "provider": "openai", "model": "gpt-4.1-mini", "name": "Specialist", "description": "", "instructions": "", "personality": "", "is_active": True}).json()
+    _configure_handoff(client, customer["id"], entry["id"], specialist["id"], monkeypatch)
+
+    monkeypatch.setattr(widget_router, "run_completion", AsyncMock(return_value=ai_service.Completion(text="Routed widget reply.")))
+    sent = client.post(f"/api/widget/{entry['widget_public_id']}/messages", json={"session_id": "s1", "content": "I need technical help"})
+    assert sent.status_code == 200
+    assert sent.json()["reply"] == "Routed widget reply."
+
+    from app.models import ConversationRuntime
+    with TestingSession() as db:
+        conversation_id = db.query(ConversationRuntime).one().conversation_id
+        assert db.get(ConversationRuntime, conversation_id).responder_id == uuid.UUID(specialist["id"])
+    detail = client.get("/api/conversations/inbox").json()[0]
+    assert client.get(f"/api/conversations/{detail['id']}").json()["messages"][-1]["sender_name"] == "Specialist"
+
+
+def test_whatsapp_qr_live_handoff_routes_to_target_agent(authenticated_client: TestClient, monkeypatch):
+    client = authenticated_client
+    customer = client.post("/api/clients", json={"name": "QR Route Co", "industry": "", "description": "", "general_context": "", "is_active": True}).json()
+    client.put("/api/providers/openai", json={"api_key": "secret"})
+    entry = client.post("/api/agents", json={"client_id": customer["id"], "provider": "openai", "model": "gpt-4.1-mini", "name": "Front", "description": "", "instructions": "", "personality": "", "is_active": True}).json()
+    specialist = client.post("/api/agents", json={"client_id": customer["id"], "provider": "openai", "model": "gpt-4.1-mini", "name": "Specialist", "description": "", "instructions": "", "personality": "", "is_active": True}).json()
+    _configure_handoff(client, customer["id"], entry["id"], specialist["id"], monkeypatch)
+    channel = client.put(f"/api/whatsapp/channels/{customer['id']}", json={"agent_id": entry["id"]}).json()
+    headers = {"X-Bridge-Token": get_settings().whatsapp_bridge_token}
+    client.put(f"/api/internal/whatsapp/channels/{channel['id']}/status", headers=headers, json={"status": "connected", "phone_number": "569123"})
+
+    monkeypatch.setattr(whatsapp_inbound_service, "run_completion", AsyncMock(return_value=ai_service.Completion(text="Routed QR reply.")))
+    inbound = client.post(
+        f"/api/internal/whatsapp/channels/{channel['id']}/inbound",
+        headers=headers,
+        json={"external_message_id": "wa-route-1", "source_phone_number": "569123", "remote_jid": "573001112233@s.whatsapp.net", "sender_name": "Ana", "text": "I need technical help"},
+    )
+    assert inbound.status_code == 200, inbound.text
+    event = _drain_qr(client, customer, monkeypatch)
+    assert event["status"] == "sent"
+    stored = client.get(f"/api/conversations/{event['conversation_id']}").json()
+    assert stored["messages"][-1]["sender_name"] == "Specialist"

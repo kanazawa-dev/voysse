@@ -18,6 +18,7 @@ from ..schemas import (
     SendMessageRequest,
 )
 from ..services.tools import run_completion
+from ..services.execution_state import route, settle, settle_safe
 from ..services.knowledge import build_system_prompt, retrieve_knowledge
 from ..services.media import describe_image, transcribe_audio
 from ..services.providers import resolve_agent_credentials, resolve_provider_credentials
@@ -205,19 +206,32 @@ async def _generate_reply(
     agent: Agent,
     credentials: tuple[str, str],
     query: str,
+    message_id: uuid.UUID,
 ) -> Conversation:
-    """Run the agent over the current conversation and store the assistant reply."""
+    """Route the message (applying any live handoff rules) and store the reply."""
+    result = await route(db, agency_id=user.agency_id, conversation=conversation, message_id=message_id,
+        message_text=query, entry_agent=agent, entry_credentials=credentials)
+    if result.skip or result.is_human:
+        return _conversation(db, user, conversation.id)
+    agent, credentials = result.final_agent, result.final_credentials
+
     knowledge = await retrieve_knowledge(db, agent, query)
     refreshed = _conversation(db, user, conversation.id)
     recent = refreshed.messages[-agent.memory_limit:] if agent.memory_limit else []
     history = [{"role": item.role, "content": item.content} for item in recent]
     messages = [{"role": "system", "content": build_system_prompt(agent, knowledge.text)}, *history]
     base_url, api_key = credentials
-    completion = await run_completion(
-        db, agent, base_url, api_key, messages, temperature=agent.temperature, max_tokens=agent.max_tokens
-    )
-    db.refresh(conversation, with_for_update={"of": Conversation})
-    if conversation.mode == "human":
+    try:
+        completion = await run_completion(
+            db, agent, base_url, api_key, messages, temperature=agent.temperature, max_tokens=agent.max_tokens
+        )
+    except HTTPException:
+        if result.turn_id is not None:
+            settle_safe(db, user.agency_id, conversation.id, result.turn_id, result.revision, uncertain=True)
+            db.commit()
+        raise
+    published = result.turn_id is None or settle(db, user.agency_id, conversation.id, result.turn_id, result.revision)
+    if not published:
         record_usage(db, agent.agency_id, agent.id, agent.provider, agent.model.strip(), completion)
         db.commit()
         return _conversation(db, user, conversation.id)
@@ -252,9 +266,10 @@ async def send_message(
     if not conversation.messages:
         conversation.title = content[:80]
     conversation.updated_at = now_utc()
-    db.add(Message(conversation_id=conversation.id, role="user", content=content, sender_type="visitor", sender_name="You"))
+    visitor_message = Message(conversation_id=conversation.id, role="user", content=content, sender_type="visitor", sender_name="You")
+    db.add(visitor_message)
     db.commit()
-    return await _generate_reply(db, user, conversation, agent, credentials, content)
+    return await _generate_reply(db, user, conversation, agent, credentials, content, visitor_message.id)
 
 
 @router.post("/{conversation_id}/media", response_model=ConversationDetail)
@@ -305,9 +320,10 @@ async def send_media_message(
     if not conversation.messages:
         conversation.title = (caption or content)[:80]
     conversation.updated_at = now_utc()
-    db.add(Message(conversation_id=conversation.id, role="user", content=content, sender_type="visitor", sender_name="You"))
+    visitor_message = Message(conversation_id=conversation.id, role="user", content=content, sender_type="visitor", sender_name="You")
+    db.add(visitor_message)
     db.commit()
-    return await _generate_reply(db, user, conversation, agent, credentials, content)
+    return await _generate_reply(db, user, conversation, agent, credentials, content, visitor_message.id)
 
 
 @router.patch("/{conversation_id}/mode", response_model=ConversationDetail)

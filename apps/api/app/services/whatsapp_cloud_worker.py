@@ -122,7 +122,8 @@ async def _locked_work(db, channel_id):
                 event.status, event.error_code = "needs_review", "reply_too_long"
             else:
                 event.reply, event.status = result.reply, "ready"
-                event.reply_metadata = {"sources": result.sources, "tool_calls": result.tool_calls}
+                event.reply_metadata = {"sources": result.sources, "tool_calls": result.tool_calls,
+                                         "responder_name": result.responder_name}
             if event.status == "needs_review":
                 require_human_review(db, event)
             event.updated_at = now_utc()
@@ -165,7 +166,7 @@ async def _locked_work(db, channel_id):
             if not external:
                 raise ValueError("Missing message ID")
             db.add(Message(conversation_id=conversation.id, role="assistant", content=event.reply,
-                           sender_type="ai", sender_name=channel.agent.name, external_message_id=external,
+                           sender_type="ai", sender_name=event.reply_metadata.get("responder_name") or channel.agent.name, external_message_id=external,
                            sources=event.reply_metadata.get("sources", []), tool_calls=event.reply_metadata.get("tool_calls")))
             event.status, event.error_code = "sent", None
             conversation.updated_at = now_utc()

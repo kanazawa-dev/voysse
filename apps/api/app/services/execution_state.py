@@ -1,12 +1,17 @@
-"""Internal transaction protocol. No live transport invokes it until adapted.
+"""Internal transaction protocol, driven by route() for real message handling.
 
 Callers own commit/rollback. Commit a NEW claim before external work; never replay
 provider/tools for an existing claim. No lease expiry or uncertain-work retry.
 """
+import uuid
+from dataclasses import dataclass
+
 from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.exc import OperationalError
 from ..models import Agency, Agent, Client, Conversation, ConversationRuntime, ExecutionTurn, Message
+from .handoffs import Draft, classify_hop, problems
+from .providers import resolve_agent_credentials
 
 
 def locked(db, agency_id, conversation_id):
@@ -120,3 +125,91 @@ def settle(db, agency_id, conversation_id, turn_id, expected_revision, *, uncert
             runtime.responder_id = None
     db.flush()
     return turn.status == "completed"
+
+
+def settle_safe(db, agency_id, conversation_id, turn_id, expected_revision, *, uncertain=False):
+    """settle(), but for system-facing surfaces (widget/channels) that must
+    never raise into a public or unattended caller. A race that settle() would
+    normally report as 409 is treated the same as "not published"."""
+    try:
+        return settle(db, agency_id, conversation_id, turn_id, expected_revision, uncertain=uncertain)
+    except HTTPException:
+        db.rollback()
+        return False
+
+
+_TURN_NAMESPACE = uuid.UUID("6f6d0e2a-6e2a-4b8a-9a8e-2f2a2b6f6a1e")
+
+
+@dataclass
+class RouteResult:
+    turn_id: uuid.UUID | None
+    revision: int | None
+    final_agent: Agent | None
+    final_credentials: tuple | None
+    is_human: bool
+    skip: bool  # not eligible right now (busy/duplicate/human) or already handled; never generate a reply
+
+
+async def route(db, *, agency_id, conversation, message_id, message_text, entry_agent, entry_credentials, language="es") -> RouteResult:
+    """If the client has configured handoff rules for the current responder,
+    claim a durable execution turn and apply them for real — hopping between
+    agents or ending in human attention — before the caller generates a reply.
+    ``entry_agent``/``entry_credentials`` must already be validated as ready by
+    the caller (this is not re-checked for the first hop).
+
+    With no configured rules for the entry agent, this never claims a turn at
+    all (``turn_id`` is None): identical to today's single-agent behavior,
+    including each channel's own retry-after-failure semantics, for any client
+    that hasn't drawn handoff rules from this agent.
+    """
+    client = db.get(Client, conversation.client_id)
+    stored = dict(client.handoff_draft or {})
+    stored.pop("revision", None)
+    draft = Draft.model_validate(stored)
+    rules = [] if problems(db, agency_id, client, draft) else draft.model_dump(mode="json")["rules"]
+    if not any(rule["source_agent_id"] == str(entry_agent.id) for rule in rules):
+        return RouteResult(None, None, entry_agent, entry_credentials, False, False)
+
+    turn_id = uuid.uuid5(_TURN_NAMESPACE, str(message_id))
+    runtime = db.get(ConversationRuntime, conversation.id)
+    expected_revision = runtime.revision if runtime else 0
+    try:
+        turn, created = claim(db, agency_id, conversation.id, turn_id, message_id, expected_revision, max_hops=draft.max_hops)
+        db.commit()
+    except HTTPException:
+        db.rollback()
+        return RouteResult(None, None, None, None, False, True)
+    if not created:
+        return RouteResult(turn.id, expected_revision, None, None, False, True)
+
+    max_hops, turn_id = turn.max_hops, turn.id
+    current_id, current_agent, credentials = entry_agent.id, entry_agent, entry_credentials
+    revision, visited, hop = expected_revision, {str(entry_agent.id)}, 0
+    while True:
+        candidates = {i: rule for i, rule in enumerate(rules) if rule["source_agent_id"] == str(current_id)}
+        if not candidates:
+            return RouteResult(turn_id, revision, current_agent, credentials, False, False)
+        classification = await classify_hop(db, agency_id=agency_id, agent_id=current_id,
+            provider=current_agent.provider, model=current_agent.model.strip(), credentials=credentials,
+            candidates=candidates, message=message_text, language=language)
+        db.commit()  # Account for the call even when the result ends in human attention.
+        # "matched" can legitimately target None (an explicit human-attention rule).
+        target_id = uuid.UUID(classification["target_agent_id"]) if classification["target_agent_id"] else None
+        if target_id is not None and (str(target_id) in visited or hop >= max_hops):
+            target_id = None  # Graceful human fallback instead of transfer()'s hard cycle/hop error.
+        reason = (classification.get("reason") or "No matching rule; human attention")[:500]
+        entry, _ = transfer(db, agency_id, conversation.id, turn_id, uuid.uuid4(), target_id, revision, reason)
+        db.commit()
+        revision = entry["revision"]
+        if target_id is None:
+            return RouteResult(turn_id, revision, None, None, True, False)
+        hop += 1
+        current_id = target_id
+        visited.add(str(current_id))
+        current_agent = db.get(Agent, current_id, populate_existing=True)
+        credentials = resolve_agent_credentials(db, current_agent) if current_agent and current_agent.is_active else None
+        if not current_agent or not current_agent.is_active or not credentials or not current_agent.model.strip():
+            entry, _ = transfer(db, agency_id, conversation.id, turn_id, uuid.uuid4(), None, revision, "Routed agent is not ready")
+            db.commit()
+            return RouteResult(turn_id, entry["revision"], None, None, True, False)

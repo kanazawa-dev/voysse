@@ -42,7 +42,7 @@ export function ExecutionPanel({ data }: { data: StudioGraph }) {
   }
   return <section className={`${styles.panel} ${styles.execution}`} data-execution-panel aria-labelledby="execution-title">
     <h2 id="execution-title">{es ? 'Revisión de ejecuciones' : 'Execution review'}</h2>
-    <p>{es ? 'Las derivaciones reales aún no están activadas. Este registro no controla los canales actuales ni muestra las simulaciones.' : 'Live handoffs are not enabled yet. This ledger does not control current channels or show simulations.'}</p>
+    <p>{es ? 'Registro real de ejecuciones: mensajes, medios, widget y canales. No muestra las pruebas del simulador.' : 'Live execution ledger for messages, media, widget and channels. This does not show simulator tests.'}</p>
     <div className={styles.actions}><Button variant="outline" disabled={busy || !!selected} onClick={() => { setNotice(''); void load(); }}>{busy ? (es ? 'Procesando…' : 'Working…') : (es ? 'Cargar turnos' : 'Load turns')}</Button></div>
     {error && <p role="alert">{error}</p>}{notice && <p role="status">{notice}</p>}
     {listing && <>

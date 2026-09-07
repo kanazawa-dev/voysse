@@ -108,7 +108,8 @@ async def _locked_work(db, channel_id):
                 finish(db, event, "needs_review", "reply_too_long")
             else:
                 event.reply = result.reply
-                event.reply_metadata = {"sources": result.sources, "tool_calls": result.tool_calls}
+                event.reply_metadata = {"sources": result.sources, "tool_calls": result.tool_calls,
+                                         "responder_name": result.responder_name}
                 finish(db, event, "ready")
         except Exception:
             db.rollback()
@@ -147,7 +148,7 @@ async def _locked_work(db, channel_id):
         if not isinstance(external, str) or not external.strip() or len(external) > 255:
             raise ValueError("Missing confirmation")
         db.add(Message(conversation_id=conversation.id, role="assistant", content=event.reply,
-                       sender_type="ai", sender_name=channel.agent.name, external_message_id=external,
+                       sender_type="ai", sender_name=event.reply_metadata.get("responder_name") or channel.agent.name, external_message_id=external,
                        sources=event.reply_metadata.get("sources", []), tool_calls=event.reply_metadata.get("tool_calls")))
         conversation.updated_at = now_utc()
         finish(db, event, "sent")

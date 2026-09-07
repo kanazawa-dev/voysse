@@ -51,7 +51,7 @@ export function HandoffEditor({ data }: { data: StudioGraph }) {
         expected_revision: draft!.revision, rules: draft!.rules, max_hops: draft!.max_hops, human_fallback: true,
       }) } : undefined);
       setDraft(value); setDirty(false); setPath([]); setFinished(false);
-      setNotice(save ? (es ? 'Borrador guardado. No se activaron derivaciones.' : 'Draft saved. Handoffs remain inactive.') : '');
+      setNotice(save ? (es ? 'Guardado. Las conexiones válidas ya enrutan mensajes reales.' : 'Saved. Valid connections now route real messages.') : '');
     } catch (err) {
       setError(messageFrom(err) + (es ? ' Tus cambios se conservan; recarga para resolver conflictos.' : ' Your edits are preserved; reload to resolve conflicts.'));
     } finally { lock.current = false; setBusy(false); }
@@ -62,7 +62,7 @@ export function HandoffEditor({ data }: { data: StudioGraph }) {
   const invalid = draft?.rules.some(r => !available(r.source_agent_id) || !available(r.target_agent_id));
   return <section className={styles.panel} data-handoff-editor aria-labelledby="handoff-title">
     <h2 id="handoff-title">{es ? 'Derivaciones entre agentes' : 'Agent handoffs'}</h2>
-    <p>{es ? 'Borrador · Sin activar. Define conexiones sin cambiar conversaciones reales.' : 'Draft · Inactive. Define connections without changing real conversations.'}</p>
+    <p>{es ? 'Estas conexiones enrutan mensajes reales en cuanto las guardas. Sin conexiones, cada agente sigue respondiendo solo.' : 'These connections route real messages as soon as you save them. With no connections, each agent keeps answering on its own.'}</p>
     {error && <p role="alert">{error}</p>}
     {notice && <p role="status">{notice}</p>}
     {!draft ? <Button variant="outline" disabled={busy} onClick={() => void sync(false)}>{es ? 'Cargar borrador' : 'Load draft'}</Button> : <>

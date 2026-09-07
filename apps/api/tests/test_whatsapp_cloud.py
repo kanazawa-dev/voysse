@@ -3,14 +3,18 @@ import time
 import hashlib
 import hmac
 import json
+import uuid
 from unittest.mock import AsyncMock
 
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
+from sqlalchemy import select
 
+from app.models import ConversationRuntime, ExecutionTurn
 from app.routers import whatsapp_cloud as whatsapp_cloud_router
 from app.routers import whatsapp_cloud_webhook as webhook_router
 from app.services import ai as ai_service
+from app.services import handoffs as handoffs_service
 from app.services import whatsapp_cloud_worker as cloud_worker
 from conftest import TestingSession
 from app.services import whatsapp as whatsapp_service
@@ -208,6 +212,38 @@ def test_webhook_text_message_creates_conversation_and_replies(authenticated_cli
     assert _post_signed(client, channel["id"], payload).status_code == 200
     assert fake_completion.await_count == 1
     assert fake_send.await_count == 1
+
+
+def test_live_handoff_rule_routes_reply_to_target_agent(authenticated_client: TestClient, monkeypatch):
+    client = authenticated_client
+    customer, agent, channel = _setup_channel(client)
+    specialist = client.post(
+        "/api/agents",
+        json={"client_id": customer["id"], "provider": "openai", "model": "gpt-4.1-mini",
+              "name": "Specialist", "description": "", "instructions": "", "personality": "", "is_active": True},
+    ).json()
+    saved = client.put(f"/api/studio/{customer['id']}/handoffs", json={"expected_revision": 0, "rules": [
+        {"source_agent_id": agent["id"], "target_agent_id": specialist["id"], "condition": "Technical question"},
+    ]})
+    assert saved.status_code == 200, saved.text
+
+    monkeypatch.setattr(handoffs_service, "chat_completion", AsyncMock(
+        return_value=ai_service.Completion(text='{"rule_index":0,"reason":"Technical question"}')))
+    fake_completion = AsyncMock(return_value=ai_service.Completion(text="Routed to the specialist."))
+    monkeypatch.setattr(whatsapp_inbound_service, "run_completion", fake_completion)
+    fake_send = AsyncMock(return_value="wamid.out-2")
+    monkeypatch.setattr(cloud_worker, "send_text", fake_send)
+
+    payload = _webhook_payload([{"from": "5730011", "id": "wamid.route-1", "type": "text", "text": {"body": "I need technical help"}}])
+    assert _post_signed(client, channel["id"], payload).status_code == 200
+
+    conversation = client.get("/api/conversations").json()[0]
+    detail = client.get(f"/api/conversations/{conversation['id']}").json()
+    assert detail["messages"][-1]["sender_name"] == "Specialist"
+    with TestingSession() as db:
+        turn = db.scalar(select(ExecutionTurn))
+        assert turn.status == "completed" and len(turn.transitions) == 1
+        assert db.get(ConversationRuntime, turn.conversation_id).responder_id == uuid.UUID(specialist["id"])
 
 
 def test_human_takeover_during_generation_suppresses_reply(authenticated_client: TestClient, monkeypatch):

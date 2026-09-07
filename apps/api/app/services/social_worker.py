@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 
 from ..models import Agency, Conversation, Message, SocialChannel, SocialEvent, now_utc
 from .ai import chat_completion
+from .execution_state import route, settle_safe
 from .knowledge import build_system_prompt, retrieve_knowledge
 from .providers import resolve_agent_credentials
 from .social import ensure_send_allowed, send_text
@@ -65,10 +66,14 @@ async def work_once(db: Session) -> bool:
     event.conversation_id = conversation.id
     existing = db.scalar(select(Message.id).where(Message.conversation_id == conversation.id,
         Message.external_message_id == event.external_id))
-    if not existing:
-        db.add(Message(conversation_id=conversation.id, role="user", content=event.text,
-            sender_type="visitor", external_message_id=event.external_id, created_at=event.received_at))
+    if existing:
+        message_id = existing
+    else:
+        visitor_message = Message(conversation_id=conversation.id, role="user", content=event.text,
+            sender_type="visitor", external_message_id=event.external_id, created_at=event.received_at)
+        db.add(visitor_message)
         db.flush()
+        message_id = visitor_message.id
     conversation.updated_at = now_utc()
     if not event.supported:
         conversation.mode = "human"
@@ -76,6 +81,7 @@ async def work_once(db: Session) -> bool:
         event.status = "ignored"
         db.commit()
         return True
+    result = None
     try:
         ensure_send_allowed(db, channel, conversation)
         agent = channel.agent
@@ -83,6 +89,13 @@ async def work_once(db: Session) -> bool:
         if not agent.is_active or not credentials or not agent.model.strip():
             raise HTTPException(409, "Agent is not ready. Configure its model and provider key.")
         if not event.reply:
+            result = await route(db, agency_id=channel.agency_id, conversation=conversation, message_id=message_id,
+                message_text=event.text, entry_agent=agent, entry_credentials=credentials)
+            if result.skip or result.is_human:
+                event.status = "ignored"
+                db.commit()
+                return True
+            agent, credentials = result.final_agent, result.final_credentials
             knowledge = await retrieve_knowledge(db, agent, event.text)
             history = db.scalars(select(Message).where(Message.conversation_id == conversation.id)
                 .order_by(Message.created_at.desc()).limit(agent.memory_limit or 30)).all()
@@ -94,16 +107,22 @@ async def work_once(db: Session) -> bool:
             record_usage(db, agent.agency_id, agent.id, agent.provider, agent.model.strip(), completion)
             if not completion.text.strip() or len(completion.text) > 1000:
                 raise HTTPException(409, "Agent response is empty or exceeds the social channel limit. Human reply required.")
-            event.reply = completion.text
+            event.reply, event.responder_name = completion.text, agent.name
         # Lock only after slow generation: a completed takeover suppresses the reply.
-        db.refresh(conversation, with_for_update={"of": Conversation})
-        if conversation.mode == "human":
+        if result and result.turn_id is not None:
+            published = settle_safe(db, channel.agency_id, conversation.id, result.turn_id, result.revision)
+        else:
+            db.refresh(conversation, with_for_update={"of": Conversation})
+            published = conversation.mode != "human"
+        if not published:
             event.status = "ignored"
             db.commit()
             return True
         event.status, event.last_error = "ready", None
         db.commit()  # Generated text is durable before attempting any external send.
     except Exception:
+        if result and result.turn_id is not None:
+            settle_safe(db, channel.agency_id, conversation.id, result.turn_id, result.revision, uncertain=True)
         # No secret-bearing exception strings. Committing preserves the inbound message.
         event.status = "failed"
         event.last_error = "Reply preparation failed. Check agent configuration and reply from Inbox. No message was sent."
@@ -136,7 +155,7 @@ async def work_once(db: Session) -> bool:
             ensure_send_allowed(db, channel, conversation)
             external = await send_text(channel, event.sender_id, event.reply)
             db.add(Message(conversation_id=conversation.id, role="assistant", content=event.reply,
-                sender_type="ai", sender_name=channel.agent.name, external_message_id=external))
+                sender_type="ai", sender_name=event.responder_name or channel.agent.name, external_message_id=external))
             conversation.updated_at = now_utc()
             event.status = "sent"
     except Exception:

@@ -15,6 +15,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
 from ..models import Agent, Conversation, Message, now_utc
+from .execution_state import route, settle_safe
 from .knowledge import build_system_prompt, retrieve_knowledge
 from .media import describe_image, transcribe_audio
 from .providers import resolve_agent_credentials, resolve_provider_credentials
@@ -43,6 +44,9 @@ class InboundResult:
     outbound_message_id: uuid.UUID | None = None
     sources: list = field(default_factory=list)
     tool_calls: list | None = None
+    # The agent that actually produced ``reply`` -- may differ from the
+    # channel's assigned agent when a live handoff rule routed the turn.
+    responder_name: str | None = None
 
 
 def _media_placeholder(kind: str) -> str:
@@ -159,6 +163,14 @@ async def process_inbound(
         db.commit()
         return InboundResult(accepted=True, conversation_id=conversation.id, mode="ai")
 
+    result = await route(db, agency_id=channel.agency_id, conversation=conversation, message_id=visitor_message.id,
+        message_text=content, entry_agent=agent, entry_credentials=credentials)
+    if result.skip:
+        return InboundResult(accepted=True, conversation_id=conversation.id, mode="ai")
+    if result.is_human:
+        return InboundResult(accepted=True, conversation_id=conversation.id, mode="human")
+    agent, credentials = result.final_agent, result.final_credentials
+
     knowledge = await retrieve_knowledge(db, agent, content)
     db.refresh(conversation)
     history = db.scalars(
@@ -184,15 +196,15 @@ async def process_inbound(
             max_tokens=agent.max_tokens,
         )
     except Exception:
+        if result.turn_id is not None:
+            settle_safe(db, channel.agency_id, conversation.id, result.turn_id, result.revision, uncertain=True)
         channel.last_error = "Message received, but reply preparation failed. Check agent configuration."
         channel.updated_at = now_utc()
         db.commit()
         return InboundResult(accepted=True, conversation_id=conversation.id, mode="ai")
 
-    # Refresh after the provider await: an operator may have taken over while
-    # generation was in progress. Lock until the decision is persisted.
-    db.refresh(conversation, with_for_update={"of": Conversation})
-    if conversation.mode == "human":
+    published = result.turn_id is None or settle_safe(db, channel.agency_id, conversation.id, result.turn_id, result.revision)
+    if not published:
         record_usage(db, agent.agency_id, agent.id, agent.provider, agent.model.strip(), completion)
         db.commit()
         return InboundResult(accepted=True, conversation_id=conversation.id, mode="human")
@@ -218,4 +230,5 @@ async def process_inbound(
         mode="ai",
         outbound_message_id=outbound.id if persist_reply else None,
         sources=knowledge.sources, tool_calls=completion.tool_calls,
+        responder_name=agent.name,
     )
