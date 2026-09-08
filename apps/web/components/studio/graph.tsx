@@ -82,6 +82,10 @@ export function ConnectionGraph({ data, selected, onSelect, onConnect, onAgentCo
     return `M${f.x} ${f.y} C${c1.x} ${c1.y} ${c2.x} ${c2.y} ${t.x} ${t.y}`;
   };
   const canLink = (id: string) => id.startsWith('agent:') || (id.startsWith('channel:') && !!onConnect);
+  // A connector handle on every side, not just the right, so dragging a link toward
+  // a node above/below/left of the source has a natural starting point too.
+  const SIDE_LABEL_ES: Record<Side, string> = { top: 'arriba', right: 'derecha', bottom: 'abajo', left: 'izquierda' };
+  const SIDE_LABEL_EN: Record<Side, string> = { top: 'top', right: 'right', bottom: 'bottom', left: 'left' };
   function toMap(clientX: number, clientY: number) {
     const rect = map.current?.getBoundingClientRect();
     return rect ? { x: (clientX - rect.left) / zoom, y: (clientY - rect.top) / zoom } : { x: 0, y: 0 };
@@ -127,32 +131,40 @@ export function ConnectionGraph({ data, selected, onSelect, onConnect, onAgentCo
         <span className={styles.nodeIcon}>{icon}</span><strong title={title}>{title}</strong>
         <small title={subtitle}>{subtitle}</small>
       </button>
-      {linkable && <span data-connector-handle data-studio-node={id} className={styles.connector}
-        role="button" tabIndex={0} aria-label={es ? `Conectar desde ${title}` : `Connect from ${title}`}
-        onKeyDown={event => {
-          if (event.key !== 'Enter' && event.key !== ' ') return;
-          event.preventDefault();
-          setDrag({ kind: 'link', from: id, x: p.x + 260, y: p.y + 44 });
-        }}
-        onPointerDown={event => {
-          event.stopPropagation(); event.preventDefault();
-          event.currentTarget.setPointerCapture(event.pointerId);
-          const at = toMap(event.clientX, event.clientY);
-          setDrag({ kind: 'link', from: id, x: at.x, y: at.y });
-        }}
-        onPointerMove={event => {
-          if (drag?.kind !== 'link') return;
-          event.stopPropagation();
-          setDrag({ ...drag, ...toMap(event.clientX, event.clientY) });
-        }}
-        onPointerUp={event => {
-          event.stopPropagation();
-          if (drag?.kind === 'link') finishLinkTo(drag.from, targetAt(event.clientX, event.clientY));
-          setDrag(null);
-        }}
-        onLostPointerCapture={() => setDrag(null)} />}
+      {linkable && handle(id, p, title, 'top')}
+      {linkable && handle(id, p, title, 'right')}
+      {linkable && handle(id, p, title, 'bottom')}
+      {linkable && handle(id, p, title, 'left')}
     </div>;
   };
+  function handle(id: string, p: { x: number; y: number }, title: string, side: Side) {
+    const anchor = anchorSide(p, side);
+    const sideLabel = es ? SIDE_LABEL_ES[side] : SIDE_LABEL_EN[side];
+    return <span key={side} data-connector-handle data-side={side} data-studio-node={id} className={styles.connector}
+          role="button" tabIndex={0} aria-label={es ? `Conectar desde ${title} (${sideLabel})` : `Connect from ${title} (${sideLabel})`}
+          onKeyDown={event => {
+            if (event.key !== 'Enter' && event.key !== ' ') return;
+            event.preventDefault();
+            setDrag({ kind: 'link', from: id, x: anchor.x, y: anchor.y });
+          }}
+          onPointerDown={event => {
+            event.stopPropagation(); event.preventDefault();
+            event.currentTarget.setPointerCapture(event.pointerId);
+            const at = toMap(event.clientX, event.clientY);
+            setDrag({ kind: 'link', from: id, x: at.x, y: at.y });
+          }}
+          onPointerMove={event => {
+            if (drag?.kind !== 'link') return;
+            event.stopPropagation();
+            setDrag({ ...drag, ...toMap(event.clientX, event.clientY) });
+          }}
+          onPointerUp={event => {
+            event.stopPropagation();
+            if (drag?.kind === 'link') finishLinkTo(drag.from, targetAt(event.clientX, event.clientY));
+            setDrag(null);
+          }}
+          onLostPointerCapture={() => setDrag(null)} />;
+  }
   const linking = drag?.kind === 'link';
   return <section className={styles.graph} aria-label={t.title} onKeyDown={e => { if (e.key === 'Escape') setDrag(null); }}>
     <div className={styles.toolbar}>
@@ -169,7 +181,7 @@ export function ConnectionGraph({ data, selected, onSelect, onConnect, onAgentCo
       onPointerMove={e => { if (pan.current) { e.currentTarget.scrollLeft = pan.current.left + pan.current.x - e.clientX; e.currentTarget.scrollTop = pan.current.top + pan.current.y - e.clientY; } }}
       onPointerUp={() => { pan.current = null; }} onPointerCancel={() => { pan.current = null; }} onLostPointerCapture={() => { pan.current = null; }}>
       <div className={styles.extent} style={{ width: width * zoom, height: height * zoom, '--canvas-width': `${width * zoom}px`, '--canvas-height': `${height * zoom}px` } as React.CSSProperties}>
-        <div ref={map} className={styles.map} style={{ width, height, transform: `scale(${zoom})`, '--map-width': `${width}px`, '--map-height': `${height}px`, '--map-zoom': zoom } as React.CSSProperties}>
+        <div ref={map} className={styles.map} data-linking={linking || undefined} style={{ width, height, transform: `scale(${zoom})`, '--map-width': `${width}px`, '--map-height': `${height}px`, '--map-zoom': zoom } as React.CSSProperties}>
           <svg className={styles.edges} width={width} height={height}>
             <defs><marker id={arrow} markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6" fill="currentColor" stroke="none" /></marker></defs>
             {data.channels.map((channel, index) => {
