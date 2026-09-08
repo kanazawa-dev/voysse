@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { useParams, usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, Plus, RefreshCw } from 'lucide-react';
+import { BloubAvatar } from '@/components/bloub-avatar';
 import { api, messageFrom } from '@/lib/api';
 import { useLanguage } from '@/lib/i18n';
 import { Button } from '@/components/ui/button';
@@ -76,7 +77,7 @@ function ClientStudio({ id }: { id: string }) {
   return <div className={styles.workspace} data-studio-workspace data-studio-busy={busy}>
     <ClientPicker current={id} />
     <Link href={`/clients/${id}`} className="inline-flex items-center gap-2 text-sm"><ArrowLeft size={16} />{t.back}</Link>
-    <header className={styles.header}><div><small>{data?.client.name}</small><h1>{t.title}</h1><p>{t.intro}</p></div>
+    <header className={styles.header}><div><small>{data?.client.name}</small><div className="flex items-center gap-2"><BloubAvatar size={30} seed="voysse" mood="idle" animated cycleShapes cycleExpressions followPointer label="Voxy" /><h1>{t.title}</h1></div><p>{t.intro}</p></div>
       <div className={styles.actions}><Button variant="outline" disabled={busy} onClick={() => setRevision(v => v + 1)}><RefreshCw />{t.refresh}</Button>
         <Button disabled={busy} onClick={() => setSelected('new')}><Plus />{t.add}</Button></div></header>
     {error && <p role="alert">{error}</p>}

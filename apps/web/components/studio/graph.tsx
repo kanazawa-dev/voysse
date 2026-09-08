@@ -2,7 +2,8 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { useLanguage } from '@/lib/i18n';
 import { useCanvasLayout } from './layout';
-import { Bot, Globe2, Radio, ZoomIn, ZoomOut } from 'lucide-react';
+import { BloubAvatar } from '@/components/bloub-avatar';
+import { Globe2, Radio, ZoomIn, ZoomOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { Rule } from './handoffs';
 import type { StudioCopy } from './copy';
@@ -52,6 +53,34 @@ export function ConnectionGraph({ data, selected, onSelect, onConnect, onAgentCo
   const width = Math.max(widgets.length ? 936 : hasHandoffs ? 700 : 620, ...visiblePositions.map(p => p.x + (hasHandoffs ? 360 : 280)));
   const height = Math.max(Math.max(4, data.agents.length) * 112 + 100, ...visiblePositions.map(p => p.y + 108));
   const edge = (from: { x: number; y: number }, to: { x: number; y: number }) => `M${from.x + 260} ${from.y + 44} C${from.x + 292} ${from.y + 44} ${to.x - 32} ${to.y + 44} ${to.x} ${to.y + 44}`;
+  // Handoff rules connect arbitrary agent pairs (often stacked in the same column), so
+  // the exit/entry side is picked from whichever side actually faces the other node
+  // instead of always leaving from the right, which used to draw a big loop-back curve
+  // for anything above/below the source.
+  const NODE_W = 260, NODE_H = 88, SIDE_OFFSET = 56;
+  type Side = 'left' | 'right' | 'top' | 'bottom';
+  const anchorSide = (node: { x: number; y: number }, side: Side) => (
+    side === 'right' ? { x: node.x + NODE_W, y: node.y + NODE_H / 2 }
+    : side === 'left' ? { x: node.x, y: node.y + NODE_H / 2 }
+    : side === 'bottom' ? { x: node.x + NODE_W / 2, y: node.y + NODE_H }
+    : { x: node.x + NODE_W / 2, y: node.y }
+  );
+  const pickSides = (from: { x: number; y: number }, to: { x: number; y: number }): [Side, Side] => {
+    const dx = (to.x + NODE_W / 2) - (from.x + NODE_W / 2), dy = (to.y + NODE_H / 2) - (from.y + NODE_H / 2);
+    return Math.abs(dx) > Math.abs(dy) ? (dx >= 0 ? ['right', 'left'] : ['left', 'right']) : (dy >= 0 ? ['bottom', 'top'] : ['top', 'bottom']);
+  };
+  const push = (side: Side, point: { x: number; y: number }) => (
+    side === 'right' ? { x: point.x + SIDE_OFFSET, y: point.y }
+    : side === 'left' ? { x: point.x - SIDE_OFFSET, y: point.y }
+    : side === 'bottom' ? { x: point.x, y: point.y + SIDE_OFFSET }
+    : { x: point.x, y: point.y - SIDE_OFFSET }
+  );
+  const smartEdge = (from: { x: number; y: number }, to: { x: number; y: number }) => {
+    const [fromSide, toSide] = pickSides(from, to);
+    const f = anchorSide(from, fromSide), t = anchorSide(to, toSide);
+    const c1 = push(fromSide, f), c2 = push(toSide, t);
+    return `M${f.x} ${f.y} C${c1.x} ${c1.y} ${c2.x} ${c2.y} ${t.x} ${t.y}`;
+  };
   const canLink = (id: string) => id.startsWith('agent:') || (id.startsWith('channel:') && !!onConnect);
   function toMap(clientX: number, clientY: number) {
     const rect = map.current?.getBoundingClientRect();
@@ -153,18 +182,20 @@ export function ConnectionGraph({ data, selected, onSelect, onConnect, onAgentCo
               const a = data.agents.findIndex(a => a.id === rule.source_agent_id), b = data.agents.findIndex(a => a.id === rule.target_agent_id);
               if (a < 0 || b < 0) return null;
               const from = point(`agent:${rule.source_agent_id}`, 340, a), to = point(`agent:${rule.target_agent_id}`, 340, b);
-              const bend = Math.max(from.x, to.x) + 320;
               const label = `${data.agents[a].name} → ${data.agents[b].name} · ${es ? 'Borrador' : 'Draft'}: ${rule.condition || (es ? 'Falta condición' : 'Condition required')}`;
               return <path key={index} className={styles.handoffEdge} data-studio-handoff-edge={index} role="button" tabIndex={0} aria-label={label} markerEnd={`url(#${arrow})`} strokeDasharray="6 4"
                 onClick={() => onRuleSelect?.(index)} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onRuleSelect?.(index); } }}
-                d={`M${from.x + 260} ${from.y + 44} C${bend} ${from.y + 44} ${bend} ${to.y + 44} ${to.x + 260} ${to.y + 44}`}><title>{label}</title></path>;
+                d={smartEdge(from, to)}><title>{label}</title></path>;
             })}
             {widgets.map(({ agent, index }) => <path key={agent.id} data-studio-widget-edge={agent.id} d={edge(point(`agent:${agent.id}`, 340, index), point(`widget:${agent.id}`, 656, index))} />)}
             {drag?.kind === 'link' && (() => {
               const from = drag.from.startsWith('agent:')
                 ? point(drag.from, 340, data.agents.findIndex(agent => `agent:${agent.id}` === drag.from))
                 : point(drag.from, 24, data.channels.findIndex(channel => `channel:${channel.kind}` === drag.from));
-              return <path data-studio-link-preview className={styles.linkPreview} d={`M${from.x + 260} ${from.y + 44} L${drag.x} ${drag.y}`} />;
+              const dx = drag.x - (from.x + NODE_W / 2), dy = drag.y - (from.y + NODE_H / 2);
+              const side: Side = Math.abs(dx) > Math.abs(dy) ? (dx >= 0 ? 'right' : 'left') : (dy >= 0 ? 'bottom' : 'top');
+              const f = anchorSide(from, side);
+              return <path data-studio-link-preview className={styles.linkPreview} d={`M${f.x} ${f.y} L${drag.x} ${drag.y}`} />;
             })()}
           </svg>
           <div className={styles.column} aria-label={t.channels}>{data.channels.map((channel, index) => node(
@@ -172,7 +203,7 @@ export function ConnectionGraph({ data, selected, onSelect, onConnect, onAgentCo
             `${channelStatus(channel, t)} · ${data.agents.find(a => a.id === channel.agent_id)?.name || t.none}`, <Radio size={18} />,
           ))}</div>
           <div className={styles.column} aria-label={t.agents}>{data.agents.map((agent, index) => node(
-            `agent:${agent.id}`, 340, index, agent.name, agent.is_active ? t.active : t.inactive, <Bot size={18} />,
+            `agent:${agent.id}`, 340, index, agent.name, agent.is_active ? t.active : t.inactive, <BloubAvatar size={18} seed={agent.id} animated={false} />,
           ))}</div>
           <div className={styles.column} aria-label={t.widgets}>{widgets.map(({ agent, index }) => node(
             `widget:${agent.id}`, 656, index, `${t.widgets} · ${agent.name}`, agent.widget_enabled ? t.active : t.disabled, <Globe2 size={18} />,

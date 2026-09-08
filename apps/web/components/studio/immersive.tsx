@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { X, ChevronDown } from 'lucide-react';
 import { useLanguage } from '@/lib/i18n';
+import { BloubAvatar } from '@/components/bloub-avatar';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { LanguageSwitcher } from '@/components/language-switcher';
@@ -19,7 +20,9 @@ export function ImmersiveStudio({ id, name, panel, setPanel, actions, graph, ins
   function close() { setPanel(''); trigger.current?.focus(); }
   return <div className={styles.immersive} data-studio-workspace data-studio-busy={busy} data-immersive-studio>
     <header className={styles.canvasHeader}>
-      <Link href="/" aria-label={es ? 'Volver al dashboard' : 'Back to dashboard'}>Voysse <strong>Studio</strong></Link>
+      <Link href="/" aria-label={es ? 'Volver al dashboard' : 'Back to dashboard'} className="inline-flex items-center gap-2">
+        <BloubAvatar size={26} seed="voysse" mood="idle" animated cycleShapes cycleExpressions followPointer label="Voxy" />Voysse <strong>Studio</strong>
+      </Link>
       <Button variant="outline" aria-expanded={picker} onClick={() => setPicker(!picker)}>{name || (es ? 'Cliente' : 'Client')}<ChevronDown /></Button>
       <div className={styles.canvasActions}>{actions}<LanguageSwitcher /><ThemeToggle /></div>
     </header>
