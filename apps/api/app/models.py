@@ -1,7 +1,10 @@
 import uuid
 from datetime import date, datetime, timezone
 
-from sqlalchemy import BigInteger, Date, Boolean, DateTime, Float, ForeignKey, Integer, JSON, LargeBinary, String, Text, UniqueConstraint
+from sqlalchemy import (
+    BigInteger, CheckConstraint, Date, Boolean, DateTime, DDL, Float, ForeignKey,
+    ForeignKeyConstraint, Integer, JSON, LargeBinary, String, Text, UniqueConstraint, event,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .database import Base
@@ -92,6 +95,7 @@ class TeamInvitation(Base):
 
 class Client(Base):
     __tablename__ = "clients"
+    __table_args__ = (UniqueConstraint("id", "agency_id", name="uq_clients_id_agency"),)
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=new_uuid)
     agency_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("agencies.id", ondelete="CASCADE"), index=True)
@@ -147,6 +151,7 @@ class ProviderCredential(Base):
 
 class Agent(Base):
     __tablename__ = "agents"
+    __table_args__ = (UniqueConstraint("id", "client_id", "agency_id", name="uq_agents_id_client_agency"),)
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=new_uuid)
     agency_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("agencies.id", ondelete="CASCADE"), index=True)
@@ -616,3 +621,78 @@ class AcquisitionCount(Base):
     source: Mapped[str] = mapped_column(String(80), primary_key=True)
     event: Mapped[str] = mapped_column(String(16), primary_key=True)
     count: Mapped[int] = mapped_column(BigInteger, default=0)
+
+
+class Solution(Base):
+    __tablename__ = "solutions"
+    __table_args__ = (
+        UniqueConstraint("id", "agency_id", name="uq_solutions_id_agency"),
+        CheckConstraint("latest_version >= 1", name="ck_solutions_version"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=new_uuid)
+    agency_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("agencies.id", ondelete="CASCADE"), index=True)
+    name: Mapped[str] = mapped_column(String(180))
+    latest_version: Mapped[int] = mapped_column(Integer, default=1)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
+
+
+class SolutionVersion(Base):
+    __tablename__ = "solution_versions"
+    __table_args__ = (
+        ForeignKeyConstraint(["solution_id", "agency_id"], ["solutions.id", "solutions.agency_id"], ondelete="CASCADE"),
+        UniqueConstraint("solution_id", "number", "agency_id", name="uq_solution_versions_scope"),
+        CheckConstraint("number >= 1", name="ck_solution_versions_number"),
+    )
+
+    solution_id: Mapped[uuid.UUID] = mapped_column(primary_key=True)
+    number: Mapped[int] = mapped_column(Integer, primary_key=True)
+    agency_id: Mapped[uuid.UUID] = mapped_column(index=True)
+    settings: Mapped[dict] = mapped_column(JSON)
+    actor_id: Mapped[uuid.UUID] = mapped_column()  # Historical attribution, survives user deletion.
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
+
+
+class SolutionInstallation(Base):
+    __tablename__ = "solution_installations"
+    __table_args__ = (
+        ForeignKeyConstraint(["solution_id", "version_number", "agency_id"],
+                             ["solution_versions.solution_id", "solution_versions.number", "solution_versions.agency_id"],
+                             deferrable=True, initially="DEFERRED"),
+        ForeignKeyConstraint(["client_id", "agency_id"], ["clients.id", "clients.agency_id"], ondelete="CASCADE"),
+        ForeignKeyConstraint(["agent_id", "client_id", "agency_id"],
+                             ["agents.id", "agents.client_id", "agents.agency_id"], ondelete="CASCADE"),
+        UniqueConstraint("solution_id", "client_id", name="uq_solution_installation_client"),
+        CheckConstraint("revision >= 1", name="ck_solution_installation_revision"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=new_uuid)
+    agency_id: Mapped[uuid.UUID] = mapped_column(index=True)
+    solution_id: Mapped[uuid.UUID] = mapped_column()
+    version_number: Mapped[int] = mapped_column(Integer)
+    client_id: Mapped[uuid.UUID] = mapped_column()
+    agent_id: Mapped[uuid.UUID] = mapped_column(unique=True)
+    local_overrides: Mapped[list] = mapped_column(JSON, default=list)
+    revision: Mapped[int] = mapped_column(Integer, default=1)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
+
+
+# Keep metadata-created test databases subject to the migration's immutable-row
+# invariant too. Only parent cascades may delete versions, for owner data erasure.
+event.listen(SolutionVersion.__table__, "after_create", DDL("""
+CREATE OR REPLACE FUNCTION reject_solution_version_update() RETURNS trigger AS $$
+BEGIN
+    IF TG_OP = 'DELETE' AND NOT EXISTS (SELECT 1 FROM solutions WHERE id = OLD.solution_id) THEN
+        RETURN OLD;
+    END IF;
+    RAISE EXCEPTION 'Solution versions are immutable' USING ERRCODE = '23514';
+END;
+$$ LANGUAGE plpgsql
+""").execute_if(dialect="postgresql"))
+event.listen(SolutionVersion.__table__, "after_create", DDL("""
+CREATE TRIGGER immutable_solution_version BEFORE UPDATE OR DELETE ON solution_versions
+FOR EACH ROW EXECUTE FUNCTION reject_solution_version_update()
+""").execute_if(dialect="postgresql"))
+event.listen(SolutionVersion.__table__, "after_drop", DDL(
+    "DROP FUNCTION IF EXISTS reject_solution_version_update()"
+).execute_if(dialect="postgresql"))
