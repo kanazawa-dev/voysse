@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import httpx
 from fastapi import HTTPException
@@ -14,6 +14,9 @@ class Completion:
     output_tokens: int = 0
     # Set by the tool loop: [{name, arguments, result_preview, is_error}].
     tool_calls: list[dict] | None = None
+    # Set by a caller that looked up knowledge before generating, e.g.
+    # execution_dispatch's respond phase: [{id, filename, excerpt}].
+    sources: list[dict] = field(default_factory=list)
 
 # Substrings in a provider's 400 error that mean a sampling parameter is not
 # accepted (e.g. reasoning models, or Anthropic's temperature <= 1 limit). When

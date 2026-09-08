@@ -238,6 +238,42 @@ def test_published_policy_routes_reply_to_target_agent(authenticated_client: Tes
         assert turn.status == "completed" and len(turn.transitions) == 1
 
 
+def test_published_policy_routed_reply_keeps_tool_calls_and_sources_across_the_send_gap(authenticated_client: TestClient, monkeypatch):
+    """The generated reply is serialized to durable storage between prepare (here)
+    and finalize (a later work_once() pass, possibly a different process) --
+    tool_calls/sources must survive that round trip, not just the in-memory one
+    dashboard/widget use."""
+    from sqlalchemy import select
+    from app.models import ExecutionTurn
+    from test_flows import _classify_or_respond, _publish_handoff_policy
+
+    client = authenticated_client
+    customer, agent, channel = _setup_channel(client)
+    specialist = client.post("/api/agents", json={"client_id": customer["id"], "provider": "openai",
+        "model": "gpt-4.1-mini", "name": "Specialist", "description": "", "instructions": "", "personality": "", "is_active": True}).json()
+    execution_dispatch = _publish_handoff_policy(client, customer["id"], agent["id"], specialist["id"])
+    monkeypatch.setattr(execution_dispatch, "chat_completion", _classify_or_respond(
+        '{"rule_index":0,"reason":"Technical question"}', "unused"))
+    tool_calls = [{"name": "check_order", "arguments": {"order_id": "42"}, "result_preview": "shipped", "is_error": False}]
+
+    async def fake_run_completion(db, agent, base_url, api_key, messages, **kwargs):
+        return ai_service.Completion(text="It shipped.", tool_calls=tool_calls)
+
+    monkeypatch.setattr(execution_dispatch, "run_completion", fake_run_completion)
+    fake_send = AsyncMock(return_value="wamid.out-tools-1")
+    monkeypatch.setattr(cloud_worker, "send_text", fake_send)
+
+    payload = _webhook_payload([{"from": "5730011", "id": "wamid.tools-1", "type": "text", "text": {"body": "I need technical help"}}])
+    assert _post_signed(client, channel["id"], payload).status_code == 200
+
+    conversation = client.get("/api/conversations").json()[0]
+    detail = client.get(f"/api/conversations/{conversation['id']}").json()
+    assert detail["messages"][-1]["sender_name"] == "Specialist"
+    assert detail["messages"][-1]["tool_calls"] == tool_calls
+    with TestingSession() as db:
+        assert db.scalar(select(ExecutionTurn)).status == "completed"
+
+
 def test_published_policy_send_failure_marks_turn_uncertain(authenticated_client: TestClient, monkeypatch):
     from sqlalchemy import select
     from app.models import ExecutionTurn

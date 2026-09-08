@@ -818,6 +818,7 @@ def test_routed_reply_uses_target_agents_knowledge(authenticated_client: TestCli
     assert sent.json()["messages"][-1]["sender_name"] == "Specialist"
     assert sent.json()["messages"][-1]["content"] == "The stated warranty is two years."
     assert "warranty" in captured["system"]
+    assert sent.json()["messages"][-1]["sources"][0]["filename"] == "garantias.pdf"
 
 
 def test_routed_reply_persists_tool_calls(authenticated_client: TestClient, monkeypatch):

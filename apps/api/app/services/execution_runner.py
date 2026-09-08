@@ -48,6 +48,7 @@ class Prepared:
     agent_name: str
     content: str
     tool_calls: list[dict] | None = None
+    sources: tuple[dict, ...] = ()
 
 
 def snapshot(db, agency, conversation_id, turn_id, revision):
@@ -116,7 +117,7 @@ async def prepare(session_factory, agency, conversation, turn, message, revision
                     if not isinstance(completion.text, str) or not 1 <= len(completion.text.strip()) <= 32000:
                         raise HTTPException(409, 'Invalid response')
                     return 'ready', Prepared(turn, revision, work.agent_id, db.get(Agent, work.agent_id).name,
-                                              completion.text, completion.tool_calls)
+                                              completion.text, completion.tool_calls, tuple(completion.sources))
                 if completion.tool_calls:
                     raise HTTPException(409, 'Tools are not supported for classification')
                 target, reason = None, 'Invalid or uncertain classification'
@@ -149,7 +150,7 @@ async def finalize(session_factory, agency, conversation, prepared: Prepared, *,
     with session_factory.begin() as db:
         response = Message(conversation_id=conversation, role='assistant', content=prepared.content,
                            sender_type='ai', sender_name=prepared.agent_name, external_message_id=external_message_id,
-                           tool_calls=prepared.tool_calls)
+                           tool_calls=prepared.tool_calls, sources=list(prepared.sources))
         db.add(response)
         if not state.settle(db, agency, conversation, prepared.turn_id, prepared.revision):
             raise HTTPException(409, 'Response no longer owned')
