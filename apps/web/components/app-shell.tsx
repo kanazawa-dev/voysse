@@ -77,7 +77,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   if (pathname === "/studio" || pathname.startsWith("/studio/")) return <main className="fixed inset-0 overflow-hidden bg-background">{children}</main>;
 
-  const currentSection = pathname === "/"
+  const currentSection = pathname === "/solutions" ? t("solutions.title") : pathname === "/"
     ? "Dashboard"
     : pathname
       .split("/")
@@ -90,16 +90,16 @@ export function AppShell({ children }: { children: ReactNode }) {
       <AppSidebar user={user} />
       <SidebarInset className="cy-workspace">
         <header className="cy-workspace-topbar flex h-16 shrink-0 items-center gap-2">
-          <div className="flex items-center gap-2 px-4">
+          <div className="flex min-w-0 items-center gap-2 px-2 sm:px-4">
             <SidebarTrigger className="-ml-1" />
             <Separator orientation="vertical" className="mr-2 data-vertical:h-4 data-vertical:self-auto" />
-            <Breadcrumb>
+            <Breadcrumb className="min-w-0">
               <BreadcrumbList>
-                <BreadcrumbItem><BreadcrumbPage className="capitalize">{currentSection}</BreadcrumbPage></BreadcrumbItem>
+                <BreadcrumbItem className="min-w-0"><BreadcrumbPage className="truncate capitalize">{currentSection}</BreadcrumbPage></BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
           </div>
-          <div className="ml-auto flex items-center gap-3 px-4"><OnboardingTour key={user.agency.id + user.id} role={user.role} /><ThemeToggle />{user.role === "admin" && <AlertsBell />}</div>
+          <div className="ml-auto flex shrink-0 items-center gap-2 px-2 sm:gap-3 sm:px-4"><OnboardingTour key={user.agency.id + user.id} role={user.role} /><ThemeToggle />{user.role === "admin" && <AlertsBell />}</div>
         </header>
         <main className="cy-workspace-content flex min-w-0 flex-1 flex-col gap-6 p-4 sm:p-8">{children}</main>
       </SidebarInset>

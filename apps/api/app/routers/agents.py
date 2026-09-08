@@ -12,7 +12,7 @@ from ..alerts import raise_alert, resolve_alerts
 from ..config import get_settings
 from ..database import get_db
 from ..deps import get_current_user
-from ..models import Agent, AgentQA, Client, KnowledgeDocument, User, WhatsAppChannel, WhatsAppCloudChannel, SocialChannel
+from ..models import Agent, AgentQA, Client, KnowledgeDocument, User, WhatsAppChannel, WhatsAppCloudChannel, SocialChannel, SolutionInstallation
 from ..schemas import AgentCreate, AgentOut, AgentUpdate, DocumentOut, ManualContextRequest, QAPairCreate, QAPairOut
 from ..services.knowledge import embed_document_chunks
 
@@ -67,6 +67,8 @@ def update_agent(agent_id: uuid.UUID, payload: AgentUpdate, db: Session = Depend
     agent = _agent(db, user, agent_id)
     values = payload.model_dump(exclude_unset=True)
     client_id = values.get("client_id", agent.client_id)
+    if client_id != agent.client_id and db.scalar(select(SolutionInstallation.id).where(SolutionInstallation.agent_id == agent.id)):
+        raise HTTPException(409, "An installed solution agent cannot be moved to another client")
     if client_id != agent.client_id and any(db.scalar(select(model.id).where(model.agent_id == agent.id)) for model in (WhatsAppChannel, WhatsAppCloudChannel, SocialChannel)):
         raise HTTPException(
             status_code=409,

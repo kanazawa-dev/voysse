@@ -25,6 +25,7 @@ from .routers import (
     portal,
     providers,
     social,
+    solutions,
     studio,
     studio_execution,
     studio_policies,
@@ -85,6 +86,7 @@ app.include_router(onboarding.router, prefix="/api")
 app.include_router(agency.router, prefix="/api")
 app.include_router(clients.router, prefix="/api")
 app.include_router(agents.router, prefix="/api")
+app.include_router(solutions.router, prefix="/api")
 app.include_router(agent_tools.router, prefix="/api")
 app.include_router(alerts.router, prefix="/api")
 app.include_router(providers.router, prefix="/api")
