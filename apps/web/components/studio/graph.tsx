@@ -2,7 +2,8 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { useLanguage } from '@/lib/i18n';
 import { useCanvasLayout } from './layout';
-import { Bot, Globe2, Radio, ZoomIn, ZoomOut } from 'lucide-react';
+import { BloubAvatar } from '@/components/bloub-avatar';
+import { Globe2, Radio, ZoomIn, ZoomOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { Rule } from './handoffs';
 import type { StudioCopy } from './copy';
@@ -202,7 +203,7 @@ export function ConnectionGraph({ data, selected, onSelect, onConnect, onAgentCo
             `${channelStatus(channel, t)} · ${data.agents.find(a => a.id === channel.agent_id)?.name || t.none}`, <Radio size={18} />,
           ))}</div>
           <div className={styles.column} aria-label={t.agents}>{data.agents.map((agent, index) => node(
-            `agent:${agent.id}`, 340, index, agent.name, agent.is_active ? t.active : t.inactive, <Bot size={18} />,
+            `agent:${agent.id}`, 340, index, agent.name, agent.is_active ? t.active : t.inactive, <BloubAvatar size={18} seed={agent.id} animated={false} />,
           ))}</div>
           <div className={styles.column} aria-label={t.widgets}>{widgets.map(({ agent, index }) => node(
             `widget:${agent.id}`, 656, index, `${t.widgets} · ${agent.name}`, agent.widget_enabled ? t.active : t.disabled, <Globe2 size={18} />,
