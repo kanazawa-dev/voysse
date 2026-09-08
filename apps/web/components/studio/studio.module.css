@@ -19,8 +19,18 @@
 .nodeIcon { position: absolute; left: 17px; top: 32px; color: var(--primary); }
 .node:hover, .node[aria-pressed="true"] { border-color: var(--primary); }
 .node:focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; }
-.connector { position: absolute; right: -8px; top: 50%; width: 16px; height: 16px; margin-top: -8px; border-radius: 50%; background: var(--card); border: 2px solid var(--primary); cursor: crosshair; touch-action: none; z-index: 5; }
+.connector { position: absolute; width: 16px; height: 16px; border-radius: 50%; background: var(--card); border: 2px solid var(--primary); cursor: crosshair; touch-action: none; z-index: 5; }
+.connector[data-side="right"] { right: -8px; top: 50%; margin-top: -8px; }
+.connector[data-side="left"] { left: -8px; top: 50%; margin-top: -8px; }
+.connector[data-side="top"] { left: 50%; top: -8px; margin-left: -8px; }
+.connector[data-side="bottom"] { left: 50%; bottom: -8px; margin-left: -8px; }
 .connector:hover, .connector:focus-visible { background: var(--primary); outline: none; transform: scale(1.2); }
+/* Touch/coarse-pointer devices have no hover, so keep handles always visible there
+   (that's the only way to discover them); real mice get the decluttered reveal-on-approach. */
+@media (hover: hover) and (pointer: fine) {
+  .connector { opacity: 0; transition: opacity .15s ease; }
+  .nodeWrap:hover .connector, .nodeWrap:focus-within .connector, .connector:focus-visible, .map[data-linking] .connector { opacity: 1; }
+}
 .linkPreview { stroke: var(--primary); stroke-width: 2; stroke-dasharray: 6 4; opacity: .8; }
 .panel { min-width: 0; padding: 24px; border: 1px solid var(--border); border-radius: 12px; background: var(--card); }
 .panel h2 { margin-bottom: 12px; font-size: 18px; } .panel p { font-size: 13px; color: var(--muted-foreground); }
