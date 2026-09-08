@@ -4,6 +4,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
   Bot,
+  Library,
   Workflow,
   Building2,
   CreditCard,
@@ -67,6 +68,7 @@ export function AppSidebar({ user, ...props }: React.ComponentProps<typeof Sideb
     { title: t("nav.clients"), url: "/clients", icon: Building2, isActive: pathname.startsWith("/clients") && !studioActive },
     { title: "Studio", url: "/studio", icon: Workflow, isActive: studioActive, newWindow: true },
     { title: t("nav.agents"), url: "/agents", icon: Bot, isActive: pathname.startsWith("/agents") },
+    { title: t("solutions.title"), url: "/solutions", icon: Library, isActive: pathname === "/solutions" },
     { title: t("nav.inbox"), url: "/inbox", icon: Inbox, isActive: pathname.startsWith("/inbox") },
     { title: t("nav.playground"), url: "/playground", icon: MessageSquareText, isActive: pathname.startsWith("/playground") },
     { title: t("nav.channels"), url: "/channels", icon: Radio, isActive: pathname.startsWith("/channels") },
