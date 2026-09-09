@@ -1,8 +1,9 @@
 # Reusable solution update planner
 
-**Status: pure preview foundation, not a live update API.**
+**Status: pure planner with a read-only installation preview API, not a live update API.**
 The [library API](solution-library.md) now persists versions and inactive client
-installations. This planner remains unconnected to live updates; it has no I/O.
+installations. The [preview integration](solution-personalizations.md) reads installations and
+tracks local edits. This pure planner itself has no I/O and never applies updates.
 
 `app.services.solution_updates.plan_update` compares three complete snapshots:
 the installed shared baseline, current client settings and a target version.
