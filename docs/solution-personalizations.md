@@ -38,9 +38,21 @@ Incompatible stored agent settings return422; incompatible published settings or
 closed. Read-only previews briefly lock rows for a coherent snapshot and release on request end.
 They do not guarantee that the agent remains unchanged after the response.
 
+## Browser flow
+
+Open a solution, select a target version, then choose **Preview update** beside an installation.
+Compare each field's three values and its status. Protect a value only if the client should
+retain it in future updates. Refresh to inspect newer changes. A conflict-free preview is not
+a behavioral test, and there is no Apply button. Older versions can be compared but not restored.
+
 ## Verification and rollback
 
 API regressions cover both edit paths, concurrent edits/protections, equal-valued markers,
 stale snapshots, invalid configuration, tenant/role isolation and read-only legacy drift.
-No migration is required. Removing the preview/protection router leaves stored markers and
-agent values intact. The browser interface and applying updates are separate work.
+`scripts/ui/solution-preview-smoke.cjs` uses intercepted API responses for ES/EN UI checks;
+it does not prove live browser/API integration. Run it with a local preview and Playwright.
+
+No migration is required. Removing this feature's hooks/router/UI leaves existing stored
+markers intact, but future legacy edits would no longer record personalization provenance.
+Existing-agent update application, release of overrides, behavioral acceptance and selective
+rollback remain separate work.

@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { api, ApiError } from "@/lib/api";
 import { useT, type I18nKey } from "@/lib/i18n";
 import { solutionError, type Installation, type Solution } from "@/lib/solutions";
+import { InstallationPreview } from "./preview";
 import type { Client } from "@/types";
 
 export function Installations({ solution, version, onBusy }: { solution: Solution; version: number; onBusy: (busy: boolean) => void }) {
@@ -15,6 +16,7 @@ export function Installations({ solution, version, onBusy }: { solution: Solutio
   const [data, setData] = useState<{ page: number; reload: number; clients: Client[]; rows: Installation[] } | null>(null);
   const [loadError, setLoadError] = useState<I18nKey | null>(null), [error, setError] = useState<I18nKey | null>(null);
   const [busy, setBusy] = useState(false), [blocked, setBlocked] = useState(false);
+  const [preview, setPreview] = useState<Installation | null>(null);
   const [installed, setInstalled] = useState<Installation | null>(null);
   const ready = data?.page === page && data.reload === reload;
   useEffect(() => {
@@ -69,9 +71,11 @@ export function Installations({ solution, version, onBusy }: { solution: Solutio
       {!data.rows.length && <p className="text-sm text-muted-foreground">{t("solutions.noInstallations")}</p>}
       {data.rows.map(row => <div key={row.id} className="flex flex-wrap items-center justify-between gap-3 border-t pt-3 text-sm">
         <span className="min-w-0 break-words">{data.clients.find(c => c.id === row.client_id)?.name ?? row.client_id} · v{row.version_number}</span>
-        <Link className="text-primary underline" href={`/agents/${row.agent_id}`}>{t("solutions.openAgent")}</Link></div>)}
+        <div className="flex flex-wrap items-center gap-3"><Button variant="outline" disabled={busy} onClick={() => setPreview(row)}>{t("solutionPreview.title")} · v{version}</Button>
+        <Link className="text-primary underline" href={`/agents/${row.agent_id}`}>{t("solutions.openAgent")}</Link></div></div>)}
       <div className="flex justify-between gap-3"><Button variant="outline" disabled={busy || !page} onClick={() => setPage(n => n - 1)}>{t("solutions.previous")}</Button>
         <Button variant="outline" disabled={busy || data.rows.length < 50} onClick={() => setPage(n => n + 1)}>{t("solutions.next")}</Button></div>
     </>}
+    {preview && <InstallationPreview key={`${preview.id}/${version}`} solutionId={solution.id} installation={preview} target={version} onClose={() => setPreview(null)} />}
   </section>;
 }

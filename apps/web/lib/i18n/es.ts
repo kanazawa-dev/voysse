@@ -11,6 +11,7 @@ import { playground } from "./dicts/playground";
 import { portal } from "./dicts/portal";
 import { inbox } from "./dicts/inbox";
 import { tools } from "./dicts/tools";
+import { solutionPreview } from "./dicts/solution-preview";
 import { solutions } from "./dicts/solutions";
 
 // Spanish dictionary. Composed from the same modules; typed as Dictionary so it
@@ -29,4 +30,5 @@ export const es: Dictionary = {
   inbox: inbox.es,
   tools: tools.es,
   solutions: solutions.es,
+  solutionPreview: solutionPreview.es,
 };
