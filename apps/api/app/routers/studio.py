@@ -17,6 +17,7 @@ from ..services.ai import chat_completion
 from ..services.knowledge import build_system_prompt, retrieve_knowledge
 from ..services.providers import resolve_agent_credentials
 from ..services.usage import record_usage
+from ..services.solution_personalizations import record_personalizations
 
 router = APIRouter(prefix="/studio/{client_id}", tags=["Studio"])
 Kind = Literal["whatsapp", "whatsapp-cloud", "instagram", "messenger"]
@@ -112,7 +113,9 @@ def configure_agent(client_id: uuid.UUID, agent_id: uuid.UUID, payload: AgentSet
         raise HTTPException(409, "Agent changed; reload before applying")
     if not payload.name.strip():
         raise HTTPException(422, "Name is required")
-    for key, value in payload.model_dump(exclude={"expected_updated_at"}).items():
+    values = payload.model_dump(exclude={"expected_updated_at"})
+    record_personalizations(db, agent, values)
+    for key, value in values.items():
         setattr(agent, key, value)
     agent.updated_at = now_utc()
     db.commit()

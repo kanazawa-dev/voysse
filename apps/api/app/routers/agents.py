@@ -15,18 +15,17 @@ from ..deps import get_current_user
 from ..models import Agent, AgentQA, Client, KnowledgeDocument, User, WhatsAppChannel, WhatsAppCloudChannel, SocialChannel, SolutionInstallation
 from ..schemas import AgentCreate, AgentOut, AgentUpdate, DocumentOut, ManualContextRequest, QAPairCreate, QAPairOut
 from ..services.knowledge import embed_document_chunks
+from ..services.solution_personalizations import record_personalizations
 
 
 router = APIRouter(prefix="/agents", tags=["Agents"])
 MAX_PDF_BYTES = 20 * 1024 * 1024
 
 
-def _agent(db: Session, user: User, agent_id: uuid.UUID) -> Agent:
-    agent = db.scalar(
-        select(Agent)
-        .options(joinedload(Agent.client).selectinload(Client.agents))
-        .where(Agent.id == agent_id, Agent.agency_id == user.agency_id)
-    )
+def _agent(db: Session, user: User, agent_id: uuid.UUID, *, lock=False) -> Agent:
+    query = select(Agent).options(joinedload(Agent.client).selectinload(Client.agents)).where(
+        Agent.id == agent_id, Agent.agency_id == user.agency_id)
+    agent = db.scalar(query.with_for_update(of=Agent).execution_options(populate_existing=True) if lock else query)
     if not agent:
         raise HTTPException(status_code=404, detail="Agent not found")
     return agent
@@ -64,7 +63,7 @@ def get_agent(agent_id: uuid.UUID, db: Session = Depends(get_db), user: User = D
 
 @router.patch("/{agent_id}", response_model=AgentOut)
 def update_agent(agent_id: uuid.UUID, payload: AgentUpdate, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    agent = _agent(db, user, agent_id)
+    agent = _agent(db, user, agent_id, lock=True)
     values = payload.model_dump(exclude_unset=True)
     client_id = values.get("client_id", agent.client_id)
     if client_id != agent.client_id and db.scalar(select(SolutionInstallation.id).where(SolutionInstallation.agent_id == agent.id)):
@@ -75,6 +74,7 @@ def update_agent(agent_id: uuid.UUID, payload: AgentUpdate, db: Session = Depend
             detail="This agent is assigned to a channel. Assign another agent to the channel before changing its client.",
         )
     _validate_client(db, user, client_id)
+    record_personalizations(db, agent, values)
     for key, value in values.items():
         setattr(agent, key, value)
     db.commit()
