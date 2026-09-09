@@ -54,5 +54,6 @@ agents**; a later upgrade cannot reconstruct lost metadata. Back it up first.
 
 [Update planning](reusable-solution-updates.md) is a separate pure foundation.
 Live updates still require installation CAS, explicit override provenance, conflict
-resolution, behavioral checks and runtime pinning. Existing agent editing does not
-yet record explicit equal-valued override intent; do not apply previews to live agents.
+resolution, behavioral checks and runtime pinning. [Personalization tracking and read-only previews](solution-personalizations.md) now record
+effective shared-setting edits and support explicit protection of equal-valued fields.
+Removing override intent and applying updates remain unavailable.
