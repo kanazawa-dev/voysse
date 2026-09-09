@@ -27,7 +27,8 @@ or channels. The content review is a human confirmation, not an automated secret
 
 Library and installation lists use 50-row pages. Selecting an older version explicitly
 uses that version as the publication draft or installation source. Existing installations
-are unchanged; update previews/application and rollback are not exposed yet.
+are unchanged. [Personalization previews](solution-personalizations.md) compare a selected
+version with an installation; applying updates and rollback are not exposed yet.
 
 ## Verification
 

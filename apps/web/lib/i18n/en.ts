@@ -13,6 +13,7 @@ import { playground } from "./dicts/playground";
 import { portal } from "./dicts/portal";
 import { inbox } from "./dicts/inbox";
 import { tools } from "./dicts/tools";
+import { solutionPreview } from "./dicts/solution-preview";
 import { solutions } from "./dicts/solutions";
 
 export const en = {
@@ -29,6 +30,7 @@ export const en = {
   inbox: inbox.en,
   tools: tools.en,
   solutions: solutions.en,
+  solutionPreview: solutionPreview.en,
 };
 
 export type Dictionary = typeof en;
