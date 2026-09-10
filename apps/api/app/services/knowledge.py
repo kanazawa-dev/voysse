@@ -58,6 +58,8 @@ def build_knowledge(agent: Agent, documents: list[KnowledgeDocument], query: str
         return KnowledgeResult(text="\n\n".join(sections), sources=sources)
 
     terms = _terms(query)
+    if not terms:
+        return KnowledgeResult(text="", sources=[])
     ranked: list[tuple[int, KnowledgeDocument, str]] = []
     for doc in valid_docs:
         for chunk in _chunks(doc.extracted_text):
@@ -70,7 +72,7 @@ def build_knowledge(agent: Agent, documents: list[KnowledgeDocument], query: str
     used_chars = 0
     seen_docs: set[str] = set()
     for score, doc, chunk in ranked:
-        if terms and score == 0 and selected:
+        if score == 0:
             break
         if used_chars + len(chunk) > MAX_SEARCH_CONTEXT_CHARS:
             continue
@@ -131,19 +133,30 @@ async def retrieve_knowledge(db: Session, agent: Agent, query: str) -> Knowledge
     if total <= MAX_FULL_CONTEXT_CHARS:
         return build_knowledge(agent, valid_docs, query)
 
-    semantic = await _semantic_search(db, agent, query)
+    semantic = await _semantic_search(db, agent, query, valid_docs)
     return semantic if semantic is not None else build_knowledge(agent, valid_docs, query)
 
 
-async def _semantic_search(db: Session, agent: Agent, query: str) -> KnowledgeResult | None:
+async def _semantic_search(
+    db: Session, agent: Agent, query: str, documents: list[KnowledgeDocument],
+) -> KnowledgeResult | None:
     credentials = resolve_provider_credentials(db, agent.agency_id, "openai")
     if not credentials:
         return None
-    chunks = list(
-        db.scalars(select(KnowledgeChunk).where(KnowledgeChunk.agent_id == agent.id)).all()
-    )
-    chunks = [chunk for chunk in chunks if chunk.embedding]
-    if not chunks:
+    # Document eligibility, not the denormalized chunk agent_id alone, defines
+    # the retrieval boundary. Never search failed or foreign documents.
+    expected = {(doc.id, position): content for doc in documents
+                for position, content in enumerate(_chunks(doc.extracted_text))}
+    chunks = list(db.scalars(select(KnowledgeChunk).where(
+        KnowledgeChunk.agent_id == agent.id,
+        KnowledgeChunk.document_id.in_([doc.id for doc in documents]),
+    )).all())
+    indexed = {(chunk.document_id, chunk.position): chunk for chunk in chunks}
+    # Partial/stale indexes must not silently hide unindexed knowledge. Fall
+    # back over ALL eligible documents until the entire current corpus is ready.
+    if (not expected or len(indexed) != len(chunks) or indexed.keys() != expected.keys()
+            or any(not indexed[key].embedding or indexed[key].content != content
+                   for key, content in expected.items())):
         return None
     base_url, api_key = credentials
     query_vector = await embed_query(base_url, api_key, query)
