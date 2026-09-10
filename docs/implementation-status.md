@@ -1,5 +1,32 @@
 # Implementation status — 6 September 2026
 
+## Source reconciliation — 8 September 2026
+
+This checkpoint supersedes older statements below that no live producer consumes
+Studio policies. It is a source audit, not production or external acceptance.
+
+- PR #94 connected published policies to dashboard chat and web widgets; PR #95
+  extended routing to WhatsApp and Instagram/Messenger. The dispatcher separates
+  preparation from external delivery confirmation.
+- PR #97 added knowledge and tools to routed replies; PR #99 preserved citations
+  and tool metadata. These no longer belong on the unimplemented-adapter list.
+- Onboarding, estimated usage costs and direct canvas connections are also present.
+  Estimated costs do not implement spending caps or managed-AI billing.
+- The request limiter now respects the ASGI server's trusted-proxy resolution
+  instead of trusting raw forwarding headers. See [ingress setup](request-limits.md#trusted-ingress-setup).
+  Each deployment still needs its actual proxy allowlist verified.
+
+Remaining scope must not be closed merely because routing exists: shared provider
+concurrency and tenant spending limits; uncertain-delivery recovery acceptance;
+live execution visualization acceptance; granular audit/permissions; evaluated
+AI/RAG; accessibility and data lifecycle; capacity and upgrade/rollback drills.
+Guided social OAuth/revocation/media support still requires its channel work and
+authorized Meta acceptance. SMTP delivery, remote backup scheduling/retention and
+restore, host alerts, real QR sessions and buyer pilots require external evidence.
+
+The historical sections below retain their original verification counts and
+limitations; they are not current test results or a declaration of completion.
+
 ## Studio: checkpoint actual
 
 Ver [estado consolidado y pendientes ordenados de Studio](studio-progress.md) antes

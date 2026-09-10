@@ -53,6 +53,14 @@ def test_buckets_expire_and_hide_addresses():
     assert error.value.status_code == 429
 
 
+def test_forged_forwarding_headers_share_the_peer_bucket():
+    limiter = RateLimiter(1, 60, name="forged-forwarding")
+    limiter(_request(headers={"x-forwarded-for": "192.0.2.1"}))
+    with pytest.raises(HTTPException) as error:
+        limiter(_request(headers={"x-forwarded-for": "192.0.2.2"}))
+    assert error.value.status_code == 429
+
+
 def test_quota_names_and_clients_are_independent():
     a = RateLimiter(1, 60, name="a")
     b = RateLimiter(1, 60, name="b")

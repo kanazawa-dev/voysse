@@ -28,9 +28,23 @@ later traffic cleans them; this is not a wall-clock retention guarantee.
   `SECRET_KEY` resets bucket identity and also affects authentication.
 - `RATE_LIMIT_BACKEND=memory` retains the legacy process-local behavior for an
   explicitly single-process setup. `RATE_LIMIT_ENABLED=false` disables protection.
-- The existing forwarded-address behavior still requires a trusted ingress which
-  overwrites client-supplied `X-Forwarded-For`. Do not expose the API directly to
-  untrusted callers without an edge rate limiter/proxy policy.
+- Quotas use the ASGI client address, not raw `X-Forwarded-For` headers. Direct
+  callers cannot select a new quota bucket by changing forwarding headers.
+
+## Trusted ingress setup
+
+Uvicorn resolves forwarding headers only for configured trusted peers. Set
+`FORWARDED_ALLOW_IPS` in the API process environment to the actual ingress IPs
+or a narrowly scoped proxy network. Do not use `*` for an API reachable by
+untrusted callers. The ingress must strip/overwrite caller-supplied forwarding
+headers; trust every intermediate proxy only after verifying that boundary.
+
+Without a matching trusted peer, requests behind a proxy share that proxy's
+quota. This is intentionally conservative but can throttle unrelated users.
+Verify two independent clients receive distinct resolved addresses through your
+real ingress before rollout. Do not log raw IPs or change stored bucket privacy.
+Docker/Railway ingress configuration and host-level protection require a separate
+deployment check; this source fix does not certify those environments.
 
 ## Scope and verification
 
