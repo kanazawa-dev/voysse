@@ -15,15 +15,11 @@ from .database import engine
 
 
 def client_ip(request: Request) -> str:
-    """Best-effort client address.
+    """Use the ASGI peer, resolved by the server's trusted-proxy policy.
 
-    The gateway forwards the caller in ``X-Forwarded-For``; the left-most entry
-    is the originating client. It is only as trustworthy as the proxy chain, so
-    treat it as a throttling hint, not an identity.
+    Reading raw forwarding headers here would bypass Uvicorn's allowlist and
+    let direct callers choose a fresh quota bucket for every request.
     """
-    forwarded = request.headers.get("x-forwarded-for")
-    if forwarded:
-        return forwarded.split(",")[0].strip()
     return request.client.host if request.client else "unknown"
 
 

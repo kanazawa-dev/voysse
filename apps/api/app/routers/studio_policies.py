@@ -1,4 +1,4 @@
-"""Publish configuration snapshots only. No live adapter consumes this journal."""
+"""Publish versioned policies consumed by live Studio message dispatch."""
 import uuid
 from typing import Literal
 from fastapi import APIRouter, Depends, HTTPException, Query

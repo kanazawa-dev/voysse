@@ -4,8 +4,8 @@ Shared by the Baileys bridge endpoint and the Cloud API webhook: dedupe by
 external message id, find or create the conversation, resolve media into text,
 store the visitor message, and produce the AI reply unless a human operator has
 taken over. If the client has a published policy routing the assigned agent,
-execution_dispatch handles generation instead (real handoffs, no knowledge or
-custom tools -- see execution_runner). The caller is responsible for actually
+execution_dispatch handles generation instead (real handoffs with the responder's
+knowledge and custom tools). The caller is responsible for actually
 delivering the reply.
 """
 
